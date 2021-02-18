@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using System.IO;
@@ -15,9 +16,29 @@ namespace SFA.DAS.Roatp.Functions
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            var serviceProvider = builder.Services.BuildServiceProvider();
+            AddNLog(builder);
 
+            var serviceProvider = builder.Services.BuildServiceProvider();
             BuildConfigurationSettings(builder, serviceProvider);
+        }
+
+        private void AddNLog(IFunctionsHostBuilder builder)
+        {
+            var nLogConfiguration = new NLogConfiguration();
+
+            builder.Services.AddLogging((options) =>
+            {
+                options.AddFilter(typeof(Startup).Namespace, LogLevel.Information);
+                options.SetMinimumLevel(LogLevel.Trace);
+                options.AddNLog(new NLogProviderOptions
+                {
+                    CaptureMessageTemplates = true,
+                    CaptureMessageProperties = true
+                });
+                options.AddConsole();
+
+                nLogConfiguration.ConfigureNLog();
+            });
         }
 
         private void BuildConfigurationSettings(IFunctionsHostBuilder builder, ServiceProvider serviceProvider)

@@ -19,10 +19,13 @@
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+		"FUNCTIONS_WORKER_RUNTIME": "dotnet",
 
         "AppName": "das-roatp-functions",
+		"ConfigNames": "SFA.DAS.RoatpFunctions",
         "EnvironmentName": "LOCAL",
         "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
+		"LoggingRedisConnectionString": "localhost"
     }
 }
 ```
