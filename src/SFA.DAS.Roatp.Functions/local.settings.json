@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "_comment": "TODO: REMOVE FILE WHEN GOING INTO RELEASE ENVIROMENTS",
+
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+
+    "AppName": "das-roatp-functions",
+    "ConfigNames": "SFA.DAS.RoatpFunctions",
+    "EnvironmentName": "LOCAL",
+    "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true"
+  }
+}
