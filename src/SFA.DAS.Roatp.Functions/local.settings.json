@@ -10,6 +10,7 @@
     "AppName": "das-roatp-functions",
     "ConfigNames": "SFA.DAS.RoatpFunctions",
     "EnvironmentName": "LOCAL",
-    "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true"
+    "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
+    "LoggingRedisConnectionString": "localhost"
   }
 }
