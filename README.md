@@ -15,18 +15,26 @@
 
 ```json
 {
-    "IsEncrypted": false,
-    "Values": {
-        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
-		"FUNCTIONS_WORKER_RUNTIME": "dotnet",
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
 
-        "AppName": "das-roatp-functions",
-		"ConfigNames": "SFA.DAS.RoatpFunctions",
-        "EnvironmentName": "LOCAL",
-        "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
-		"LoggingRedisConnectionString": "localhost"
-    }
+    "AppName": "das-roatp-functions",
+    "ConfigNames": "SFA.DAS.RoatpFunctions",
+    "EnvironmentName": "LOCAL",
+    "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
+    "LoggingRedisConnectionString": "localhost"
+  },
+
+  "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",
+  "ApplyApiAuthentication": {
+    "ApiBaseAddress": "https://localhost:6000"
+  },
+  "QnaApiAuthentication": {
+    "ApiBaseAddress": "http://localhost:5554"
+  }
 }
 ```
 
