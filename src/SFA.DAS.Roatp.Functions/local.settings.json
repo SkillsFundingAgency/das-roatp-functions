@@ -12,5 +12,12 @@
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost"
+  },
+
+  "ApplyApiAuthentication": {
+    "ApiBaseAddress": "https://localhost:6000"
+  },
+  "QnaApiAuthentication": {
+    "ApiBaseAddress": "http://localhost:5554"
   }
 }

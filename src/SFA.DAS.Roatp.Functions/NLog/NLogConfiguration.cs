@@ -7,7 +7,7 @@ using SFA.DAS.NLog.Targets.Redis.DotNetCore;
 using System;
 using System.IO;
 
-namespace SFA.DAS.Roatp.Functions
+namespace SFA.DAS.Roatp.Functions.NLog
 {
     public class NLogConfiguration
     {
