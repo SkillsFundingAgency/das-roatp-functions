@@ -9,11 +9,14 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.16.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.5" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.12" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.7.0" />
     <PackageReference Include="SFA.DAS.Configuration.AzureTableStorage" Version="3.0.84" />
     <PackageReference Include="SFA.DAS.NLog.Targets.Redis" Version="1.2.1" />
+    <PackageReference Include="SFA.DAS.QnA.Api.Types" Version="0.2.218" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SFA.DAS.Roatp.Functions.Configuration\SFA.DAS.Roatp.Functions.Configuration.csproj" />
