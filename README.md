@@ -25,13 +25,11 @@
     "ConfigNames": "SFA.DAS.RoatpFunctions",
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
-    "LoggingRedisConnectionString": "localhost"
+    "LoggingRedisConnectionString": "localhost",
+    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
   },
 
   "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",
-  "ApplyApiAuthentication": {
-    "ApiBaseAddress": "https://localhost:6000"
-  },
   "QnaApiAuthentication": {
     "ApiBaseAddress": "http://localhost:5554"
   }

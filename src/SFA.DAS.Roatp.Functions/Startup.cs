@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -8,6 +9,7 @@ using NLog.Extensions.Logging;
 using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
 using SFA.DAS.Roatp.Functions.NLog;
 using System;
@@ -27,6 +29,7 @@ namespace SFA.DAS.Roatp.Functions
             BuildConfigurationSettings(builder, serviceProvider);
 
             BuildHttpClients(builder);
+            BuildDataContext(builder);
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -73,7 +76,6 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Replace(ServiceDescriptor.Singleton(typeof(IConfiguration), config));
 
             builder.Services.AddOptions();
-            builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
         }
 
@@ -94,18 +96,15 @@ namespace SFA.DAS.Roatp.Functions
                 }
             })
             .SetHandlerLifetime(handlerLifeTime);
-            
-            builder.Services.AddHttpClient<IApplyApiClient, ApplyApiClient>((serviceProvider, httpClient) =>
+        }
+
+        private static void BuildDataContext(IFunctionsHostBuilder builder)
+        {
+            builder.Services.AddDbContext<ApplyDataContext>(options =>
             {
-                var applyApiAuthentication = serviceProvider.GetService<IOptions<ApplyApiAuthentication>>().Value;
-                httpClient.BaseAddress = new Uri(applyApiAuthentication.ApiBaseAddress);
-                httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
-                if (!httpClient.BaseAddress.IsLoopback)
-                {
-                    httpClient.DefaultRequestHeaders.Authorization = BearerTokenGenerator.GenerateToken(applyApiAuthentication.TenantId, applyApiAuthentication.ClientId, applyApiAuthentication.ClientSecret, applyApiAuthentication.ResourceId);
-                }
-            })
-            .SetHandlerLifetime(handlerLifeTime);
+                var connectionString = Environment.GetEnvironmentVariable("ApplySqlConnectionString");
+                options.UseSqlServer(connectionString);
+            });
         }
     }
 }
