@@ -15,6 +15,8 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string ModerationStatus { get; set; }
 
         public ApplyData ApplyData { get; set; }
+
+        public virtual ExtractedApplication ExtractedApplication { get; set; }
     }
 
     public class ApplyData
