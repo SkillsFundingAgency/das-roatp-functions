@@ -46,29 +46,23 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task<List<Guid>> GetApplicationsToExtract(DateTime executionDateTime)
         {
-            var applications = _applyDataContext.Apply
-                                .FromSqlRaw(@"   SELECT *
-                                             FROM Apply apply
-                                             WHERE apply.ApplicationId NOT IN (SELECT ApplicationId FROM ExtractedApplications)
-                                             AND CAST(JSON_VALUE(apply.ApplyData, '$.ApplyDetails.ApplicationSubmittedOn') AS DATE) < {0}",
-                                 executionDateTime.Date)
-                                .AsNoTracking();
+            _logger.LogDebug($"Getting list of applications to extract.");
 
-            // TODO: EF keeps making this an INNER JOIN so have resorted to the above. I can't figure out what configuration is missing!
-            //var applications = _applyDataContext.Apply
-            //                    .FromSqlRaw(@"   SELECT *
-            //                                     FROM Apply apply
-            //                                     LEFT OUTER JOIN ExtractedApplications extract ON apply.ApplicationId = extract.ApplicationId
-            //                                     WHERE extract.ApplicationId IS NULL
-            //                                      AND CAST(JSON_VALUE(apply.ApplyData, '$.ApplyDetails.ApplicationSubmittedOn') AS DATE) < {0}",
-            //                                     executionDateTime.Date)
-            //                    .AsNoTracking();
+            var applications = await _applyDataContext.Apply
+                                .AsNoTracking()
+                                .Include(x => x.ExtractedApplication)
+                                .Where(app => app.ExtractedApplication == null && app.ApplicationStatus != "In Progress")
+                                .ToListAsync();
 
-            return await applications.Select(app => app.ApplicationId).ToListAsync();
+            // Note: Because ApplyData uses a JSON Conversion, you have to ensure it was populated above
+            return applications.Where(x => x.ApplyData.ApplyDetails.ApplicationSubmittedOn < executionDateTime.Date)
+                               .Select(app => app.ApplicationId).ToList();
         }
 
         public async Task<List<SubmittedApplicationAnswer>> ExtractAnswersForApplication(Guid applicationId)
         {
+            _logger.LogDebug($"Extracting answers for application {applicationId}");
+
             var answers = new List<SubmittedApplicationAnswer>();
 
             var sections = await _qnaApiClient.GetAllSectionsForApplication(applicationId);
@@ -103,6 +97,8 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
+            _logger.LogDebug($"Saving extracted answers for application {applicationId}");
+
             using (var dataContextTransaction = _applyDataContext.Database.BeginTransaction())
             {
                 var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
@@ -124,6 +120,8 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     await _applyDataContext.SaveChangesAsync();
                     await dataContextTransaction.CommitAsync();
+
+                    _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
                 }
                 catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType () != typeof(ApplyDataContext))
                 {

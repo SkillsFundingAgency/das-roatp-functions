@@ -1,5 +1,4 @@
 ﻿using EntityFrameworkCore.Testing.Moq;
-using EntityFrameworkCore.Testing.Moq.Extensions;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,6 +23,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
 
+        private Apply _inProgressApplication;
         private Apply _application;
         private List<Section> _sections;
 
@@ -36,11 +36,11 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _qnaApiClient = new Mock<IQnaApiClient>();
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
-            _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), DateTime.Today.AddDays(-1));
+            _inProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "In Progress", null);
+            _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "Submitted", DateTime.Today.AddDays(-1));
 
-            var applications = new List<Apply> { _application };
+            var applications = new List<Apply> { _inProgressApplication, _application };
             _applyDataContext.Set<Apply>().AddRange(applications);
-            _applyDataContext.Set<Apply>().AddFromSqlRawResult(applications);
             _applyDataContext.SaveChanges();
 
             _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
@@ -58,7 +58,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         }
 
         [Test]
-        public async Task GetApplicationsToExtract_Contains_Expected_Result()
+        public async Task GetApplicationsToExtract_Contains_Expected_Applications()
         {
             var expectedApplicationId = _application.ApplicationId;
             var executionDateTime = _application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value.Date.AddDays(1);
@@ -67,6 +67,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             CollectionAssert.IsNotEmpty(actualResults);
             CollectionAssert.Contains(actualResults, expectedApplicationId);
+            CollectionAssert.DoesNotContain(actualResults, _inProgressApplication.ApplicationId);
         }
 
         [Test]
