@@ -4,6 +4,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
     public class Apply
     {
+        public Guid Id { get; set; }
         public Guid ApplicationId { get; set; }
         public Guid OrganisationId { get; set; }
 
