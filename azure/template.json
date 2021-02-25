@@ -70,7 +70,7 @@
         "resourceNamePrefix": "[toLower(concat('das-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
         "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]",
         "appServicePlanName": "[concat(variables('resourceNamePrefix'),'-asp')]",
-        "funcAppName": "[concat(variables('resourceNamePrefix'),'fa')]"
+        "functionAppName": "[concat(variables('resourceNamePrefix'),'fa')]"
     },
     "resources": [
         {
@@ -86,7 +86,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-06-01",
             "resourceGroup": "[variables('resourceGroupName')]",
-            "name": "worker-app-service-plan",
+            "name": "app-service-plan",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -149,10 +149,10 @@
                 },
                 "parameters": {
                     "appInsightsName": {
-                        "value": "[variables('funcAppName')]"
+                        "value": "[variables('functionAppName')]"
                     },
                     "attachedService": {
-                        "value": "[variables('funcAppName')]"
+                        "value": "[variables('functionAppName')]"
                     }
                 }
             }
@@ -170,7 +170,7 @@
                 },
                 "parameters": {
                     "functionAppName": {
-                        "value": "[variables('funcAppName')]"
+                        "value": "[variables('functionAppName')]"
                     },
                     "appServicePlanName": {
                         "value": "[variables('appServicePlanName')]"
@@ -245,7 +245,7 @@
         },
         "FunctionAppName": {
             "type": "string",
-            "value": "[variables('funcAppName')]"
+            "value": "[variables('functionAppName')]"
         }
     }
 }
