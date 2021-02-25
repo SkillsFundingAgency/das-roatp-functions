@@ -13,7 +13,7 @@
         },
         "configNames": {
             "type": "string",
-            "defaultValue": "__SolutionBaseName__"
+            "defaultValue": "SFA.DAS.Roatp.Functions"
         },
         "tags": {
             "type": "object"
