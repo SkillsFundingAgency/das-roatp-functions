@@ -5,10 +5,6 @@
         "resourceEnvironmentName": {
             "type": "string"
         },
-        "version": {
-            "type": "string",
-            "defaultValue": "1.0"
-        },
         "environmentName": {
             "type": "string"
         },
@@ -70,7 +66,7 @@
         "resourceNamePrefix": "[toLower(concat('das-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
         "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]",
         "appServicePlanName": "[concat(variables('resourceNamePrefix'),'-asp')]",
-        "functionAppName": "[concat(variables('resourceNamePrefix'),'fa')]"
+        "functionAppName": "[concat(variables('resourceNamePrefix'),'-fa')]"
     },
     "resources": [
         {
@@ -204,7 +200,7 @@
                                     "value": "[parameters('configurationStorageConnectionString')]"
                                 },
                                 {
-                                    "name": "Environment",
+                                    "name": "EnvironmentName",
                                     "value": "[toUpper(parameters('environmentName'))]"
                                 },
                                 {
@@ -229,7 +225,7 @@
                                 },
                                 {
                                     "name": "Version",
-                                    "value": "[parameters('version')]"
+                                    "value": "1.0"
                                 }
                             ]
                         }
