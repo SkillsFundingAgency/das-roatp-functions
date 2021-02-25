@@ -100,7 +100,10 @@
                         "value": "[parameters('appServicePlanInstances')]"
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('resourceGroupName')]"
+            ]
         },
         {
             "apiVersion": "2020-06-01",
@@ -151,7 +154,10 @@
                         "value": "[variables('functionAppName')]"
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('resourceGroupName')]"
+            ]
         },
         {
             "apiVersion": "2020-06-01",
@@ -231,7 +237,10 @@
                         }
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('resourceGroupName')]"
+            ]
         }
     ],
     "outputs": {
