@@ -12,6 +12,8 @@ variables:
   value: 'release'
 
 pool:
+  workspace:
+    clean: all
   name: 'DAS - Continuous Integration'
 
 resources:
