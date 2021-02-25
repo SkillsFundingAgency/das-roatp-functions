@@ -5,6 +5,10 @@
         "resourceEnvironmentName": {
             "type": "string"
         },
+        "version": {
+            "type": "string",
+            "defaultValue": "1.0"
+        },
         "environmentName": {
             "type": "string"
         },
@@ -15,27 +19,59 @@
             "type": "string",
             "defaultValue": "__SolutionBaseName__"
         },
-        "version": {
-            "type": "string",
-            "defaultValue": "1.0"
-        },
         "tags": {
             "type": "object"
         },
         "resourceGroupLocation": {
             "type": "string"
-        },        
+        },
         "configurationStorageConnectionString": {
+            "type": "securestring"
+        },
+        "sharedStorageAccountConnectionString": {
             "type": "securestring"
         },
         "loggingRedisConnectionString": {
             "type": "securestring"
+        },
+        "loggingRedisKey": {
+            "type": "securestring"
+        },
+        "appServicePlanSize": {
+            "type": "string",
+            "defaultValue": 1
+        },
+        "appServicePlanInstances": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "sharedEnvResourceGroup": {
+            "type": "string"
+        },
+        "sharedEnvVirtualNetworkName": {
+            "type": "string"
+        },
+        "subnetDelegations": {
+            "type": "array"
+        },
+        "subnetObject": {
+            "type": "object"
+        },
+        "subnetServiceEndpointList": {
+            "type": "array"
+        },
+        "functionAppAllowedIps": {
+            "type": "array",
+            "defaultValue": []
         }
     },
+
     "variables": {
         "deploymentUrlBase": "https://raw.githubusercontent.com/SkillsFundingAgency/das-platform-building-blocks/master/templates/",
         "resourceNamePrefix": "[toLower(concat('das-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
-        "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]"
+        "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]",
+        "appServicePlanName": "[concat(variables('resourceNamePrefix'),'-asp')]",
+        "funcAppName": "[concat(variables('resourceNamePrefix'),'fa')]"
     },
     "resources": [
         {
@@ -46,12 +82,179 @@
             "tags": "[parameters('tags')]",
             "properties": {
             }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "name": "worker-app-service-plan",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'app-service-plan.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServicePlanName": {
+                        "value": "[variables('appServicePlanName')]"
+                    },
+                    "aspSize": {
+                        "value": "[parameters('appServicePlanSize')]"
+                    },
+                    "aspInstances": {
+                        "value": "[parameters('appServicePlanInstances')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "function-app-subnet",
+            "resourceGroup": "[parameters('sharedEnvResourceGroup')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'subnet.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[parameters('sharedEnvVirtualNetworkName')]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('subnetObject').name]"
+                    },
+                    "subnetAddressPrefix": {
+                        "value": "[parameters('subnetObject').addressSpace]"
+                    },
+                    "serviceEndpointList": {
+                        "value": "[parameters('subnetServiceEndpointList')]"
+                    },
+                    "delegations": {
+                        "value": "[parameters('subnetDelegations')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "application-insights",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'application-insights.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appInsightsName": {
+                        "value": "[variables('funcAppName')]"
+                    },
+                    "attachedService": {
+                        "value": "[variables('funcAppName')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "function-app",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'function-app-v2.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "functionAppName": {
+                        "value": "[variables('funcAppName')]"
+                    },
+                    "appServicePlanName": {
+                        "value": "[variables('appServicePlanName')]"
+                    },
+                    "appServicePlanResourceGroup": {
+                        "value": "[variables('resourceGroupName')]"
+                    },
+                    "ipSecurityRestrictions": {
+                        "value": "[parameters('functionAppAllowedIps')]"
+                    },
+                    "subnetResourceId": {
+                        "value": "[reference('function-app-subnet').outputs.SubnetResourceId.value]"
+                    },
+                    "functionAppAppSettings": {
+                        "value": {
+                            "array": [
+                                {
+                                    "name": "ASPNETCORE_ENVIRONMENT",
+                                    "value": "[toUpper(parameters('environmentName'))]"
+                                },
+                                {
+                                    "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                                    "value": "[reference('application-insights').outputs.InstrumentationKey.value]"
+                                },
+                                {
+                                    "name": "ConfigNames",
+                                    "value": "[parameters('configNames')]"
+                                },
+                                {
+                                    "name": "AzureWebJobsStorage",
+                                    "value": "[parameters('sharedStorageAccountConnectionString')]"
+                                },
+                                {
+                                    "name": "ConfigurationStorageConnectionString",
+                                    "value": "[parameters('configurationStorageConnectionString')]"
+                                },
+                                {
+                                    "name": "EnvironmentName",
+                                    "value": "[toUpper(parameters('environmentName'))]"
+                                },
+                                {
+                                    "name": "Environment",
+                                    "value": "[toUpper(parameters('environmentName'))]"
+                                },
+                                {
+                                    "name": "FUNCTIONS_EXTENSION_VERSION",
+                                    "value": "~3"
+                                },
+                                {
+                                    "name": "FUNCTIONS_WORKER_RUNTIME",
+                                    "value": "dotnet"
+                                },
+                                {
+                                    "name": "AppName",
+                                    "value": "das-roatp-functions"
+                                },
+                                {
+                                    "name": "LoggingRedisConnectionString",
+                                    "value": "[parameters('loggingRedisConnectionString')]"
+                                },
+                                {
+                                    "name": "LoggingRedisKey",
+                                    "value": "[parameters('loggingRedisKey')]"
+                                },
+                                {
+                                    "name": "Version",
+                                    "value": "[parameters('version')]"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     ],
     "outputs": {
         "ResourceGroupName": {
             "type": "string",
             "value": "[variables('resourceGroupName')]"
-        }
+        },
+        "FunctionAppName": {
+            "type": "string",
+            "value": "[variables('funcAppName')]"
+       }
     }
 }
