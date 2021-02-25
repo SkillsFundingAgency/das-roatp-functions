@@ -35,7 +35,7 @@
             "type": "securestring"
         },
         "loggingRedisKey": {
-            "type": "securestring"
+            "type": "string"
         },
         "appServicePlanSize": {
             "type": "string",
@@ -188,10 +188,6 @@
                         "value": {
                             "array": [
                                 {
-                                    "name": "ASPNETCORE_ENVIRONMENT",
-                                    "value": "[toUpper(parameters('environmentName'))]"
-                                },
-                                {
                                     "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
                                     "value": "[reference('application-insights').outputs.InstrumentationKey.value]"
                                 },
@@ -206,10 +202,6 @@
                                 {
                                     "name": "ConfigurationStorageConnectionString",
                                     "value": "[parameters('configurationStorageConnectionString')]"
-                                },
-                                {
-                                    "name": "EnvironmentName",
-                                    "value": "[toUpper(parameters('environmentName'))]"
                                 },
                                 {
                                     "name": "Environment",
