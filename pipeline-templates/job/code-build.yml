@@ -8,12 +8,12 @@ jobs:
     value: 'SFA.DAS.Roatp.Functions' 
 
   steps:
-    - task: gitversion/execute@0
+    - task: gittools.gittools.setup-gitversion-task.gitversion/setup@0
       displayName: gitversion/setup
       inputs:
         versionSpec: 5.x
 
-    - task: gitversion/execute@0
+    - task: gittools.gittools.setup-gitversion-task.gitversion/setup@0
       displayName: gitversion/execute
       inputs:
         useConfigFile: true
