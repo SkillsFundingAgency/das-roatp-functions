@@ -1,3 +1,7 @@
+parameters:
+  SolutionBaseName:
+  BuildConfiguration:
+
 jobs:
 - job: CodeBuild
   pool:
@@ -5,7 +9,7 @@ jobs:
   variables:
   - group: BUILD Management Resources
   - name: SolutionBaseName
-    value: 'SFA.DAS.Roatp.Functions' 
+    value: SFA.DAS.Roatp.Functions 
 
   steps:
     - task: gitversion/setup@0
@@ -24,25 +28,26 @@ jobs:
     - template: azure-pipelines-templates/build/step/dependency-check.yml@das-platform-building-blocks
 
     - task: DotNetCoreCLI@2
-      displayName: "Publish $(SolutionBaseName)"
+      displayName: Publish $(SolutionBaseName)
       inputs:
         command: publish
         publishWebProjects: false #set to false as this setting (which defaults to true) will parse the entire repo for web projects
         projects: src/$(SolutionBaseName)/$(SolutionBaseName).csproj
         modifyOutputPath: true
-        arguments: "-o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-build"
+        arguments: -o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-build
         zipAfterPublish: true
 
     - task: CopyFiles@2
-      displayName: 'Copy Files to: $(build.artifactstagingdirectory)/publish'
+      displayName: 
+        Copy Files to: $(build.artifactstagingdirectory)/publish
       inputs:
         Contents: |
           azure/**
-        TargetFolder: '$(build.artifactstagingdirectory)/publish'
+        TargetFolder: $(build.artifactstagingdirectory)/publish
         OverWrite: true
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish Artifact: drop'
+      displayName: Publish Artifact:drop
       inputs:
         targetPath: $(build.artifactstagingdirectory)/publish
         artifactName: drop

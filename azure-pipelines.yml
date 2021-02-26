@@ -6,14 +6,14 @@ trigger:
 
 variables:
 - name: BuildPlatform
-  value : 'any cpu'
+  value : any cpu
 - name: BuildConfiguration
-  value: 'release'
+  value: release
 
 pool:
   workspace:
     clean: all
-  name: 'DAS - Continuous Integration'
+  name: DAS - Continuous Integration
 
 resources:
   repositories:
@@ -21,7 +21,7 @@ resources:
       type: github
       name: SkillsFundingAgency/das-platform-building-blocks
       ref: refs/heads/master
-      endpoint: 'GitHub (SFA)'
+      endpoint: GitHub (SFA)
 
 stages:
 - stage: Build
