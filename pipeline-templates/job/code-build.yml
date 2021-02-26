@@ -9,7 +9,7 @@ jobs:
   variables:
   - group: BUILD Management Resources 
 
-  steps:
+  steps:  
     - task: gitversion/setup@0
       displayName: gitversion/setup
       inputs:
@@ -26,6 +26,7 @@ jobs:
     - template: azure-pipelines-templates/build/step/dependency-check.yml@das-platform-building-blocks
 
     - task: DotNetCoreCLI@2
+      displayName: Publish
       inputs:
         command: publish
         publishWebProjects: false #set to false as this setting (which defaults to true) will parse the entire repo for web projects
@@ -35,7 +36,7 @@ jobs:
         zipAfterPublish: true
 
     - task: CopyFiles@2
-      displayName: Copy Files to $(build.artifactstagingdirectory)/publish
+      displayName: Copy Files to $(build.artifactstagingdirectory)/publish'
       inputs:
         Contents: |
           azure/**
