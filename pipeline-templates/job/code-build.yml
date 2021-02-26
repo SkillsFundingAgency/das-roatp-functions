@@ -8,12 +8,12 @@ jobs:
     value: 'SFA.DAS.Roatp.Functions' 
 
   steps:
-    - task: gittools.gittools.setup-gitversion-task.gitversion/setup@0
+    - task: gitversion/execute@0
       displayName: gitversion/setup
       inputs:
         versionSpec: 5.x
 
-    - task: gittools.gittools.execute-gitversion-task.gitversion/execute@0
+    - task: gitversion/execute@0
       displayName: gitversion/execute
       inputs:
         useConfigFile: true
@@ -29,7 +29,7 @@ jobs:
         command: publish
         publishWebProjects: false #set to false as this setting (which defaults to true) will parse the entire repo for web projects
         projects: src/$(SolutionBaseName)/$(SolutionBaseName).csproj
-        arguments: "-o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-build"
+        arguments: "-o $(build.artifactstagingdirectory)"
         modifyOutputPath: true
         zipAfterPublish: true
 
