@@ -4,9 +4,12 @@ parameters:
 
 jobs:
 - job: CodeBuild
+  pool:
+    name: DAS - Continuous Integration
   variables:
-  - group: BUILD Management Resources
-  steps:
+  - group: BUILD Management Resources 
+
+  steps:  
     - task: gitversion/setup@0
       displayName: gitversion/setup
       inputs:
@@ -23,13 +26,13 @@ jobs:
     - template: azure-pipelines-templates/build/step/dependency-check.yml@das-platform-building-blocks
 
     - task: DotNetCoreCLI@2
-      displayName: Publish - dotnet publish ${{ SolutionBaseName }}
+      displayName: Publish $(SolutionBaseName)
       inputs:
         command: publish
         publishWebProjects: false #set to false as this setting (which defaults to true) will parse the entire repo for web projects
-        projects: src/${{ SolutionBaseName }}/${{ SolutionBaseName }}.csproj
-        arguments: -o $(build.artifactstagingdirectory)/publish -c ${{ BuildConfiguration }} --no-build
+        projects: src/$(SolutionBaseName)/$(SolutionBaseName).csproj
         modifyOutputPath: true
+        arguments: -o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-build
         zipAfterPublish: true
 
     - task: CopyFiles@2
@@ -39,9 +42,9 @@ jobs:
           azure/**
         TargetFolder: $(build.artifactstagingdirectory)/publish
         OverWrite: true
-    
+
     - task: PublishPipelineArtifact@1
-      displayName: Publish Artifact drop
+      displayName: Publish Artifact:drop
       inputs:
         targetPath: $(build.artifactstagingdirectory)/publish
         artifactName: drop
