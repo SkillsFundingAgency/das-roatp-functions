@@ -4,8 +4,7 @@ parameters:
 
 jobs:
 - job: CodeBuild
-  pool:
-    name: DAS - Continuous Integration
+
   variables:
   - group: BUILD Management Resources 
 
