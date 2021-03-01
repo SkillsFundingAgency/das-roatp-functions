@@ -9,6 +9,8 @@ variables:
   value : any cpu
 - name: BuildConfiguration
   value: release
+- name: SolutionBaseName
+  value: SFA.DAS.Roatp.Functions
 
 pool:
   workspace:
@@ -27,3 +29,6 @@ stages:
 - stage: Build
   jobs:
   - template: pipeline-templates/job/code-build.yml
+    parameters:
+      SolutionBaseName: $(SolutionBaseName)
+      BuildConfiguration: $(BuildConfiguration)
