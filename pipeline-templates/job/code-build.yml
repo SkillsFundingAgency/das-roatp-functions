@@ -6,7 +6,9 @@ jobs:
 - job: CodeBuild
 
   variables:
-  - group: BUILD Management Resources 
+  - group: BUILD Management Resources
+  - name: SolutionBaseName
+    value: SFA.DAS.Roatp.Functions
 
   steps:  
     - task: gitversion/setup@0
