@@ -7,8 +7,6 @@ jobs:
 
   variables:
   - group: BUILD Management Resources
-  - name: SolutionBaseName
-    value: SFA.DAS.Roatp.Functions
 
   steps:  
     - task: gitversion/setup@0
@@ -27,13 +25,13 @@ jobs:
     - template: azure-pipelines-templates/build/step/dependency-check.yml@das-platform-building-blocks
 
     - task: DotNetCoreCLI@2
-      displayName: Publish $(SolutionBaseName)
+      displayName: Publish ${{ SolutionBaseName }}
       inputs:
         command: publish
         publishWebProjects: false #set to false as this setting (which defaults to true) will parse the entire repo for web projects
-        projects: src/$(SolutionBaseName)/$(SolutionBaseName).csproj
+        projects: src/${{ SolutionBaseName }}/${{ SolutionBaseName }}.csproj
         modifyOutputPath: true
-        arguments: -o $(build.artifactstagingdirectory)/publish -c $(BuildConfiguration) --no-build
+        arguments: -o $(build.artifactstagingdirectory)/publish -c ${{ BuildConfiguration }}--no-build
         zipAfterPublish: true
 
     - task: CopyFiles@2
