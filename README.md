@@ -18,24 +18,26 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
 
     "AppName": "das-roatp-functions",
-    "ConfigNames": "SFA.DAS.RoatpFunctions",
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
-    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
+    "ApplicationExtractSchedule": "0 0 */2 * * *"
   },
 
   "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",
+  "ConnectionStrings": {
+    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
+  },
+
   "QnaApiAuthentication": {
     "ApiBaseAddress": "http://localhost:5554"
   }
 }
 ```
 
-### Application Report
+### Application Extract
 
-No specific configuration - run as Timer Trigger function
+No specific configuration - run as Timer Trigger function. See `"ApplicationExtractSchedule"` for schedule

@@ -26,7 +26,7 @@ namespace SFA.DAS.Roatp.Functions
 
 
         [FunctionName("ApplicationExtract")]
-        public async Task Run([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
         {
             if (myTimer.IsPastDue)
             {

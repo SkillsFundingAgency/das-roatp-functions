@@ -65,7 +65,7 @@ namespace SFA.DAS.Roatp.Functions
 #else
             configBuilder.AddAzureTableStorage(options =>
             {
-                options.ConfigurationKeys = configuration["ConfigNames"].Split(",");
+                options.ConfigurationKeys = new[] { "SFA.DAS.RoatpFunctions"};
                 options.StorageConnectionString = configuration["ConfigurationStorageConnectionString"];
                 options.EnvironmentName = configuration["EnvironmentName"];
                 options.PreFixConfigurationKeys = false;
@@ -76,6 +76,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Replace(ServiceDescriptor.Singleton(typeof(IConfiguration), config));
 
             builder.Services.AddOptions();
+            builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
         }
 
@@ -100,10 +101,10 @@ namespace SFA.DAS.Roatp.Functions
 
         private static void BuildDataContext(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddDbContext<ApplyDataContext>(options =>
+            builder.Services.AddDbContext<ApplyDataContext>((serviceProvider, options) =>
             {
-                var connectionString = Environment.GetEnvironmentVariable("ApplySqlConnectionString");
-                options.UseSqlServer(connectionString);
+                var connectionStrings = serviceProvider.GetService<IOptions<ConnectionStrings>>().Value;
+                options.UseSqlServer(connectionStrings.ApplySqlConnectionString);
             });
         }
     }
