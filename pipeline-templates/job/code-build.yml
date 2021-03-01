@@ -36,7 +36,7 @@ jobs:
         zipAfterPublish: true
 
     - task: CopyFiles@2
-      displayName: Copy Files to $(build.artifactstagingdirectory)/publish'
+      displayName: Copy Files to $(build.artifactstagingdirectory)/publish
       inputs:
         Contents: |
           azure/**
