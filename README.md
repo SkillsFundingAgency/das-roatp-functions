@@ -33,7 +33,7 @@
   },
 
   "QnaApiAuthentication": {
-    "Identifier": "https://citizenazuresfabisgov.onmicrosoft.com/das-at-api-as-ar",
+    "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
   }
 }

@@ -15,7 +15,7 @@
     "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
   },
   "QnaApiAuthentication": {
-    "Identifier": "https://citizenazuresfabisgov.onmicrosoft.com/das-at-api-as-ar",
+    "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
   }
 }
