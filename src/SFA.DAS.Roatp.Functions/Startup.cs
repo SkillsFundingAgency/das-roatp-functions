@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,9 +92,12 @@ namespace SFA.DAS.Roatp.Functions
                 var qnaApiAuthentication = serviceProvider.GetService<IOptions<QnaApiAuthentication>>().Value;
                 httpClient.BaseAddress = new Uri(qnaApiAuthentication.ApiBaseAddress);
                 httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
-                if (!httpClient.BaseAddress.IsLoopback)
+
+                var configuration = serviceProvider.GetService<IConfiguration>();
+                if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    httpClient.DefaultRequestHeaders.Authorization = BearerTokenGenerator.GenerateToken(qnaApiAuthentication.TenantId, qnaApiAuthentication.ClientId, qnaApiAuthentication.ClientSecret, qnaApiAuthentication.ResourceId);
+                    var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(qnaApiAuthentication.Identifier);
+                    httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
                 }
             })
             .SetHandlerLifetime(handlerLifeTime);
@@ -104,7 +108,18 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.AddDbContext<ApplyDataContext>((serviceProvider, options) =>
             {
                 var connectionStrings = serviceProvider.GetService<IOptions<ConnectionStrings>>().Value;
-                options.UseSqlServer(connectionStrings.ApplySqlConnectionString);
+                var applySqlConnectionString = connectionStrings.ApplySqlConnectionString;
+
+                var connection = new SqlConnection(applySqlConnectionString);
+
+                var configuration = serviceProvider.GetService<IConfiguration>(); ;
+                if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    var generateTokenTask = SqlTokenGenerator.GenerateTokenAsync();
+                    connection.AccessToken = generateTokenTask.GetAwaiter().GetResult();
+                }
+
+                options.UseSqlServer(connection);
             });
         }
     }
