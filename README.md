@@ -11,7 +11,7 @@
 
 ### Configuration
 
-1) Create a local.settings.json file (Copy to Output Directory = Copy always) with the following contents:
+1) Create a local.settings.json file (Copy to Output Directory = Copy if newer) with the following contents:
 
 ```json
 {
@@ -33,6 +33,7 @@
   },
 
   "QnaApiAuthentication": {
+    "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
   }
 }
