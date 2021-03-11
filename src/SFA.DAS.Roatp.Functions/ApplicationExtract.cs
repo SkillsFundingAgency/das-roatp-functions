@@ -1,6 +1,7 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SFA.DAS.QnA.Api.Types.Page;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
@@ -75,19 +76,8 @@ namespace SFA.DAS.Roatp.Functions
 
                     foreach (var page in completedPages)
                     {
-                        foreach (var pageAnswer in page.PageOfAnswers.SelectMany(poa => poa.Answers))
-                        {
-                            if (string.IsNullOrWhiteSpace(pageAnswer.Value)) continue;
-
-                            answers.Add(
-                                new SubmittedApplicationAnswer
-                                {
-                                    ApplicationId = applicationId,
-                                    PageId = page.PageId,
-                                    QuestionId = pageAnswer.QuestionId,
-                                    Answer = pageAnswer.Value
-                                });
-                        }
+                        var submittedPageAnswers = ExtractPageAnswers(applicationId, page);
+                        answers.AddRange(submittedPageAnswers);
                     }
                 }
             }
@@ -95,6 +85,85 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
+        private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, Page page)
+        {
+            var submittedPageAnswers = new List<SubmittedApplicationAnswer>();
+
+            if (page.PageOfAnswers != null && page.Questions != null)
+            {
+                // Note: RoATP only has a single PageOfAnswers in a page (i.e page.AllowMultipleAnswers is always false)
+                var pageAnswers = page.PageOfAnswers[0].Answers;
+
+                foreach (var question in page.Questions)
+                {
+                    var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, page.PageId, question, pageAnswers);
+                    submittedPageAnswers.AddRange(submittedQuestionAnswers);
+                }
+            }
+
+            return submittedPageAnswers;
+        }
+
+        private static List<SubmittedApplicationAnswer> ExtractQuestionAnswers(Guid applicationId, string pageId, Question question, ICollection<Answer> answers)
+        {
+            var submittedQuestionAnswers = new List<SubmittedApplicationAnswer>();
+
+            var questionId = question.QuestionId;
+            var questionType = question.Input.Type;
+
+            var questionAnswers = answers?.Where(ans => ans.QuestionId == questionId && !string.IsNullOrWhiteSpace(ans.Value));
+
+            if (questionAnswers != null)
+            {
+                switch (questionType)
+                {
+                    // TODO: Sort out a mapper for each question type
+                    default:
+                        foreach (var questionAnswer in questionAnswers)
+                        {
+                            var submittedAnswer = new SubmittedApplicationAnswer
+                            {
+                                ApplicationId = applicationId,
+                                PageId = pageId,
+                                QuestionId = questionId,
+                                QuestionType = questionType,
+                                Answer = questionAnswer.Value,
+                                ColumnHeading = null
+                            };
+
+                            submittedQuestionAnswers.Add(submittedAnswer);
+                        }
+                        break;
+                }
+
+                // We have to do similar for extracting any matching further question
+                if (question.Input.Options != null)
+                {
+                    var submittedFurtherQuestionAnswers = new List<SubmittedApplicationAnswer>();
+
+                    var submittedValues = submittedQuestionAnswers.Where(sqa => sqa.QuestionId == questionId).Select(ans => ans.Answer);
+
+                    foreach (var option in question.Input.Options.Where(opt => opt.FurtherQuestions != null))
+                    {
+                        // Check that option was selected
+                        if (submittedValues.Contains(option.Value))
+                        {
+                            foreach (var furtherQuestion in option.FurtherQuestions)
+                            {
+                                var furtherQuestionAnswers = ExtractQuestionAnswers(applicationId, pageId, furtherQuestion, answers);
+                                submittedFurtherQuestionAnswers.AddRange(furtherQuestionAnswers);
+                            }
+                        }
+                    }
+
+                    submittedQuestionAnswers.AddRange(submittedFurtherQuestionAnswers);
+                }
+            }
+
+            return submittedQuestionAnswers;
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to catch all exceptions")]
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogDebug($"Saving extracted answers for application {applicationId}");
@@ -123,7 +192,7 @@ namespace SFA.DAS.Roatp.Functions
 
                     _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
                 }
-                catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType () != typeof(ApplyDataContext))
+                catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType() != typeof(ApplyDataContext))
                 {
                     // Safe to ignore as it is the Unit Tests executing and it doesn't currently mock Transactions
                 }
