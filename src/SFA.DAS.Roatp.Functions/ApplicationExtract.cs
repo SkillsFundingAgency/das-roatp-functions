@@ -1,6 +1,7 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SFA.DAS.QnA.Api.Types.Page;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
@@ -111,48 +112,71 @@ namespace SFA.DAS.Roatp.Functions
             var questionId = question.QuestionId;
             var questionType = question.Input.Type;
 
-            var questionAnswers = answers?.Where(ans => ans.QuestionId == questionId && !string.IsNullOrWhiteSpace(ans.Value));
+            // Note: RoATP only has a single answer per question
+            var questionAnswer = answers?.FirstOrDefault(ans => ans.QuestionId == questionId && !string.IsNullOrWhiteSpace(ans.Value));
 
-            if (questionAnswers != null)
+            if (questionAnswer != null)
             {
                 switch (questionType.ToUpper())
                 {
-                    // TODO: Sort out a mapper for each question type
-                    case "CHECKBOXLIST":
-                    case "COMPLEXCHECKBOXLIST":
-                        foreach (var questionAnswer in questionAnswers)
-                        {
-                            foreach (var questionAnswerEntry in questionAnswer.Value.Split(","))
-                            {
-                                var submittedAnswer = new SubmittedApplicationAnswer
-                                {
-                                    ApplicationId = applicationId,
-                                    PageId = pageId,
-                                    QuestionId = questionId,
-                                    QuestionType = questionType,
-                                    Answer = questionAnswerEntry,
-                                    ColumnHeading = null
-                                };
+                    case "TABULARDATA":
+                        var tabularData = JsonConvert.DeserializeObject<TabularData>(questionAnswer.Value);
 
-                                submittedQuestionAnswers.Add(submittedAnswer);
+                        if (tabularData?.DataRows != null && tabularData?.HeadingTitles != null)
+                        {
+                            foreach (var row in tabularData.DataRows)
+                            {
+                                for (int column = 0; column < row.Columns.Count; column++)
+                                {
+                                    string answer = row.Columns[column];
+                                    string columnHeading = tabularData.HeadingTitles.ElementAtOrDefault(column);
+
+                                    if (string.IsNullOrWhiteSpace(answer)) continue;
+
+                                    var submittedTabularAnswer = new SubmittedApplicationAnswer
+                                    {
+                                        ApplicationId = applicationId,
+                                        PageId = pageId,
+                                        QuestionId = questionId,
+                                        QuestionType = questionType,
+                                        Answer = answer,
+                                        ColumnHeading = columnHeading
+                                    };
+
+                                    submittedQuestionAnswers.Add(submittedTabularAnswer);
+                                }
                             }
                         }
                         break;
-                    default:
-                        foreach (var questionAnswer in questionAnswers)
+                    case "CHECKBOXLIST":
+                    case "COMPLEXCHECKBOXLIST":
+                        foreach (var questionAnswerEntry in questionAnswer.Value.Split(","))
                         {
-                            var submittedAnswer = new SubmittedApplicationAnswer
+                            var submittedCheckBoxAnswer = new SubmittedApplicationAnswer
                             {
                                 ApplicationId = applicationId,
                                 PageId = pageId,
                                 QuestionId = questionId,
                                 QuestionType = questionType,
-                                Answer = questionAnswer.Value,
+                                Answer = questionAnswerEntry,
                                 ColumnHeading = null
                             };
 
-                            submittedQuestionAnswers.Add(submittedAnswer);
+                            submittedQuestionAnswers.Add(submittedCheckBoxAnswer);
                         }
+                        break;
+                    default:
+                        var submittedAnswer = new SubmittedApplicationAnswer
+                        {
+                            ApplicationId = applicationId,
+                            PageId = pageId,
+                            QuestionId = questionId,
+                            QuestionType = questionType,
+                            Answer = questionAnswer.Value,
+                            ColumnHeading = null
+                        };
+
+                        submittedQuestionAnswers.Add(submittedAnswer);
                         break;
                 }
 
