@@ -71,29 +71,52 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         }
 
         [Test]
-        public async Task ExtractAnswersForApplication_Contains_Expected_Result()
+        public async Task ExtractAnswersForApplication_Contains_Expected_Questions()
         {
             var firstPage = _sections[0].QnAData.Pages[0];
-            var firstPageAnswer = firstPage.PageOfAnswers[0].Answers[0];
+            var firstPageQuestion = firstPage.Questions[0];
 
-            var expectedResult = new SubmittedApplicationAnswer
+            var expectedQuestion = new SubmittedApplicationAnswer
             {
                 ApplicationId = _application.ApplicationId,
                 PageId = firstPage.PageId,
-                QuestionId = firstPageAnswer.QuestionId,
-                Answer = firstPageAnswer.Value
+                QuestionId = firstPageQuestion.QuestionId,
+                QuestionType = firstPageQuestion.Input.Type
             };
 
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
-            var actualResult = applicationAnswers.FirstOrDefault(x => x.PageId == expectedResult.PageId);
+            var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
+            var actualQuestion = extractedQuestions.FirstOrDefault(x => x.PageId == expectedQuestion.PageId && x.QuestionId == expectedQuestion.QuestionId);
 
             _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-            Assert.IsNotNull(actualResult);
-            Assert.AreEqual(expectedResult.ApplicationId, actualResult.ApplicationId);
-            Assert.AreEqual(expectedResult.PageId, actualResult.PageId);
-            Assert.AreEqual(expectedResult.QuestionId, actualResult.QuestionId);
-            Assert.AreEqual(expectedResult.Answer, actualResult.Answer);
+            Assert.IsNotNull(actualQuestion);
+            Assert.AreEqual(expectedQuestion.ApplicationId, actualQuestion.ApplicationId);
+            Assert.AreEqual(expectedQuestion.PageId, actualQuestion.PageId);
+            Assert.AreEqual(expectedQuestion.QuestionId, actualQuestion.QuestionId);
+            Assert.AreEqual(expectedQuestion.QuestionType, actualQuestion.QuestionType);
+        }
+
+        [Test]
+        public async Task ExtractAnswersForApplication_Contains_Expected_QuestionAnswers()
+        {
+            var firstPage = _sections[0].QnAData.Pages[0];
+            var firstPageQuestion = firstPage.Questions[0];
+            var firstPageAnswer = firstPage.PageOfAnswers[0].Answers[0];
+
+            var expectedAnswer = new SubmittedApplicationAnswer
+            {
+                Answer = firstPageAnswer.Value,
+                ColumnHeading = null
+            };
+
+            var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
+            var actualAnswer = extractedQuestions.FirstOrDefault(x => x.PageId == firstPage.PageId && x.QuestionId == firstPageQuestion.QuestionId);
+
+            _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
+
+            Assert.IsNotNull(actualAnswer);
+            Assert.AreEqual(expectedAnswer.Answer, actualAnswer.Answer);
+            Assert.AreEqual(expectedAnswer.ColumnHeading, actualAnswer.ColumnHeading);
         }
 
         [Test]
