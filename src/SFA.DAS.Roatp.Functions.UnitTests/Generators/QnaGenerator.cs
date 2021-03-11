@@ -33,6 +33,18 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
                             PageId = pageId,
                             Active = true,
                             Complete = true,
+                            Questions = new List<Question>
+                            {
+                                new Question
+                                {
+                                    QuestionId = questionId,
+                                    Input = new Input
+                                    {
+                                        Type = "Text",
+                                        Options = new List<Option>()
+                                    },
+                                }
+                            },
                             PageOfAnswers = new List<PageOfAnswers>
                             {
                                 new PageOfAnswers
