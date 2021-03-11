@@ -115,9 +115,29 @@ namespace SFA.DAS.Roatp.Functions
 
             if (questionAnswers != null)
             {
-                switch (questionType)
+                switch (questionType.ToUpper())
                 {
                     // TODO: Sort out a mapper for each question type
+                    case "CHECKBOXLIST":
+                    case "COMPLEXCHECKBOXLIST":
+                        foreach (var questionAnswer in questionAnswers)
+                        {
+                            foreach (var questionAnswerEntry in questionAnswer.Value.Split(","))
+                            {
+                                var submittedAnswer = new SubmittedApplicationAnswer
+                                {
+                                    ApplicationId = applicationId,
+                                    PageId = pageId,
+                                    QuestionId = questionId,
+                                    QuestionType = questionType,
+                                    Answer = questionAnswerEntry,
+                                    ColumnHeading = null
+                                };
+
+                                submittedQuestionAnswers.Add(submittedAnswer);
+                            }
+                        }
+                        break;
                     default:
                         foreach (var questionAnswer in questionAnswers)
                         {
