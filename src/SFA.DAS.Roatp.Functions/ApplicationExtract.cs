@@ -72,7 +72,7 @@ namespace SFA.DAS.Roatp.Functions
             {
                 foreach (var section in sections)
                 {
-                    var completedPages = section.QnAData.Pages.Where(pg => pg.Active && pg.Complete);
+                    var completedPages = section.QnAData.Pages.Where(pg => pg.Active && pg.Complete && !pg.NotRequired);
 
                     foreach (var page in completedPages)
                     {
