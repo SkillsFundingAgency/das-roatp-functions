@@ -66,7 +66,7 @@ namespace SFA.DAS.Roatp.Functions
 #else
             configBuilder.AddAzureTableStorage(options =>
             {
-                options.ConfigurationKeys = new[] { "SFA.DAS.RoatpFunctions"};
+                options.ConfigurationKeys = new[] { "SFA.DAS.Roatp.Functions"};
                 options.StorageConnectionString = configuration["ConfigurationStorageConnectionString"];
                 options.EnvironmentName = configuration["EnvironmentName"];
                 options.PreFixConfigurationKeys = false;
