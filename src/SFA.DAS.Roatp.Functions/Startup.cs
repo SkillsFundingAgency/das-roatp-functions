@@ -112,7 +112,7 @@ namespace SFA.DAS.Roatp.Functions
 
                 var connection = new SqlConnection(applySqlConnectionString);
 
-                var configuration = serviceProvider.GetService<IConfiguration>(); ;
+                var configuration = serviceProvider.GetService<IConfiguration>();
                 if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
                 {
                     var generateTokenTask = SqlTokenGenerator.GenerateTokenAsync();
