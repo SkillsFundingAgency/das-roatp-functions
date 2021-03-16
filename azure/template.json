@@ -56,9 +56,8 @@
         "subnetServiceEndpointList": {
             "type": "array"
         },
-        "functionAppAllowedIps": {
-            "type": "array",
-            "defaultValue": []
+        "functionAppAccessRestrictions": {
+            "type": "array"
         }
     },
     "variables": {
@@ -181,7 +180,7 @@
                         "value": "[variables('resourceGroupName')]"
                     },
                     "ipSecurityRestrictions": {
-                        "value": "[parameters('functionAppAllowedIps')]"
+                        "value": "[parameters('functionAppAccessRestrictions')]"
                     },
                     "subnetResourceId": {
                         "value": "[reference('function-app-subnet').outputs.SubnetResourceId.value]"
