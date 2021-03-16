@@ -6,6 +6,7 @@ using SFA.DAS.QnA.Api.Types.Page;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.Mappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,72 +111,26 @@ namespace SFA.DAS.Roatp.Functions
             var submittedQuestionAnswers = new List<SubmittedApplicationAnswer>();
 
             var questionId = question.QuestionId;
-            var questionType = question.Input.Type;
 
             // Note: RoATP only has a single answer per question
             var questionAnswer = answers?.FirstOrDefault(ans => ans.QuestionId == questionId && !string.IsNullOrWhiteSpace(ans.Value));
 
             if (questionAnswer != null)
             {
-                switch (questionType.ToUpper())
+                switch (question.Input.Type.ToUpper())
                 {
                     case "TABULARDATA":
                         var tabularData = JsonConvert.DeserializeObject<TabularData>(questionAnswer.Value);
-
-                        if (tabularData?.DataRows != null && tabularData?.HeadingTitles != null)
-                        {
-                            foreach (var row in tabularData.DataRows)
-                            {
-                                for (int column = 0; column < row.Columns.Count; column++)
-                                {
-                                    string answer = row.Columns[column];
-                                    string columnHeading = tabularData.HeadingTitles.ElementAtOrDefault(column);
-
-                                    if (string.IsNullOrWhiteSpace(answer)) continue;
-
-                                    var submittedTabularAnswer = new SubmittedApplicationAnswer
-                                    {
-                                        ApplicationId = applicationId,
-                                        PageId = pageId,
-                                        QuestionId = questionId,
-                                        QuestionType = questionType,
-                                        Answer = answer,
-                                        ColumnHeading = columnHeading
-                                    };
-
-                                    submittedQuestionAnswers.Add(submittedTabularAnswer);
-                                }
-                            }
-                        }
+                        var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, pageId, question, tabularData);
+                        submittedQuestionAnswers.AddRange(tabularAnswers);
                         break;
                     case "CHECKBOXLIST":
                     case "COMPLEXCHECKBOXLIST":
-                        foreach (var questionAnswerEntry in questionAnswer.Value.Split(","))
-                        {
-                            var submittedCheckBoxAnswer = new SubmittedApplicationAnswer
-                            {
-                                ApplicationId = applicationId,
-                                PageId = pageId,
-                                QuestionId = questionId,
-                                QuestionType = questionType,
-                                Answer = questionAnswerEntry,
-                                ColumnHeading = null
-                            };
-
-                            submittedQuestionAnswers.Add(submittedCheckBoxAnswer);
-                        }
+                        var checkboxAnswers = CheckBoxListMapper.GetAnswers(applicationId, pageId, question, questionAnswer.Value);
+                        submittedQuestionAnswers.AddRange(checkboxAnswers);
                         break;
                     default:
-                        var submittedAnswer = new SubmittedApplicationAnswer
-                        {
-                            ApplicationId = applicationId,
-                            PageId = pageId,
-                            QuestionId = questionId,
-                            QuestionType = questionType,
-                            Answer = questionAnswer.Value,
-                            ColumnHeading = null
-                        };
-
+                        var submittedAnswer = SubmittedAnswerMapper.GetAnswer(applicationId, pageId, question, questionAnswer.Value);
                         submittedQuestionAnswers.Add(submittedAnswer);
                         break;
                 }
@@ -207,7 +162,6 @@ namespace SFA.DAS.Roatp.Functions
             return submittedQuestionAnswers;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to catch all exceptions")]
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogDebug($"Saving extracted answers for application {applicationId}");
@@ -236,11 +190,13 @@ namespace SFA.DAS.Roatp.Functions
 
                     _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
                 }
+#pragma warning disable CA1031
                 catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType() != typeof(ApplyDataContext))
                 {
                     // Safe to ignore as it is the Unit Tests executing and it doesn't currently mock Transactions
                 }
-                catch (Exception ex)
+#pragma warning restore CA1031
+                catch (DbUpdateException ex)
                 {
                     _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
                     await dataContextTransaction.RollbackAsync();
