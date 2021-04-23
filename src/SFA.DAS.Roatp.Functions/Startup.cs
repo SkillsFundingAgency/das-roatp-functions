@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,6 +32,8 @@ namespace SFA.DAS.Roatp.Functions
 
             BuildHttpClients(builder);
             BuildDataContext(builder);
+
+            BuildAzureBlobStorage(builder, serviceProvider);
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -120,6 +123,23 @@ namespace SFA.DAS.Roatp.Functions
                 }
 
                 options.UseSqlServer(connection);
+            });
+        }
+
+        private static void BuildAzureBlobStorage(IFunctionsHostBuilder builder, ServiceProvider serviceProvider)
+        {
+            var connectionStrings = serviceProvider.GetService<IOptions<ConnectionStrings>>().Value;
+            var datamartBlobStorageConnectionString = connectionStrings.DatamartBlobStorageConnectionString;
+
+            if (string.IsNullOrEmpty(datamartBlobStorageConnectionString))
+            {
+                var configuration = serviceProvider.GetService<IConfiguration>();
+                datamartBlobStorageConnectionString = configuration.GetConnectionString("DatamartBlobStorageConnectionString");
+            }
+
+            builder.Services.AddAzureClients(builder =>
+            {
+                builder.AddBlobServiceClient(datamartBlobStorageConnectionString);
             });
         }
     }

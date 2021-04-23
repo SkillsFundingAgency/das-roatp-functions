@@ -1,6 +1,7 @@
 ﻿using SFA.DAS.QnA.Api.Types;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
@@ -8,5 +9,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
     public interface IQnaApiClient
     {
         Task<IEnumerable<Section>> GetAllSectionsForApplication(Guid applicationId);
+        Task<Stream> DownloadFile(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, string questionId);
     }
 }

@@ -8,11 +8,12 @@
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
-    "ApplicationExtractSchedule": "0 0 */2 * * *"
+    "ApplicationExtractSchedule": "0 0 */2 * * *",
+    "FileExtractSchedule": "0 0 */2 * * *"
   },
-
   "ConnectionStrings": {
-    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
+    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
+    "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true"
   },
   "QnaApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",

@@ -24,12 +24,14 @@
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
-    "ApplicationExtractSchedule": "0 0 */2 * * *"
+    "ApplicationExtractSchedule": "0 0 */2 * * *",
+    "FileExtractSchedule": "0 0 */2 * * *"
   },
 
   "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",
   "ConnectionStrings": {
-    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True"
+    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
+    "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true"
   },
 
   "QnaApiAuthentication": {
@@ -42,3 +44,7 @@
 ### Application Extract
 
 No specific configuration - run as Timer Trigger function. See `"ApplicationExtractSchedule"` for schedule
+
+### File Extract
+
+No specific configuration - run as Timer Trigger function. See `"FileExtractSchedule"` for schedule
