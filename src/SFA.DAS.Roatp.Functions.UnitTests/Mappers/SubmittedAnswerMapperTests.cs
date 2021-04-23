@@ -9,6 +9,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
     public class SubmittedAnswerMapperTests
     {
         private readonly Guid _applicationId = Guid.NewGuid();
+        private const int _sequenceNumber = 1;
+        private const int _sectionNumber = 1;
         private const string _pageId = "1";
 
         private Question _question;
@@ -35,7 +37,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _question = null;
 
-            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             Assert.IsNull(result);
         }
@@ -45,7 +47,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _submittedAnswer = null;
 
-            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             Assert.IsNull(result);
         }
@@ -55,7 +57,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _submittedAnswer = string.Empty;
 
-            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             Assert.IsNull(result);
         }
@@ -63,10 +65,12 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         [Test]
         public void GetAnswer_Returns_expected_result()
         {
-            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(_applicationId, result.ApplicationId);
+            Assert.AreEqual(_sequenceNumber, result.SequenceNumber);
+            Assert.AreEqual(_sectionNumber, result.SectionNumber);
             Assert.AreEqual(_pageId, result.PageId);
             Assert.AreEqual(_question.QuestionId, result.QuestionId);
             Assert.AreEqual(_question.Input.Type, result.QuestionType);

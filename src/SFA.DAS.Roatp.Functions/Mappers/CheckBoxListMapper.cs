@@ -7,7 +7,7 @@ namespace SFA.DAS.Roatp.Functions.Mappers
 {
     public static class CheckBoxListMapper
     {
-        public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, string pageId, Question question, string checkBoxListAnswer)
+        public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, string checkBoxListAnswer)
         {
             var answers = new List<SubmittedApplicationAnswer>();
 
@@ -23,6 +23,8 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                         var answer = new SubmittedApplicationAnswer
                         {
                             ApplicationId = applicationId,
+                            SequenceNumber = sequenceNumber,
+                            SectionNumber = sectionNumber,
                             PageId = pageId,
                             QuestionId = questionId,
                             QuestionType = questionType,

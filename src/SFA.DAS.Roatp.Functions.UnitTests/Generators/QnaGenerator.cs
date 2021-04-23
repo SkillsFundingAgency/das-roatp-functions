@@ -11,12 +11,13 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
         {
             return new List<Section>
             {
-                GenerateSection(applicationId, 1, 1, "page1", "question1", "answer1"),
-                GenerateSection(applicationId, 1, 2, "page2", "question2", "answer2")
+                GenerateSection(applicationId, 1, 1, "page1", "question1", "Text", "answer1"),
+                GenerateSection(applicationId, 1, 2, "page2", "question2", "Text", "answer2"),
+                GenerateSection(applicationId, 1, 3, "page3", "question3", "FileUpload", "file.pdf")
             };
         }
 
-        private static Section GenerateSection(Guid applicationId, int sequenceNo, int sectionNo, string pageId, string questionId, string answer)
+        private static Section GenerateSection(Guid applicationId, int sequenceNo, int sectionNo, string pageId, string questionId, string inputType, string answer)
         {
             return new Section
             {
@@ -40,7 +41,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
                                     QuestionId = questionId,
                                     Input = new Input
                                     {
-                                        Type = "Text",
+                                        Type = inputType,
                                         Options = new List<Option>()
                                     },
                                 }

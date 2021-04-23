@@ -11,6 +11,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
     public class CheckBoxListMapperTests
     {
         private readonly Guid _applicationId = Guid.NewGuid();
+        private const int _sequenceNumber = 1;
+        private const int _sectionNumber = 1;
         private const string _pageId = "1";
 
         private Question _question;
@@ -51,7 +53,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _question = null;
 
-            var result = CheckBoxListMapper.GetAnswers(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -61,7 +63,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _submittedAnswer = null;
 
-            var result = CheckBoxListMapper.GetAnswers(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -71,7 +73,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _submittedAnswer = string.Empty;
 
-            var result = CheckBoxListMapper.GetAnswers(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -81,7 +83,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             var expectedItemCount = _question.Input.Options.Count;
 
-            var result = CheckBoxListMapper.GetAnswers(_applicationId, _pageId, _question, _submittedAnswer);
+            var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
             CollectionAssert.IsNotEmpty(result);
             Assert.AreEqual(expectedItemCount, result.Count);
@@ -89,6 +91,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
             for(int index = 0; index < result.Count; index++)
             {
                 Assert.AreEqual(_applicationId, result[index].ApplicationId);
+                Assert.AreEqual(_sequenceNumber, result[index].SequenceNumber);
+                Assert.AreEqual(_sectionNumber, result[index].SectionNumber);
                 Assert.AreEqual(_pageId, result[index].PageId);
                 Assert.AreEqual(_question.QuestionId, result[index].QuestionId);
                 Assert.AreEqual(_question.Input.Type, result[index].QuestionType);

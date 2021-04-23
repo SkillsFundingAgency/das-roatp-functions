@@ -78,7 +78,7 @@ namespace SFA.DAS.Roatp.Functions
 
                     foreach (var page in completedPages)
                     {
-                        var submittedPageAnswers = ExtractPageAnswers(applicationId, page);
+                        var submittedPageAnswers = ExtractPageAnswers(applicationId, section.SequenceNo, section.SectionNo, page);
                         answers.AddRange(submittedPageAnswers);
                     }
                 }
@@ -87,7 +87,7 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
-        private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, Page page)
+        private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
         {
             var submittedPageAnswers = new List<SubmittedApplicationAnswer>();
 
@@ -98,7 +98,7 @@ namespace SFA.DAS.Roatp.Functions
 
                 foreach (var question in page.Questions)
                 {
-                    var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, page.PageId, question, pageAnswers);
+                    var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, sequenceNumber, sectionNumber, page.PageId, question, pageAnswers);
                     submittedPageAnswers.AddRange(submittedQuestionAnswers);
                 }
             }
@@ -106,7 +106,7 @@ namespace SFA.DAS.Roatp.Functions
             return submittedPageAnswers;
         }
 
-        private static List<SubmittedApplicationAnswer> ExtractQuestionAnswers(Guid applicationId, string pageId, Question question, ICollection<Answer> answers)
+        private static List<SubmittedApplicationAnswer> ExtractQuestionAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, ICollection<Answer> answers)
         {
             var submittedQuestionAnswers = new List<SubmittedApplicationAnswer>();
 
@@ -121,16 +121,16 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     case "TABULARDATA":
                         var tabularData = JsonConvert.DeserializeObject<TabularData>(questionAnswer.Value);
-                        var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, pageId, question, tabularData);
+                        var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, sequenceNumber, sectionNumber, pageId, question, tabularData);
                         submittedQuestionAnswers.AddRange(tabularAnswers);
                         break;
                     case "CHECKBOXLIST":
                     case "COMPLEXCHECKBOXLIST":
-                        var checkboxAnswers = CheckBoxListMapper.GetAnswers(applicationId, pageId, question, questionAnswer.Value);
+                        var checkboxAnswers = CheckBoxListMapper.GetAnswers(applicationId, sequenceNumber, sectionNumber, pageId, question, questionAnswer.Value);
                         submittedQuestionAnswers.AddRange(checkboxAnswers);
                         break;
                     default:
-                        var submittedAnswer = SubmittedAnswerMapper.GetAnswer(applicationId, pageId, question, questionAnswer.Value);
+                        var submittedAnswer = SubmittedAnswerMapper.GetAnswer(applicationId, sequenceNumber, sectionNumber, pageId, question, questionAnswer.Value);
                         submittedQuestionAnswers.Add(submittedAnswer);
                         break;
                 }
@@ -149,7 +149,7 @@ namespace SFA.DAS.Roatp.Functions
                         {
                             foreach (var furtherQuestion in option.FurtherQuestions)
                             {
-                                var furtherQuestionAnswers = ExtractQuestionAnswers(applicationId, pageId, furtherQuestion, answers);
+                                var furtherQuestionAnswers = ExtractQuestionAnswers(applicationId, sequenceNumber, sectionNumber, pageId, furtherQuestion, answers);
                                 submittedFurtherQuestionAnswers.AddRange(furtherQuestionAnswers);
                             }
                         }
