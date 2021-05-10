@@ -1,9 +1,9 @@
-using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using System;
 using System.Collections.Generic;
@@ -19,14 +19,14 @@ namespace SFA.DAS.Roatp.Functions
         private readonly ILogger<FileExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
         private readonly IQnaApiClient _qnaApiClient;
-        private readonly BlobServiceClient _blobServiceClient;
+        private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
 
-        public FileExtract(ILogger<FileExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, BlobServiceClient blobServiceClient)
+        public FileExtract(ILogger<FileExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
             _qnaApiClient = qnaApiClient;
-            _blobServiceClient = blobServiceClient;
+            _datamartBlobStorageFactory = datamartBlobStorageFactory;
         }
 
 
@@ -71,7 +71,7 @@ namespace SFA.DAS.Roatp.Functions
         {
             _logger.LogDebug($"Saving QnA files into Datamart for application {applicationId}");
 
-            var blobContainerClient = await GetBlobContainerClient();
+            var blobContainerClient = await _datamartBlobStorageFactory.GetQnABlobContainerClient();
 
             foreach (var file in fileUploads)
             {
@@ -91,13 +91,6 @@ namespace SFA.DAS.Roatp.Functions
             var application = await _applyDataContext.ExtractedApplications.FirstAsync(app => app.ApplicationId == applicationId);
             application.QnaFilesExtracted = true;
             await _applyDataContext.SaveChangesAsync();
-        }
-
-        private async Task<BlobContainerClient> GetBlobContainerClient()
-        {
-            var result = _blobServiceClient.GetBlobContainerClient(_blobContainerName);
-            await result.CreateIfNotExistsAsync();
-            return result;
         }
     }
 }

@@ -8,6 +8,7 @@ using NUnit.Framework;
 using SFA.DAS.QnA.Api.Types;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 using System;
@@ -23,7 +24,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
     {
         private Mock<ILogger<FileExtract>> _logger;
         private Mock<IQnaApiClient> _qnaApiClient;
-        private Mock<BlobServiceClient> _blobServiceClient;
+        private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
+
         private Mock<BlobContainerClient> _blobContainerClient;
 
         private ApplyDataContext _applyDataContext;
@@ -59,20 +61,19 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _applyDataContext.Set<SubmittedApplicationAnswer>().AddRange(submittedAnswers);
             _applyDataContext.SaveChanges();
 
-            SetupBlobStorageMock();
+            SetupDatamartBlobStorageFactory();
 
-            _sut = new FileExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _blobServiceClient.Object);
+            _sut = new FileExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _datamartBlobStorageFactory.Object);
         }
 
-        private void SetupBlobStorageMock()
+        private void SetupDatamartBlobStorageFactory()
         {
-            _blobServiceClient = new Mock<BlobServiceClient>();
             _blobContainerClient = new Mock<BlobContainerClient>();
-
             _blobContainerClient.Setup(x => x.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<BlobContainerEncryptionScopeOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
-            _blobServiceClient.Setup(x => x.GetBlobContainerClient(It.IsAny<string>())).Returns(_blobContainerClient.Object); 
+            _datamartBlobStorageFactory = new Mock<IDatamartBlobStorageFactory>();
+            _datamartBlobStorageFactory.Setup(fac => fac.GetQnABlobContainerClient()).ReturnsAsync(_blobContainerClient.Object);
         }
 
         [Test]

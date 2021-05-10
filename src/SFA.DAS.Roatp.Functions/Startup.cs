@@ -1,7 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -11,6 +10,7 @@ using NLog.Extensions.Logging;
 using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
 using SFA.DAS.Roatp.Functions.NLog;
@@ -32,8 +32,7 @@ namespace SFA.DAS.Roatp.Functions
 
             BuildHttpClients(builder);
             BuildDataContext(builder);
-
-            BuildAzureBlobStorage(builder, serviceProvider);
+            BuildDependencyInjection(builder);
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -126,21 +125,9 @@ namespace SFA.DAS.Roatp.Functions
             });
         }
 
-        private static void BuildAzureBlobStorage(IFunctionsHostBuilder builder, ServiceProvider serviceProvider)
+        private static void BuildDependencyInjection(IFunctionsHostBuilder builder)
         {
-            var connectionStrings = serviceProvider.GetService<IOptions<ConnectionStrings>>().Value;
-            var datamartBlobStorageConnectionString = connectionStrings.DatamartBlobStorageConnectionString;
-
-            if (string.IsNullOrEmpty(datamartBlobStorageConnectionString))
-            {
-                var configuration = serviceProvider.GetService<IConfiguration>();
-                datamartBlobStorageConnectionString = configuration.GetConnectionString("DatamartBlobStorageConnectionString");
-            }
-
-            builder.Services.AddAzureClients(builder =>
-            {
-                builder.AddBlobServiceClient(datamartBlobStorageConnectionString);
-            });
+            builder.Services.AddSingleton<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
         }
     }
 }
