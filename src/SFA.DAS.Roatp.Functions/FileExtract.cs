@@ -14,7 +14,7 @@ namespace SFA.DAS.Roatp.Functions
 {
     public class FileExtract
     {
-        private const string _blobContainerName = "roatp-apply";
+        private const string _blobContainerName = "roatpapply";
 
         private readonly ILogger<FileExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
