@@ -24,8 +24,8 @@
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
-    "ApplicationExtractSchedule": "0 0 */2 * * *",
-    "FileExtractSchedule": "0 0 */2 * * *"
+    "ApplicationExtractSchedule": "0 0 0 * * *",
+    "FileExtractSchedule": "0 0 2 * * *"
   },
 
   "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",

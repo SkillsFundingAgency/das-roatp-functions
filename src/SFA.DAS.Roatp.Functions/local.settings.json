@@ -8,8 +8,8 @@
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
-    "ApplicationExtractSchedule": "0 0 */2 * * *",
-    "FileExtractSchedule": "0 0 */2 * * *"
+    "ApplicationExtractSchedule": "0 0 0 * * *",
+    "FileExtractSchedule": "0 0 2 * * *"
   },
   "ConnectionStrings": {
     "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
