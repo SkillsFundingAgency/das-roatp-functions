@@ -127,7 +127,7 @@ namespace SFA.DAS.Roatp.Functions
 
         private static void BuildDependencyInjection(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddSingleton<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
+            builder.Services.AddScoped<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
         }
     }
 }
