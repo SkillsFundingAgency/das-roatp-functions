@@ -21,6 +21,18 @@ namespace SFA.DAS.Roatp.Functions
 
         public FileExtract(ILogger<FileExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
         {
+            if (log != null)
+            {
+                log.LogInformation( $"FileExtract within constructor." +
+                                    $"ApplyDataContext is { (applyDataContext != null ? "not null" : "null")}. " +
+                                    $"QnaApiClient is { (qnaApiClient != null ? "not null" : "null")}. " +
+                                    $"DatamartBlobStorageFactory is { (datamartBlobStorageFactory != null ? "not null" : "null")}.");
+            }
+            else
+            {
+                Console.WriteLine("FileExtract within constructor BUT logger is null.");
+            }
+
             _logger = log;
             _applyDataContext = applyDataContext;
             _qnaApiClient = qnaApiClient;
