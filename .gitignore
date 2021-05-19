@@ -3,6 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Settings
+*/local.settings.debug.json
+*/App.Debug.config
+*.v3.ncrunchsolution
+*.v3.ncrunchproject
+
 # User-specific files
 *.rsuser
 *.suo
