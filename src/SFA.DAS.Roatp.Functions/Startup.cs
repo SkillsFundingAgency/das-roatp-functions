@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NLog.Extensions.Logging;
-using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
@@ -16,6 +15,8 @@ using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
 using SFA.DAS.Roatp.Functions.NLog;
 using System;
 using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Azure.ServiceBus.Management;
 
 [assembly: FunctionsStartup(typeof(SFA.DAS.Roatp.Functions.Startup))]
 
@@ -33,6 +34,23 @@ namespace SFA.DAS.Roatp.Functions
             BuildHttpClients(builder);
             BuildDataContext(builder);
             BuildDependencyInjection(builder);
+//            CreateQueue(builder.GetContext().Configuration).GetAwaiter().GetResult();
+            CreateQueue(builder.Services.BuildServiceProvider().GetService<IConfiguration>()).GetAwaiter().GetResult();
+        }
+
+        private static async Task CreateQueue(IConfiguration configuration)
+        {
+            var serviceBusConnectionString = configuration.GetSection("Values")["DASServiceBusConnectionString"] ?? throw new InvalidOperationException("DASServiceBusConnectionString setting not found.");
+            var managementClient = new ManagementClient(serviceBusConnectionString);
+            if (await managementClient.QueueExistsAsync("SFA.DAS.Roatp.Functions.ApplyFileExtract"))
+                return;
+            var queueDescription = new QueueDescription("SFA.DAS.Roatp.Functions.ApplyFileExtract")
+            {
+                LockDuration = TimeSpan.FromMinutes(5),
+                MaxDeliveryCount = 10,
+                MaxSizeInMB = 5120
+            };
+            await managementClient.CreateQueueAsync(queueDescription);
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -64,7 +82,8 @@ namespace SFA.DAS.Roatp.Functions
                 .AddEnvironmentVariables();
 
 #if DEBUG
-            configBuilder.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true);
+            configBuilder.AddJsonFile("local.settings.json", optional: false, reloadOnChange: true);
+            configBuilder.AddJsonFile("local.settings.Debug.json", optional: true, reloadOnChange: true);
 #else
             configBuilder.AddAzureTableStorage(options =>
             {

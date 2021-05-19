@@ -1,5 +1,7 @@
 {
   "IsEncrypted": false,
+  "DASServiceBusConnectionString": "",
+
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
@@ -9,14 +11,16 @@
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
     "ApplicationExtractSchedule": "0 0 0 * * *",
-    "FileExtractSchedule": "0 0 2 * * *"
+    "FileExtractSchedule": "0 0 2 * * *",
+    "DASServiceBusConnectionString": ""
   },
   "ConnectionStrings": {
-    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
-    "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true"
+    "ApplySqlConnectionString": "Data Source=.;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
+    "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true",
+    "DASServiceBusConnectionString": ""
   },
   "QnaApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
-    "ApiBaseAddress": "http://localhost:5554"
+    "ApiBaseAddress": "http://localhost:44368"
   }
 }

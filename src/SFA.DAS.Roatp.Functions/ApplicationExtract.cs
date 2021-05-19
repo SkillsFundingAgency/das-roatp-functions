@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.ServiceBus;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -29,7 +30,9 @@ namespace SFA.DAS.Roatp.Functions
 
 
         [FunctionName("ApplicationExtract")]
-        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
+            [ServiceBus("SFA.DAS.Roatp.Functions.ApplyFileExtract", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<QnAFileDownload> filesToDownload
+            )
         {
             if (myTimer.IsPastDue)
             {
@@ -43,6 +46,22 @@ namespace SFA.DAS.Roatp.Functions
             foreach (var applicationId in applications)
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
+                //Get all uploaded file details
+                var files = answers.Where(answer =>
+                    answer.QuestionType.Equals("FILEUPLOAD", StringComparison.OrdinalIgnoreCase)).ToList();
+                foreach (var submittedApplicationAnswer in files)
+                {
+                    //Add details of each file to the SFA.DAS.Roatp.Functions.QnAQnAFileExtract queue
+                    await filesToDownload.AddAsync(new QnAFileDownload
+                    {
+                        ApplicationId = applicationId,
+                        PageId = submittedApplicationAnswer.PageId,
+                        QuestionId = submittedApplicationAnswer.QuestionId,
+                        SectionNumber = submittedApplicationAnswer.SectionNumber,
+                        SequenceNumber = submittedApplicationAnswer.SequenceNumber,
+                        Filename = submittedApplicationAnswer.Answer
+                    });
+                }
                 await SaveExtractedAnswersForApplication(applicationId, answers);
             }
         }

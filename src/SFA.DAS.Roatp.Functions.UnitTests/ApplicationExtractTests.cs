@@ -20,7 +20,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<ILogger<ApplicationExtract>> _logger;
         private Mock<IQnaApiClient> _qnaApiClient;
         private ApplyDataContext _applyDataContext;
-
+        private Mock<IAsyncCollector<QnAFileDownload>> _asyncCollector;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
 
         private Apply _inProgressApplication;
@@ -45,14 +45,14 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
             _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(_application.ApplicationId)).ReturnsAsync(_sections);
-
+            _asyncCollector = new Mock<IAsyncCollector<QnAFileDownload>>();
             _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object);
         }
 
         [Test]
         public async Task Run_Logs_Information_Message()
         {
-            await _sut.Run(_timerInfo);
+            await _sut.Run(_timerInfo, _asyncCollector.Object);
 
             _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }

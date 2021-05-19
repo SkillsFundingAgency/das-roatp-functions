@@ -40,7 +40,7 @@ namespace SFA.DAS.Roatp.Functions
         }
 
 
-        [FunctionName("FileExtract")]
+        //[FunctionName("FileExtract")]
         public async Task Run([TimerTrigger("%FileExtractSchedule%")] TimerInfo myTimer)
         {
             if (myTimer.IsPastDue)
