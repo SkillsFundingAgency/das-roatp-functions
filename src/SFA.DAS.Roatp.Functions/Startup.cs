@@ -16,6 +16,8 @@ using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
 using SFA.DAS.Roatp.Functions.NLog;
 using System;
 using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Azure.ServiceBus.Management;
 
 [assembly: FunctionsStartup(typeof(SFA.DAS.Roatp.Functions.Startup))]
 
@@ -33,6 +35,28 @@ namespace SFA.DAS.Roatp.Functions
             BuildHttpClients(builder);
             BuildDataContext(builder);
             BuildDependencyInjection(builder);
+            BuildServiceBusQueues(builder).GetAwaiter().GetResult();
+        }
+
+        private static async Task BuildServiceBusQueues(IFunctionsHostBuilder builder)
+        {
+            var configuration = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+
+            var serviceBusConnectionString = configuration.GetSection("Values")["DASServiceBusConnectionString"];
+            var applyFileExtractQueue = configuration.GetSection("Values")["ApplyFileExtractQueue"];
+
+            var managementClient = new ManagementClient(serviceBusConnectionString);
+
+            if (!await managementClient.QueueExistsAsync(applyFileExtractQueue))
+            {
+                var queueDescription = new QueueDescription(applyFileExtractQueue)
+                {
+                    LockDuration = TimeSpan.FromMinutes(5),
+                    MaxDeliveryCount = 10,
+                    MaxSizeInMB = 5120
+                };
+                await managementClient.CreateQueueAsync(queueDescription);
+            }
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -64,7 +88,7 @@ namespace SFA.DAS.Roatp.Functions
                 .AddEnvironmentVariables();
 
 #if DEBUG
-            configBuilder.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true);
+            configBuilder.AddJsonFile("local.settings.json", optional: false, reloadOnChange: true);
 #else
             configBuilder.AddAzureTableStorage(options =>
             {

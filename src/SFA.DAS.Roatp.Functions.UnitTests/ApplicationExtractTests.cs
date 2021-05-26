@@ -7,10 +7,12 @@ using SFA.DAS.QnA.Api.Types;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.Requests;
 using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
@@ -20,7 +22,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<ILogger<ApplicationExtract>> _logger;
         private Mock<IQnaApiClient> _qnaApiClient;
         private ApplyDataContext _applyDataContext;
-
+        private Mock<IAsyncCollector<ApplyFileExtractRequest>> _applyFileExtractQueue;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
 
         private Apply _inProgressApplication;
@@ -46,13 +48,15 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
             _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(_application.ApplicationId)).ReturnsAsync(_sections);
 
+            _applyFileExtractQueue = new Mock<IAsyncCollector<ApplyFileExtractRequest>>();
+
             _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object);
         }
 
         [Test]
         public async Task Run_Logs_Information_Message()
         {
-            await _sut.Run(_timerInfo);
+            await _sut.Run(_timerInfo, _applyFileExtractQueue.Object);
 
             _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
@@ -150,6 +154,17 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
             Assert.IsNotNull(extractedApplication);
+        }
+
+        [Test]
+        public async Task EnqueueApplyFilesForExtract_Enqueues_Requests()
+        {
+            var applicationId = _application.ApplicationId;
+            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+            await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
+
+            _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
     }
 }

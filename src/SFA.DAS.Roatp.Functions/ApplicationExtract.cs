@@ -1,4 +1,5 @@
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -7,6 +8,7 @@ using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Mappers;
+using SFA.DAS.Roatp.Functions.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +31,8 @@ namespace SFA.DAS.Roatp.Functions
 
 
         [FunctionName("ApplicationExtract")]
-        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
+            [ServiceBus("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue)
         {
             if (myTimer.IsPastDue)
             {
@@ -43,6 +46,8 @@ namespace SFA.DAS.Roatp.Functions
             foreach (var applicationId in applications)
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
+
+                await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 await SaveExtractedAnswersForApplication(applicationId, answers);
             }
         }
@@ -201,6 +206,16 @@ namespace SFA.DAS.Roatp.Functions
                     _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
                     await dataContextTransaction.RollbackAsync();
                 }
+            }
+        }
+
+        public async Task EnqueueApplyFilesForExtract(IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue, List<SubmittedApplicationAnswer> answers)
+        {
+            var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (var submittedApplicationAnswer in applyFiles)
+            {
+                await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
             }
         }
     }

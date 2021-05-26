@@ -8,6 +8,7 @@
 
 - Install [.NET Core 3.1](https://www.microsoft.com/net/download)
 - Install [Azure Functions SDK](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
+- Azure Service Bus instance hosted within Azure
 
 ### Configuration
 
@@ -25,15 +26,13 @@
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
     "ApplicationExtractSchedule": "0 0 0 * * *",
-    "FileExtractSchedule": "0 0 2 * * *"
+	"ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
+	"DASServiceBusConnectionString": "Connection string pointing to an Azure Service Bus"
   },
-
-  "_comment": "USE THE BELOW SETTINGS SHOULD YOU WISH TO NOT USE AZURE TABLE STORAGE",
   "ConnectionStrings": {
     "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
     "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true"
   },
-
   "QnaApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
@@ -43,8 +42,14 @@
 
 ### Application Extract
 
-No specific configuration - run as Timer Trigger function. See `"ApplicationExtractSchedule"` for schedule
+No specific configuration - run as Timer Trigger function. See `"ApplicationExtractSchedule"` for schedule.
+
+Note also fires off a Service Bus message to Apply File Extract for any file uploads 
+
+### Apply File Extract
+
+No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"ApplyFileExtractQueue"` for Service Bus information.
 
 ### File Extract
 
-No specific configuration - run as Timer Trigger function. See `"FileExtractSchedule"` for schedule
+No specific configuration - run as Timer Trigger function. See `"FileExtractSchedule"` for schedule.

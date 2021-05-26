@@ -9,7 +9,8 @@
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
     "ApplicationExtractSchedule": "0 0 0 * * *",
-    "FileExtractSchedule": "0 0 2 * * *"
+    "ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
+    "DASServiceBusConnectionString": "Endpoint=sb://???.servicebus.windows.net/;SharedAccessKeyName=???;SharedAccessKey=???"
   },
   "ConnectionStrings": {
     "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
