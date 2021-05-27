@@ -42,8 +42,8 @@ namespace SFA.DAS.Roatp.Functions
         {
             var configuration = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
 
-            var serviceBusConnectionString = configuration.GetSection("Values")["DASServiceBusConnectionString"];
-            var applyFileExtractQueue = configuration.GetSection("Values")["ApplyFileExtractQueue"];
+            var serviceBusConnectionString = configuration["DASServiceBusConnectionString"];
+            var applyFileExtractQueue = configuration["ApplyFileExtractQueue"];
 
             var managementClient = new ManagementClient(serviceBusConnectionString);
 
