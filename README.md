@@ -49,7 +49,3 @@ Note also fires off a Service Bus message to Apply File Extract for any file upl
 ### Apply File Extract
 
 No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"ApplyFileExtractQueue"` for Service Bus information.
-
-### File Extract
-
-No specific configuration - run as Timer Trigger function. See `"FileExtractSchedule"` for schedule.
