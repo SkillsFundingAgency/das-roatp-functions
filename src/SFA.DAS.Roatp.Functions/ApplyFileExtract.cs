@@ -34,7 +34,8 @@ namespace SFA.DAS.Roatp.Functions
                 await using var filestream = await _qnaApiClient.DownloadFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SectionNumber, fileToExtract.PageId, fileToExtract.QuestionId);
                 var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.QuestionId}/Apply/{fileToExtract.Filename}";
 
-                await blobContainerClient.UploadBlobAsync(blobName, filestream);
+                var blobClient = blobContainerClient.GetBlobClient(blobName);
+                await blobClient.UploadAsync(filestream, overwrite: true);
 
                 _logger.LogInformation($"Saved QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
             }
