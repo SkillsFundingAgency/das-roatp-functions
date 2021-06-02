@@ -41,6 +41,7 @@ namespace SFA.DAS.Roatp.Functions
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to save QnA file into Datamart for application {fileToExtract.ApplicationId} and question {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
+                throw;
             }
         }
     }
