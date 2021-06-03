@@ -35,9 +35,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 
             modelBuilder.Entity<SubmittedApplicationAnswer>(entity =>
             {
-                entity.Ignore(saa => saa.SequenceNumber)
-                    .Ignore(saa => saa.SectionNumber)
-                    .HasOne(saa => saa.ExtractedApplication)
+                entity.HasOne(saa => saa.ExtractedApplication)
                     .WithMany(ea => ea.SubmittedApplicationAnswers)
                     .HasPrincipalKey(ea => ea.ApplicationId)
                     .HasForeignKey(saa => saa.ApplicationId)
