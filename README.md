@@ -26,7 +26,11 @@
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
     "ApplicationExtractSchedule": "0 0 0 * * *",
+    "GatewayExtractSchedule": "0 0 1 * * *",
+    "AssessorExtractSchedule": "0 0 1 * * *",
+    "FinanceExtractSchedule": "0 0 1 * * *",
 	"ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
+	"AdminFileExtractQueue": "SFA.DAS.Roatp.Functions.AdminFileExtract",
 	"DASServiceBusConnectionString": "Connection string pointing to an Azure Service Bus"
   },
   "ConnectionStrings": {
@@ -36,6 +40,10 @@
   "QnaApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
+  },
+  "RoatpApplyApiAuthentication": {
+    "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
+    "ApiBaseAddress": "https://localhost:6000"
   }
 }
 ```
@@ -44,8 +52,30 @@
 
 No specific configuration - run as Timer Trigger function. See `"ApplicationExtractSchedule"` for schedule.
 
-Note also fires off a Service Bus message to Apply File Extract for any file uploads 
+Note also fires off a Service Bus message to Apply File Extract for any file uploads.
 
 ### Apply File Extract
 
 No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"ApplyFileExtractQueue"` for Service Bus information.
+
+### Gateway Extract
+
+No specific configuration - run as Timer Trigger function. See `"GatewayExtractSchedule"` for schedule.
+
+Note also fires off a Service Bus message to Admin File Extract for any file uploads.
+
+### Assessor Extract
+
+No specific configuration - run as Timer Trigger function. See `"AssessorExtractSchedule"` for schedule.
+
+Note also fires off a Service Bus message to Admin File Extract for any file uploads.
+
+### Finance Extract
+
+No specific configuration - run as Timer Trigger function. See `"FinanceExtractSchedule"` for schedule.
+
+Note also fires off a Service Bus message to Admin File Extract for any file uploads.
+
+### Admin File Extract
+
+No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"AdminFileExtractQueue"` for Service Bus information.

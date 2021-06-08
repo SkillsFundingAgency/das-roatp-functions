@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
@@ -15,13 +16,16 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string ModerationStatus { get; set; }
 
         public ApplyData ApplyData { get; set; }
+        public FinancialReviewDetails FinancialGrade { get; set; }
 
         public virtual ExtractedApplication ExtractedApplication { get; set; }
+        public virtual ICollection<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
     }
 
     public class ApplyData
     {
         public ApplyDetails ApplyDetails { get; set; }
+        public GatewayReviewDetails GatewayReviewDetails { get; set; }
     }
 
     public class ApplyDetails

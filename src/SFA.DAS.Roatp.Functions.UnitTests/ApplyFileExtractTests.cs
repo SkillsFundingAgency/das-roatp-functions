@@ -1,21 +1,15 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using EntityFrameworkCore.Testing.Moq;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using SFA.DAS.QnA.Api.Types;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
-using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Requests;
-using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,6 +22,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
 
         private Mock<BlobContainerClient> _blobContainerClient;
+        private Mock<BlobClient> _blobClient;
 
         private ApplyFileExtract _sut;
 
@@ -50,6 +45,10 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _blobContainerClient.Setup(x => x.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<BlobContainerEncryptionScopeOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
+            _blobClient = new Mock<BlobClient>();
+            _blobContainerClient.Setup(x => x.GetBlobClient(It.IsAny<string>()))
+                .Returns(_blobClient.Object);
+
             _datamartBlobStorageFactory = new Mock<IDatamartBlobStorageFactory>();
             _datamartBlobStorageFactory.Setup(fac => fac.GetQnABlobContainerClient()).ReturnsAsync(_blobContainerClient.Object);
         }
@@ -69,7 +68,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var request = new ApplyFileExtractRequest(new SubmittedApplicationAnswer());
             await _sut.Run(request);
 
-            _blobContainerClient.Verify(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
     }
 }
