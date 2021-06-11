@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
 {
-    public interface IRoatpApplyApiClient
+    public interface IApplyApiClient
     {
         Task<Stream> DownloadGatewaySubcontractorDeclarationClarificationFile(Guid applicationId, string fileName);
 

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
 {
-    public class RoatpApplyApiClient : ApiClientBase<RoatpApplyApiClient>, IRoatpApplyApiClient
+    public class ApplyApiClient : ApiClientBase<ApplyApiClient>, IApplyApiClient
     {
-        public RoatpApplyApiClient(HttpClient client, ILogger<RoatpApplyApiClient> logger)
+        public ApplyApiClient(HttpClient client, ILogger<ApplyApiClient> logger)
                     : base(client, logger)
         {
         }

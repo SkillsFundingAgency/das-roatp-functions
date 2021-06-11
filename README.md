@@ -41,7 +41,7 @@
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
   },
-  "RoatpApplyApiAuthentication": {
+  "ApplyApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "https://localhost:6000"
   }

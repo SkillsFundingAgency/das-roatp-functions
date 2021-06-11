@@ -18,7 +18,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
     public class AdminFileExtractTests
     {
         private Mock<ILogger<AdminFileExtract>> _logger;
-        private Mock<IRoatpApplyApiClient> _applyApiClient;
+        private Mock<IApplyApiClient> _applyApiClient;
         private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
 
         private Mock<BlobContainerClient> _blobContainerClient;
@@ -30,7 +30,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         public void Setup()
         {
             _logger = new Mock<ILogger<AdminFileExtract>>();
-            _applyApiClient = new Mock<IRoatpApplyApiClient>();
+            _applyApiClient = new Mock<IApplyApiClient>();
 
             _applyApiClient.Setup(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
             _applyApiClient.Setup(x => x.DownloadAssessorClarificationFile(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());

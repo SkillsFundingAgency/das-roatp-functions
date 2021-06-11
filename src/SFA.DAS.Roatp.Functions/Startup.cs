@@ -121,7 +121,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.AddOptions();
             builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
-            builder.Services.Configure<RoatpApplyApiAuthentication>(config.GetSection("RoatpApplyApiAuthentication"));
+            builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("RoatpApplyApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
@@ -145,16 +145,16 @@ namespace SFA.DAS.Roatp.Functions
             })
             .SetHandlerLifetime(handlerLifeTime);
 
-            builder.Services.AddHttpClient<IRoatpApplyApiClient, RoatpApplyApiClient>((serviceProvider, httpClient) =>
+            builder.Services.AddHttpClient<IApplyApiClient, ApplyApiClient>((serviceProvider, httpClient) =>
             {
-                var roatpApplyApiAuthentication = serviceProvider.GetService<IOptions<RoatpApplyApiAuthentication>>().Value;
-                httpClient.BaseAddress = new Uri(roatpApplyApiAuthentication.ApiBaseAddress);
+                var applyApiAuthentication = serviceProvider.GetService<IOptions<ApplyApiAuthentication>>().Value;
+                httpClient.BaseAddress = new Uri(applyApiAuthentication.ApiBaseAddress);
                 httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
 
                 var configuration = serviceProvider.GetService<IConfiguration>();
                 if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(roatpApplyApiAuthentication.Identifier);
+                    var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(applyApiAuthentication.Identifier);
                     httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
                 }
             })

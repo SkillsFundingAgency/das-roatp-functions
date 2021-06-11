@@ -11,13 +11,13 @@ namespace SFA.DAS.Roatp.Functions
     public class AdminFileExtract
     {
         private readonly ILogger<AdminFileExtract> _logger;
-        private readonly IRoatpApplyApiClient _roatpApplyApiClient;
+        private readonly IApplyApiClient _applyApiClient;
         private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
 
-        public AdminFileExtract(ILogger<AdminFileExtract> log, IRoatpApplyApiClient roatpApplyApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
+        public AdminFileExtract(ILogger<AdminFileExtract> log, IApplyApiClient applyApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
         {
             _logger = log;
-            _roatpApplyApiClient = roatpApplyApiClient;
+            _applyApiClient = applyApiClient;
             _datamartBlobStorageFactory = datamartBlobStorageFactory;
         }
 
@@ -54,7 +54,7 @@ namespace SFA.DAS.Roatp.Functions
         {
             var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
 
-            await using var filestream = await _roatpApplyApiClient.DownloadGatewaySubcontractorDeclarationClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
+            await using var filestream = await _applyApiClient.DownloadGatewaySubcontractorDeclarationClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
             var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
 
             var blobClient = blobContainerClient.GetBlobClient(blobName);
@@ -67,7 +67,7 @@ namespace SFA.DAS.Roatp.Functions
         {
             var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
 
-            await using var filestream = await _roatpApplyApiClient.DownloadAssessorClarificationFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SequenceNumber, fileToExtract.PageId, fileToExtract.Filename);
+            await using var filestream = await _applyApiClient.DownloadAssessorClarificationFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SequenceNumber, fileToExtract.PageId, fileToExtract.Filename);
             var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
 
             var blobClient = blobContainerClient.GetBlobClient(blobName);
@@ -80,7 +80,7 @@ namespace SFA.DAS.Roatp.Functions
         {
             var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
 
-            await using var filestream = await _roatpApplyApiClient.DownloadFinanceClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
+            await using var filestream = await _applyApiClient.DownloadFinanceClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
             var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
 
             var blobClient = blobContainerClient.GetBlobClient(blobName);
