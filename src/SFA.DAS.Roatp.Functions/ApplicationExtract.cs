@@ -98,8 +98,9 @@ namespace SFA.DAS.Roatp.Functions
 
             if (page.PageOfAnswers != null && page.Questions != null)
             {
-                // Note: RoATP only has a single PageOfAnswers in a page (i.e page.AllowMultipleAnswers is always false)
-                var pageAnswers = page.PageOfAnswers[0].Answers;
+                // Note: RoATP only has a single PageOfAnswers in a page unless it's a MultipleFileUpload page
+                var pageAnswers = "MultipleFileUpload".Equals(page.DisplayType) ? page.PageOfAnswers.SelectMany(answers => answers.Answers).ToList()
+                                    : page.PageOfAnswers[0].Answers;
 
                 foreach (var question in page.Questions)
                 {
