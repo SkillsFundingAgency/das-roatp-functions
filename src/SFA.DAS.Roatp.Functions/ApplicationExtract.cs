@@ -1,4 +1,5 @@
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -7,6 +8,7 @@ using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Mappers;
+using SFA.DAS.Roatp.Functions.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +31,8 @@ namespace SFA.DAS.Roatp.Functions
 
 
         [FunctionName("ApplicationExtract")]
-        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
+            [ServiceBus("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue)
         {
             if (myTimer.IsPastDue)
             {
@@ -43,6 +46,8 @@ namespace SFA.DAS.Roatp.Functions
             foreach (var applicationId in applications)
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
+
+                await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 await SaveExtractedAnswersForApplication(applicationId, answers);
             }
         }
@@ -78,7 +83,7 @@ namespace SFA.DAS.Roatp.Functions
 
                     foreach (var page in completedPages)
                     {
-                        var submittedPageAnswers = ExtractPageAnswers(applicationId, page);
+                        var submittedPageAnswers = ExtractPageAnswers(applicationId, section.SequenceNo, section.SectionNo, page);
                         answers.AddRange(submittedPageAnswers);
                     }
                 }
@@ -87,18 +92,19 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
-        private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, Page page)
+        private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
         {
             var submittedPageAnswers = new List<SubmittedApplicationAnswer>();
 
             if (page.PageOfAnswers != null && page.Questions != null)
             {
-                // Note: RoATP only has a single PageOfAnswers in a page (i.e page.AllowMultipleAnswers is always false)
-                var pageAnswers = page.PageOfAnswers[0].Answers;
+                // Note: RoATP only has a single PageOfAnswers in a page unless it's a MultipleFileUpload page
+                var pageAnswers = "MultipleFileUpload".Equals(page.DisplayType) ? page.PageOfAnswers.SelectMany(answers => answers.Answers).ToList()
+                                    : page.PageOfAnswers[0].Answers;
 
                 foreach (var question in page.Questions)
                 {
-                    var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, page.PageId, question, pageAnswers);
+                    var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, sequenceNumber, sectionNumber, page.PageId, question, pageAnswers);
                     submittedPageAnswers.AddRange(submittedQuestionAnswers);
                 }
             }
@@ -106,7 +112,7 @@ namespace SFA.DAS.Roatp.Functions
             return submittedPageAnswers;
         }
 
-        private static List<SubmittedApplicationAnswer> ExtractQuestionAnswers(Guid applicationId, string pageId, Question question, ICollection<Answer> answers)
+        private static List<SubmittedApplicationAnswer> ExtractQuestionAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, ICollection<Answer> answers)
         {
             var submittedQuestionAnswers = new List<SubmittedApplicationAnswer>();
 
@@ -121,16 +127,16 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     case "TABULARDATA":
                         var tabularData = JsonConvert.DeserializeObject<TabularData>(questionAnswer.Value);
-                        var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, pageId, question, tabularData);
+                        var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, sequenceNumber, sectionNumber, pageId, question, tabularData);
                         submittedQuestionAnswers.AddRange(tabularAnswers);
                         break;
                     case "CHECKBOXLIST":
                     case "COMPLEXCHECKBOXLIST":
-                        var checkboxAnswers = CheckBoxListMapper.GetAnswers(applicationId, pageId, question, questionAnswer.Value);
+                        var checkboxAnswers = CheckBoxListMapper.GetAnswers(applicationId, sequenceNumber, sectionNumber, pageId, question, questionAnswer.Value);
                         submittedQuestionAnswers.AddRange(checkboxAnswers);
                         break;
                     default:
-                        var submittedAnswer = SubmittedAnswerMapper.GetAnswer(applicationId, pageId, question, questionAnswer.Value);
+                        var submittedAnswer = SubmittedAnswerMapper.GetAnswer(applicationId, sequenceNumber, sectionNumber, pageId, question, questionAnswer.Value);
                         submittedQuestionAnswers.Add(submittedAnswer);
                         break;
                 }
@@ -149,7 +155,7 @@ namespace SFA.DAS.Roatp.Functions
                         {
                             foreach (var furtherQuestion in option.FurtherQuestions)
                             {
-                                var furtherQuestionAnswers = ExtractQuestionAnswers(applicationId, pageId, furtherQuestion, answers);
+                                var furtherQuestionAnswers = ExtractQuestionAnswers(applicationId, sequenceNumber, sectionNumber, pageId, furtherQuestion, answers);
                                 submittedFurtherQuestionAnswers.AddRange(furtherQuestionAnswers);
                             }
                         }
@@ -201,6 +207,16 @@ namespace SFA.DAS.Roatp.Functions
                     _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
                     await dataContextTransaction.RollbackAsync();
                 }
+            }
+        }
+
+        public async Task EnqueueApplyFilesForExtract(IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue, List<SubmittedApplicationAnswer> answers)
+        {
+            var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (var submittedApplicationAnswer in applyFiles)
+            {
+                await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
             }
         }
     }

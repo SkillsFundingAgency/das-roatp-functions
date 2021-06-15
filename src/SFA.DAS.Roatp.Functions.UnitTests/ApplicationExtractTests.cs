@@ -7,10 +7,12 @@ using SFA.DAS.QnA.Api.Types;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.Requests;
 using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
@@ -20,7 +22,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<ILogger<ApplicationExtract>> _logger;
         private Mock<IQnaApiClient> _qnaApiClient;
         private ApplyDataContext _applyDataContext;
-
+        private Mock<IAsyncCollector<ApplyFileExtractRequest>> _applyFileExtractQueue;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
 
         private Apply _inProgressApplication;
@@ -46,13 +48,15 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
             _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(_application.ApplicationId)).ReturnsAsync(_sections);
 
+            _applyFileExtractQueue = new Mock<IAsyncCollector<ApplyFileExtractRequest>>();
+
             _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object);
         }
 
         [Test]
         public async Task Run_Logs_Information_Message()
         {
-            await _sut.Run(_timerInfo);
+            await _sut.Run(_timerInfo, _applyFileExtractQueue.Object);
 
             _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
@@ -73,12 +77,15 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         [Test]
         public async Task ExtractAnswersForApplication_Contains_Expected_Questions()
         {
-            var firstPage = _sections[0].QnAData.Pages[0];
+            var firstSection = _sections[0];
+            var firstPage = firstSection.QnAData.Pages[0];
             var firstPageQuestion = firstPage.Questions[0];
 
             var expectedQuestion = new SubmittedApplicationAnswer
             {
                 ApplicationId = _application.ApplicationId,
+                SequenceNumber = firstSection.SequenceNo,
+                SectionNumber = firstSection.SectionNo,
                 PageId = firstPage.PageId,
                 QuestionId = firstPageQuestion.QuestionId,
                 QuestionType = firstPageQuestion.Input.Type
@@ -91,6 +98,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             Assert.IsNotNull(actualQuestion);
             Assert.AreEqual(expectedQuestion.ApplicationId, actualQuestion.ApplicationId);
+            Assert.AreEqual(expectedQuestion.SequenceNumber, actualQuestion.SequenceNumber);
+            Assert.AreEqual(expectedQuestion.SectionNumber, actualQuestion.SectionNumber);
             Assert.AreEqual(expectedQuestion.PageId, actualQuestion.PageId);
             Assert.AreEqual(expectedQuestion.QuestionId, actualQuestion.QuestionId);
             Assert.AreEqual(expectedQuestion.QuestionType, actualQuestion.QuestionType);
@@ -99,7 +108,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         [Test]
         public async Task ExtractAnswersForApplication_Contains_Expected_QuestionAnswers()
         {
-            var firstPage = _sections[0].QnAData.Pages[0];
+            var firstSection = _sections[0];
+            var firstPage = firstSection.QnAData.Pages[0];
             var firstPageQuestion = firstPage.Questions[0];
             var firstPageAnswer = firstPage.PageOfAnswers[0].Answers[0];
 
@@ -144,6 +154,17 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
             Assert.IsNotNull(extractedApplication);
+        }
+
+        [Test]
+        public async Task EnqueueApplyFilesForExtract_Enqueues_Requests()
+        {
+            var applicationId = _application.ApplicationId;
+            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+            await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
+
+            _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
     }
 }

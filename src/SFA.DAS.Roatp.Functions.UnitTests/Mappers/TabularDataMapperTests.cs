@@ -10,6 +10,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
     public class TabularDataMapperTests
     {
         private readonly Guid _applicationId = Guid.NewGuid();
+        private const int _sequenceNumber = 1;
+        private const int _sectionNumber = 1;
         private const string _pageId = "1";
 
         private Question _question;
@@ -44,7 +46,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _question = null;
 
-            var result = TabularDataMapper.GetAnswers(_applicationId, _pageId, _question, _tabularData);
+            var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -54,7 +56,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _tabularData = null;
 
-            var result = TabularDataMapper.GetAnswers(_applicationId, _pageId, _question, _tabularData);
+            var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -64,7 +66,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             _tabularData = new TabularData();
 
-            var result = TabularDataMapper.GetAnswers(_applicationId, _pageId, _question, _tabularData);
+            var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
             CollectionAssert.IsEmpty(result);
         }
@@ -74,7 +76,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             var expectedItemCount = _tabularData.DataRows.Count * _tabularData.HeadingTitles.Count;
 
-            var result = TabularDataMapper.GetAnswers(_applicationId, _pageId, _question, _tabularData);
+            var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
             CollectionAssert.IsNotEmpty(result);
             Assert.AreEqual(expectedItemCount, result.Count);
@@ -86,6 +88,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
                     var answer = result[column + (row * _tabularData.DataRows.Count)];
 
                     Assert.AreEqual(_applicationId, answer.ApplicationId);
+                    Assert.AreEqual(_sequenceNumber, answer.SequenceNumber);
+                    Assert.AreEqual(_sectionNumber, answer.SectionNumber);
                     Assert.AreEqual(_pageId, answer.PageId);
                     Assert.AreEqual(_question.QuestionId, answer.QuestionId);
                     Assert.AreEqual(_question.Input.Type, answer.QuestionType);

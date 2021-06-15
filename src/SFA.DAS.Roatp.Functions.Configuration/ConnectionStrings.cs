@@ -3,5 +3,7 @@
     public class ConnectionStrings
     {
         public string ApplySqlConnectionString { get; set; }
+
+        public string DatamartBlobStorageConnectionString { get; set; }
     }
 }

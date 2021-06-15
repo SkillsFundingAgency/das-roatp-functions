@@ -6,7 +6,7 @@ namespace SFA.DAS.Roatp.Functions.Mappers
 {
     public static class SubmittedAnswerMapper
     {
-        public static SubmittedApplicationAnswer GetAnswer(Guid applicationId, string pageId, Question question, string submittedAnswer)
+        public static SubmittedApplicationAnswer GetAnswer(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, string submittedAnswer)
         {
             var answer = default(SubmittedApplicationAnswer);
 
@@ -18,6 +18,8 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                 answer = new SubmittedApplicationAnswer
                 {
                     ApplicationId = applicationId,
+                    SequenceNumber = sequenceNumber,
+                    SectionNumber = sectionNumber,
                     PageId = pageId,
                     QuestionId = questionId,
                     QuestionType = questionType,

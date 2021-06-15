@@ -8,7 +8,7 @@ namespace SFA.DAS.Roatp.Functions.Mappers
 {
     public static class TabularDataMapper
     {
-        public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, string pageId, Question question, TabularData tabularData)
+        public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, TabularData tabularData)
         {
             var answers = new List<SubmittedApplicationAnswer>();
 
@@ -29,6 +29,8 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                         var answer = new SubmittedApplicationAnswer
                         {
                             ApplicationId = applicationId,
+                            SequenceNumber = sequenceNumber,
+                            SectionNumber = sectionNumber,
                             PageId = pageId,
                             QuestionId = questionId,
                             QuestionType = questionType,
