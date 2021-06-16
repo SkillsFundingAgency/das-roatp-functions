@@ -12,27 +12,27 @@ using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions
 {
-    public class FinancialExtract
+    public class FinanceExtract
     {
-        private readonly ILogger<FinancialExtract> _logger;
+        private readonly ILogger<FinanceExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
 
-        public FinancialExtract(ILogger<FinancialExtract> log, ApplyDataContext applyDataContext)
+        public FinanceExtract(ILogger<FinanceExtract> log, ApplyDataContext applyDataContext)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
         }
 
-        [FunctionName("FinancialExtract")]
-        public async Task Run([TimerTrigger("%FinancialExtractSchedule%")] TimerInfo myTimer,
+        [FunctionName("FinanceExtract")]
+        public async Task Run([TimerTrigger("%FinanceExtractSchedule%")] TimerInfo myTimer,
             [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
         {
             if (myTimer.IsPastDue)
             {
-                _logger.LogInformation("FinancialExtract function is running later than scheduled");
+                _logger.LogInformation("FinanceExtract function is running later than scheduled");
             }
 
-            _logger.LogInformation($"FinancialExtract function executed at: {DateTime.Now}");
+            _logger.LogInformation($"FinanceExtract function executed at: {DateTime.Now}");
 
             var applications = await GetApplicationsToExtract();
 

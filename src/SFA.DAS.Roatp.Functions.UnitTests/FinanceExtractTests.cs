@@ -15,9 +15,9 @@ using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
-    public class FinancialExtractTests
+    public class FinanceExtractTests
     {
-        private Mock<ILogger<FinancialExtract>> _logger;
+        private Mock<ILogger<FinanceExtract>> _logger;
         private ApplyDataContext _applyDataContext;
         private Mock<IAsyncCollector<AdminFileExtractRequest>> _adminFileExtractQueue;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
@@ -25,12 +25,12 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Apply _reviewInProgressApplication;
         private Apply _application;
 
-        private FinancialExtract _sut;
+        private FinanceExtract _sut;
 
         [SetUp]
         public void Setup()
         {
-            _logger = new Mock<ILogger<FinancialExtract>>();
+            _logger = new Mock<ILogger<FinanceExtract>>();
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
             _reviewInProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
@@ -47,7 +47,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _adminFileExtractQueue = new Mock<IAsyncCollector<AdminFileExtractRequest>>();
 
-            _sut = new FinancialExtract(_logger.Object, _applyDataContext);
+            _sut = new FinanceExtract(_logger.Object, _applyDataContext);
         }
 
         [Test]
