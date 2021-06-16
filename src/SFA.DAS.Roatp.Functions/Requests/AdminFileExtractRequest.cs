@@ -25,7 +25,7 @@ namespace SFA.DAS.Roatp.Functions.Requests
         public AdminFileExtractRequest(Guid applicationId, GatewayReviewDetails gatewayReviewDetails)
         {
             ApplicationId = applicationId;
-            PageId = "SubcontractorDeclarationClarificationFile";
+            PageId = "GatewayClarificationFiles";
             Filename = gatewayReviewDetails.GatewaySubcontractorDeclarationClarificationUpload;
             AdminFileType = AdminFileType.Gateway;
         }
@@ -43,7 +43,7 @@ namespace SFA.DAS.Roatp.Functions.Requests
         public AdminFileExtractRequest(Guid applicationId, ClarificationFile financialClarificationFile)
         {
             ApplicationId = applicationId;
-            PageId = "ClarificationFile";
+            PageId = "FinanceClarificationFiles";
             Filename = financialClarificationFile.Filename;
             AdminFileType = AdminFileType.Finance;
         }
