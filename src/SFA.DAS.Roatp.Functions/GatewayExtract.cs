@@ -51,7 +51,7 @@ namespace SFA.DAS.Roatp.Functions
                                 .AsNoTracking()
                                 .Include(x => x.ExtractedApplication)
                                 .Where(app => app.ExtractedApplication != null && !app.ExtractedApplication.GatewayFilesExtracted)
-                                .Where(app => app.GatewayReviewStatus == "Pass" || app.GatewayReviewStatus == "Fail")
+                                .Where(app => app.GatewayReviewStatus == "Pass" || app.GatewayReviewStatus == "Fail" || app.GatewayReviewStatus == "Rejected")
                                 .ToListAsync();
 
             return applications;
