@@ -17,6 +17,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 {
     public class AdminFileExtractTests
     {
+        private readonly Guid _applicationId = Guid.NewGuid();
+
         private Mock<ILogger<AdminFileExtract>> _logger;
         private Mock<IApplyApiClient> _applyApiClient;
         private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
@@ -32,9 +34,9 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _logger = new Mock<ILogger<AdminFileExtract>>();
             _applyApiClient = new Mock<IApplyApiClient>();
 
-            _applyApiClient.Setup(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
-            _applyApiClient.Setup(x => x.DownloadAssessorClarificationFile(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
-            _applyApiClient.Setup(x => x.DownloadFinanceClarificationFile(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+            _applyApiClient.Setup(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+            _applyApiClient.Setup(x => x.DownloadAssessorClarificationFile(_applicationId, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+            _applyApiClient.Setup(x => x.DownloadFinanceClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
 
             SetupDatamartBlobStorageFactory();
 
@@ -67,30 +69,36 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         [Test]
         public async Task Run_Downloads_and_Saves_Gateway_File_Into_BlobStorage()
         {
-            var request = new AdminFileExtractRequest(Guid.NewGuid(), new GatewayReviewDetails());
+            var gatewayReviewDetails = new GatewayReviewDetails { GatewaySubcontractorDeclarationClarificationUpload = "file.pdf" };
+
+            var request = new AdminFileExtractRequest(_applicationId, gatewayReviewDetails);
             await _sut.Run(request);
 
-            _applyApiClient.Verify(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(It.IsAny<Guid>(), It.IsAny<string>()), Times.Once);
+            _applyApiClient.Verify(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, gatewayReviewDetails.GatewaySubcontractorDeclarationClarificationUpload), Times.Once);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
         public async Task Run_Downloads_and_Saves_Assessor_File_Into_BlobStorage()
         {
-            var request = new AdminFileExtractRequest(new AssessorClarificationOutcome());
+            var assessorClarificationOutcome = new AssessorClarificationOutcome { ApplicationId = _applicationId, ClarificationFile = "file.pdf" };
+
+            var request = new AdminFileExtractRequest(assessorClarificationOutcome);
             await _sut.Run(request);
 
-            _applyApiClient.Verify(x => x.DownloadAssessorClarificationFile(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
+            _applyApiClient.Verify(x => x.DownloadAssessorClarificationFile(assessorClarificationOutcome.ApplicationId, assessorClarificationOutcome.SequenceNumber, assessorClarificationOutcome.SectionNumber, assessorClarificationOutcome.PageId, assessorClarificationOutcome.ClarificationFile), Times.AtLeastOnce);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
         public async Task Run_Downloads_and_Saves_Finance_File_Into_BlobStorage()
         {
-            var request = new AdminFileExtractRequest(Guid.NewGuid(), new ClarificationFile());
+            var financeClarificationFile = new ClarificationFile { Filename = "file.pdf" };
+
+            var request = new AdminFileExtractRequest(_applicationId, financeClarificationFile);
             await _sut.Run(request);
 
-            _applyApiClient.Verify(x => x.DownloadFinanceClarificationFile(It.IsAny<Guid>(), It.IsAny<string>()), Times.Once);
+            _applyApiClient.Verify(x => x.DownloadFinanceClarificationFile(_applicationId, financeClarificationFile.Filename), Times.Once);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
