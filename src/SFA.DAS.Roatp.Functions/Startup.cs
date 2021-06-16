@@ -121,7 +121,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.AddOptions();
             builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
-            builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("RoatpApplyApiAuthentication"));
+            builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
