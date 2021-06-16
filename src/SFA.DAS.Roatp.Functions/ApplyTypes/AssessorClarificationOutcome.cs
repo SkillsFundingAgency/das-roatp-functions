@@ -4,6 +4,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
     public class AssessorClarificationOutcome
     {
+        public Guid Id { get; set; }
         public Guid ApplicationId { get; set; }
         public int SequenceNumber { get; set; }
         public int SectionNumber { get; set; }

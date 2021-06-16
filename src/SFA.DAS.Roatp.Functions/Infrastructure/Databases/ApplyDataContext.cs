@@ -51,8 +51,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 
             modelBuilder.Entity<AssessorClarificationOutcome>(entity =>
             {
-                entity.HasKey(acp => acp.ApplicationId);
-
                 entity.ToTable("ModeratorPageReviewOutcome");
 
                 entity.HasOne(aco => aco.Apply)
