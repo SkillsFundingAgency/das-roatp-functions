@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -24,6 +23,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
             }
             else
             {
+                await LogUnsuccessfulResponse(response);
                 return null;
             }
         }
@@ -38,6 +38,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
             }
             else
             {
+                await LogUnsuccessfulResponse(response);
                 return null;
             }
         }
@@ -52,7 +53,24 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
             }
             else
             {
+                await LogUnsuccessfulResponse(response);
                 return null;
+            }
+        }
+
+        private async Task LogUnsuccessfulResponse(HttpResponseMessage response)
+        {
+            if (response?.RequestMessage != null && !response.IsSuccessStatusCode)
+            {
+                var httpMethod = response.RequestMessage.Method.ToString();
+                var statusCode = (int)response.StatusCode;
+                var reasonPhrase = response.ReasonPhrase;
+                var requestUri = response.RequestMessage.RequestUri;
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var callingMethod = new System.Diagnostics.StackFrame(1).GetMethod().Name;
+
+                _logger.LogError($"HTTP {statusCode} {reasonPhrase} || {httpMethod}: {requestUri} || Method: {callingMethod} || Message: {responseContent}");
             }
         }
     }
