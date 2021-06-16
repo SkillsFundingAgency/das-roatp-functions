@@ -30,7 +30,7 @@ namespace SFA.DAS.Roatp.Functions
         }
 
 
-        //[FunctionName("ApplicationExtract")]
+        [FunctionName("ApplicationExtract")]
         public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
             [ServiceBus("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue)
         {
