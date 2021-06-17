@@ -8,6 +8,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage
     public interface IDatamartBlobStorageFactory
     {
         Task<BlobContainerClient> GetQnABlobContainerClient();
+        Task<BlobContainerClient> GetAdminBlobContainerClient();
     }
 
     public class DatamartBlobStorageFactory : IDatamartBlobStorageFactory
@@ -21,6 +22,13 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage
         }
 
         public async Task<BlobContainerClient> GetQnABlobContainerClient()
+        {
+            var client = new BlobContainerClient(_datamartBlobStorageConnectionString, BLOB_CONTAINER_NAME);
+            await client.CreateIfNotExistsAsync();
+            return client;
+        }
+
+        public async Task<BlobContainerClient> GetAdminBlobContainerClient()
         {
             var client = new BlobContainerClient(_datamartBlobStorageConnectionString, BLOB_CONTAINER_NAME);
             await client.CreateIfNotExistsAsync();

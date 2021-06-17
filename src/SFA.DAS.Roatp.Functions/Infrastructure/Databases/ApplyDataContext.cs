@@ -18,11 +18,18 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
 
-            modelBuilder.Entity<Apply>()
-                .Property(prop => prop.ApplyData)
+            modelBuilder.Entity<Apply>(entity =>
+            {
+                entity.Property(prop => prop.ApplyData)
                 .HasConversion(
                     con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
                     con => JsonConvert.DeserializeObject<ApplyData>(con, jsonSerializerSettings));
+
+                entity.Property(prop => prop.FinancialGrade)
+                .HasConversion(
+                    con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
+                    con => JsonConvert.DeserializeObject<FinancialReviewDetails>(con, jsonSerializerSettings));
+            });
 
             modelBuilder.Entity<ExtractedApplication>(entity =>
             {
@@ -41,10 +48,22 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(saa => saa.ApplicationId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
+
+            modelBuilder.Entity<AssessorClarificationOutcome>(entity =>
+            {
+                entity.ToTable("ModeratorPageReviewOutcome");
+
+                entity.HasOne(aco => aco.Apply)
+                    .WithMany(app => app.AssessorClarificationOutcomes)
+                    .HasPrincipalKey(app => app.ApplicationId)
+                    .HasForeignKey(aco => aco.ApplicationId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
+        public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
     }
 }

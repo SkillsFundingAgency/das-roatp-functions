@@ -9,7 +9,11 @@
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",
     "LoggingRedisConnectionString": "localhost",
     "ApplicationExtractSchedule": "0 0 0 * * *",
+    "GatewayExtractSchedule": "0 0 1 * * *",
+    "AssessorExtractSchedule": "0 0 1 * * *",
+    "FinanceExtractSchedule": "0 0 1 * * *",
     "ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
+    "AdminFileExtractQueue": "SFA.DAS.Roatp.Functions.AdminFileExtract",
     "DASServiceBusConnectionString": "Endpoint=sb://???.servicebus.windows.net/;SharedAccessKeyName=???;SharedAccessKey=???"
   },
   "ConnectionStrings": {
@@ -19,5 +23,9 @@
   "QnaApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "http://localhost:5554"
+  },
+  "ApplyApiAuthentication": {
+    "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
+    "ApiBaseAddress": "https://localhost:6000"
   }
 }

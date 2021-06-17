@@ -291,6 +291,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
         {
             if (response?.RequestMessage != null && !response.IsSuccessStatusCode)
             {
+                var callingMethod = new System.Diagnostics.StackFrame(1).GetMethod().Name;
+
                 var httpMethod = response.RequestMessage.Method.ToString();
                 var statusCode = (int)response.StatusCode;
                 var reasonPhrase = response.ReasonPhrase;
@@ -304,7 +306,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
                     apiErrorMessage = apiError.Message;
                 }
 
-                _logger.LogError($"HTTP {statusCode} {reasonPhrase} || {httpMethod}: {requestUri} || Message: {apiErrorMessage}");
+                _logger.LogError($"Method: {callingMethod} || HTTP {statusCode} {reasonPhrase} || {httpMethod}: {requestUri} || Message: {apiErrorMessage}");
             }
         }
 

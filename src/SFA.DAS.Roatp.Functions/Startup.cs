@@ -40,22 +40,38 @@ namespace SFA.DAS.Roatp.Functions
 
         private static async Task BuildServiceBusQueues(IFunctionsHostBuilder builder)
         {
+            TimeSpan lockDuration = TimeSpan.FromMinutes(5);
+            const int maxDeliveryCount = 10;
+            const int maxSizeInMB = 5120;
+
             var configuration = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
 
             var serviceBusConnectionString = configuration["DASServiceBusConnectionString"];
-            var applyFileExtractQueue = configuration["ApplyFileExtractQueue"];
 
             var managementClient = new ManagementClient(serviceBusConnectionString);
 
+            var applyFileExtractQueue = configuration["ApplyFileExtractQueue"];
             if (!await managementClient.QueueExistsAsync(applyFileExtractQueue))
             {
-                var queueDescription = new QueueDescription(applyFileExtractQueue)
+                var applyQueueDescription = new QueueDescription(applyFileExtractQueue)
                 {
-                    LockDuration = TimeSpan.FromMinutes(5),
-                    MaxDeliveryCount = 10,
-                    MaxSizeInMB = 5120
+                    LockDuration = lockDuration,
+                    MaxDeliveryCount = maxDeliveryCount,
+                    MaxSizeInMB = maxSizeInMB
                 };
-                await managementClient.CreateQueueAsync(queueDescription);
+                await managementClient.CreateQueueAsync(applyQueueDescription);
+            }
+
+            var adminFileExtractQueue = configuration["AdminFileExtractQueue"];
+            if (!await managementClient.QueueExistsAsync(adminFileExtractQueue))
+            {
+                var adminQueueDescription = new QueueDescription(adminFileExtractQueue)
+                {
+                    LockDuration = lockDuration,
+                    MaxDeliveryCount = maxDeliveryCount,
+                    MaxSizeInMB = maxSizeInMB
+                };
+                await managementClient.CreateQueueAsync(adminQueueDescription);
             }
         }
 
@@ -105,6 +121,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.AddOptions();
             builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
+            builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
@@ -123,6 +140,21 @@ namespace SFA.DAS.Roatp.Functions
                 if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
                 {
                     var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(qnaApiAuthentication.Identifier);
+                    httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
+                }
+            })
+            .SetHandlerLifetime(handlerLifeTime);
+
+            builder.Services.AddHttpClient<IApplyApiClient, ApplyApiClient>((serviceProvider, httpClient) =>
+            {
+                var applyApiAuthentication = serviceProvider.GetService<IOptions<ApplyApiAuthentication>>().Value;
+                httpClient.BaseAddress = new Uri(applyApiAuthentication.ApiBaseAddress);
+                httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
+
+                var configuration = serviceProvider.GetService<IConfiguration>();
+                if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(applyApiAuthentication.Identifier);
                     httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
                 }
             })
