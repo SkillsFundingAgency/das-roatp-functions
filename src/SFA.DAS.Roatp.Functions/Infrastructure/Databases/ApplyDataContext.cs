@@ -24,11 +24,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                 .HasConversion(
                     con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
                     con => JsonConvert.DeserializeObject<ApplyData>(con, jsonSerializerSettings));
-
-                entity.Property(prop => prop.FinancialGrade)
-                .HasConversion(
-                    con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
-                    con => JsonConvert.DeserializeObject<FinancialReviewDetails>(con, jsonSerializerSettings));
             });
 
             modelBuilder.Entity<ExtractedApplication>(entity =>
@@ -59,11 +54,31 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(aco => aco.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            modelBuilder.Entity<FinancialReviewDetails>(entity =>
+            {
+                entity.HasOne(fr => fr.Apply)
+                    .WithOne(app => app.FinancialReview)
+                    .HasPrincipalKey<Apply>("ApplicationId")
+                    .HasForeignKey<FinancialReviewDetails>("ApplicationId")
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<FinancialReviewClarificationFile>(entity =>
+            {
+                entity.HasOne(cf => cf.FinancialReview)
+                    .WithMany(fr => fr.ClarificationFiles)
+                    .HasPrincipalKey(fr => fr.ApplicationId)
+                    .HasForeignKey(cf => cf.ApplicationId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
+        public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
+        public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
     }
 }

@@ -11,13 +11,12 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
 
         public string ApplicationStatus { get; set; }
         public string GatewayReviewStatus { get; set; }
-        public string FinancialReviewStatus { get; set; }
         public string AssessorReviewStatus { get; set; }
         public string ModerationStatus { get; set; }
 
         public ApplyData ApplyData { get; set; }
-        public FinancialReviewDetails FinancialGrade { get; set; }
 
+        public virtual FinancialReviewDetails FinancialReview { get; set; }
         public virtual ExtractedApplication ExtractedApplication { get; set; }
         public virtual ICollection<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
     }

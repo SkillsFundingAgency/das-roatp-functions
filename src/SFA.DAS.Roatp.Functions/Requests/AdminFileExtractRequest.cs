@@ -40,7 +40,7 @@ namespace SFA.DAS.Roatp.Functions.Requests
             AdminFileType = AdminFileType.Assessor;
         }
 
-        public AdminFileExtractRequest(Guid applicationId, ClarificationFile financialClarificationFile)
+        public AdminFileExtractRequest(Guid applicationId, FinancialReviewClarificationFile financialClarificationFile)
         {
             ApplicationId = applicationId;
             PageId = "FinanceClarificationFiles";
