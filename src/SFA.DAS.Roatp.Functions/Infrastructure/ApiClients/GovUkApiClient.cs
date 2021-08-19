@@ -17,16 +17,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
         }
         public async Task<BankHolidayRoot> GetBankHolidays()
         {
-            var response = await GetResponse("/bank-holidays.json");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError($"Error getting list of bank holidays from [bank-holidays.json]");
-                return new BankHolidayRoot();
-            }
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<BankHolidayRoot>(json);
-
+            return await Get<BankHolidayRoot>("/bank-holidays.json");
         }
     }
 }

@@ -29,6 +29,7 @@
     "GatewayExtractSchedule": "0 0 1 * * *",
     "AssessorExtractSchedule": "0 0 1 * * *",
     "FinanceExtractSchedule": "0 0 1 * * *",
+	"BankHolidayFulfillmentSchedule": "0 0 1 * * *",
 	"ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
 	"AdminFileExtractQueue": "SFA.DAS.Roatp.Functions.AdminFileExtract",
 	"DASServiceBusConnectionString": "Connection string pointing to an Azure Service Bus"
@@ -44,6 +45,9 @@
   "ApplyApiAuthentication": {
     "Identifier": "https://tenant.onmicrosoft.com/das-at-api-as-ar",
     "ApiBaseAddress": "https://localhost:6000"
+  },
+  "GovUkApiAuthentication": {
+    "ApiBaseAddress": "https://www.gov.uk"
   }
 }
 ```
@@ -79,3 +83,7 @@ Note also fires off a Service Bus message to Admin File Extract for any file upl
 ### Admin File Extract
 
 No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"AdminFileExtractQueue"` for Service Bus information.
+
+
+### Bank Holiday Fulfillment
+No specific configuration - run as Timer Trigger function. See `"BankHolidayFulfillmentSchedule"` for schedule.

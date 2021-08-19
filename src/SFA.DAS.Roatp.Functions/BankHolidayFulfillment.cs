@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.BankHolidayTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
@@ -40,8 +39,7 @@ namespace SFA.DAS.Roatp.Functions
             var bankHolidaysFromExternalSource = await _govUkApiClient.GetBankHolidays();
 
             var bankHolidaysToProcess = new List<BankHoliday>();
-            if (bankHolidaysFromExternalSource?.EnglandAndWales?.Events != null &&
-                bankHolidaysFromExternalSource.EnglandAndWales.Events.Any())
+            if (bankHolidaysFromExternalSource.EnglandAndWales?.Events?.Any()==true)
             {
                 foreach (var bankHoliday in bankHolidaysFromExternalSource.EnglandAndWales.Events)
                 {

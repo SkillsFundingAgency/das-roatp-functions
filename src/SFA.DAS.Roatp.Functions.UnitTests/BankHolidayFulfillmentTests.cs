@@ -1,16 +1,10 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
-using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
-using SFA.DAS.Roatp.Functions.Requests;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 using EntityFrameworkCore.Testing.Moq;
 using Microsoft.Azure.WebJobs;
@@ -27,25 +21,53 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private ApplyDataContext _applyDataContext;
         private BankHolidayFulfillment _bankHolidayFulfillment;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        private DateTime _bankHolidayAlreadyPresent;
+        private DateTime _bankHolidayAdded;
 
         [SetUp]
         public void Setup()
         {
             _logger = new Mock<ILogger<BankHolidayFulfillment>>();
             _apiClient = new Mock<IGovUkApiClient>();
-            _bankHolidayRoot = new BankHolidayRoot();
+            _bankHolidayAlreadyPresent = DateTime.Today;
+            _bankHolidayAdded = DateTime.Today.AddDays(1);
+
+            _bankHolidayRoot = new BankHolidayRoot { EnglandAndWales = new BankHolidays { Events = new List<Event> { new Event { Date = _bankHolidayAdded }, new Event {Date = _bankHolidayAlreadyPresent}} }};
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
             _apiClient.Setup(x => x.GetBankHolidays()).ReturnsAsync(_bankHolidayRoot);
+            var bankHolidays = new List<BankHoliday> { new BankHoliday {BankHolidayDate = _bankHolidayAlreadyPresent} };
+            _applyDataContext.Set<BankHoliday>().AddRange(bankHolidays);
+            _applyDataContext.SaveChanges();
+
         }
 
-        
         [Test]
         public async Task Run_BankHolidayFulfillment_Log_Message()
         {
             _bankHolidayFulfillment = new BankHolidayFulfillment(_applyDataContext, _logger.Object, _apiClient.Object);
             _bankHolidayFulfillment.Run(_timerInfo);
-            _apiClient.Verify(x=>x.GetBankHolidays(),Times.Once);
             _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
+        }
+
+        [Test]
+        public async Task Run_BankHolidayFulfillment_GettingBankHolidays()
+        {
+            _bankHolidayFulfillment = new BankHolidayFulfillment(_applyDataContext, _logger.Object, _apiClient.Object);
+            _bankHolidayFulfillment.Run(_timerInfo);
+            _apiClient.Verify(x => x.GetBankHolidays(), Times.Once);
+            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
+        }
+
+        [Test]
+        public async Task Run_BankHolidayFulfillment_GettingCurrentBankHolidays()
+        {
+            _bankHolidayFulfillment = new BankHolidayFulfillment(_applyDataContext, _logger.Object, _apiClient.Object);
+            _bankHolidayFulfillment.Run(_timerInfo);
+            var submittedBankHolidays = _applyDataContext.BankHoliday.ToList();
+
+            Assert.IsTrue(submittedBankHolidays.Any(x=>x.BankHolidayDate==_bankHolidayAdded));
+            Assert.IsTrue(submittedBankHolidays.Any(x => x.BankHolidayDate == _bankHolidayAlreadyPresent));
+
         }
     }
 }
