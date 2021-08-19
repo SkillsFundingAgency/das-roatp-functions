@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.BankHolidayTypes;
 
 namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
 {

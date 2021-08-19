@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.BankHolidayTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SFA.DAS.Roatp.Functions.ApplyTypes
+namespace SFA.DAS.Roatp.Functions.BankHolidayTypes
 {
     public class BankHoliday
     {

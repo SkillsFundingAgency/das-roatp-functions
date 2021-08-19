@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EntityFrameworkCore.Testing.Moq;
 using Microsoft.Azure.WebJobs;
+using SFA.DAS.Roatp.Functions.BankHolidayTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
