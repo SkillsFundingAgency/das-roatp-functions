@@ -18,7 +18,7 @@
     "DASServiceBusConnectionString": "Endpoint=sb://???.servicebus.windows.net/;SharedAccessKeyName=???;SharedAccessKey=???"
   },
   "ConnectionStrings": {
-    "ApplySqlConnectionString": "Data Source=DESKTOP-LENEN2S\\SQLEXPRESS;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
+    "ApplySqlConnectionString": "Data Source=.\\MSSQLLocalDB;Initial Catalog=SFA.DAS.ApplyService;Integrated Security=True",
     "DatamartBlobStorageConnectionString": "UseDevelopmentStorage=true"
   },
   "QnaApiAuthentication": {
@@ -30,7 +30,6 @@
     "ApiBaseAddress": "https://localhost:6000"
   },
   "GovUkApiAuthentication": {
-    "Identifier": "",
     "ApiBaseAddress": "https://www.gov.uk"
   }
 }

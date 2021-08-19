@@ -23,7 +23,7 @@ namespace SFA.DAS.Roatp.Functions
             _applyDataContext = applyDataContext;
         }
 
-     //   [FunctionName("AssessorExtract")]
+        [FunctionName("AssessorExtract")]
         public async Task Run([TimerTrigger("%AssessorExtractSchedule%")] TimerInfo myTimer,
             [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
         {

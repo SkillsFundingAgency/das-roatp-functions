@@ -21,7 +21,7 @@ namespace SFA.DAS.Roatp.Functions
             _datamartBlobStorageFactory = datamartBlobStorageFactory;
         }
 
-     //   [FunctionName("AdminFileExtract")]
+        [FunctionName("AdminFileExtract")]
         public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
         {
             _logger.LogDebug($"Saving {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}");

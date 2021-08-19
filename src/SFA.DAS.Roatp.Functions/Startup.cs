@@ -35,7 +35,7 @@ namespace SFA.DAS.Roatp.Functions
             BuildHttpClients(builder);
             BuildDataContext(builder);
             BuildDependencyInjection(builder);
-           // BuildServiceBusQueues(builder).GetAwaiter().GetResult();
+            BuildServiceBusQueues(builder).GetAwaiter().GetResult();
         }
 
         private static async Task BuildServiceBusQueues(IFunctionsHostBuilder builder)
