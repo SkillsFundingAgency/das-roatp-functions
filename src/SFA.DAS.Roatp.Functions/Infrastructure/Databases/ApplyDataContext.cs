@@ -65,5 +65,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
+
+        public virtual DbSet<BankHoliday> BankHoliday { get; set; }
     }
 }

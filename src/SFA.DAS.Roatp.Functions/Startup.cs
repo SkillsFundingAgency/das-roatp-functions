@@ -35,7 +35,7 @@ namespace SFA.DAS.Roatp.Functions
             BuildHttpClients(builder);
             BuildDataContext(builder);
             BuildDependencyInjection(builder);
-            BuildServiceBusQueues(builder).GetAwaiter().GetResult();
+           // BuildServiceBusQueues(builder).GetAwaiter().GetResult();
         }
 
         private static async Task BuildServiceBusQueues(IFunctionsHostBuilder builder)
@@ -122,6 +122,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
             builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
+            builder.Services.Configure<GovUkApiAuthentication>(config.GetSection("GovUkApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
@@ -159,6 +160,17 @@ namespace SFA.DAS.Roatp.Functions
                 }
             })
             .SetHandlerLifetime(handlerLifeTime);
+
+
+            builder.Services.AddHttpClient<IGovUkApiClient, GovUkApiClient>((serviceProvider, httpClient) =>
+                {
+                    var govUkApiAuthentication = serviceProvider.GetService<IOptions<GovUkApiAuthentication>>().Value;
+                    httpClient.BaseAddress = new Uri(govUkApiAuthentication.ApiBaseAddress);
+                    httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
+
+                })
+                .SetHandlerLifetime(handlerLifeTime);
+
         }
 
         private static void BuildDataContext(IFunctionsHostBuilder builder)

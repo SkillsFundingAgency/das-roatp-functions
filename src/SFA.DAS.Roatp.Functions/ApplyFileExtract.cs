@@ -22,7 +22,7 @@ namespace SFA.DAS.Roatp.Functions
         }
 
 
-        [FunctionName("ApplyFileExtract")]
+      //  [FunctionName("ApplyFileExtract")]
         public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
         {
             _logger.LogDebug($"Saving QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
