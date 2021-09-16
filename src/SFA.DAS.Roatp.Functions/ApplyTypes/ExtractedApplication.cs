@@ -12,6 +12,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public bool GatewayFilesExtracted { get; set; }
         public bool AssessorFilesExtracted { get; set; }
         public bool FinanceFilesExtracted { get; set; }
+        public bool AppealFilesExtracted { get; set; }
 
         public virtual Apply Apply { get; set; }
         public virtual ICollection<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
