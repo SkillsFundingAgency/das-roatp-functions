@@ -34,11 +34,11 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
             _reviewInProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
-                    .AddExtractedApplicationDetails(false, false, false)
+                    .AddExtractedApplicationDetails(false, false, false, false)
                     .AddGatewayReviewDetails("In Progress", false);
 
             _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
-                    .AddExtractedApplicationDetails(false, false, false)
+                    .AddExtractedApplicationDetails(false, false, false, false)
                     .AddGatewayReviewDetails("Pass", true);
 
             var applications = new List<Apply> { _reviewInProgressApplication, _application };
