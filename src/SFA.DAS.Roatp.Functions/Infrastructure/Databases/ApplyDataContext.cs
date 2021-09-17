@@ -34,6 +34,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 
             modelBuilder.Entity<Appeal>(entity =>
             {
+                entity.ToTable("Appeal");
+
                 entity.HasOne(appeal => appeal.Apply)
                     .WithOne(app => app.Appeal)
                     .HasPrincipalKey<Apply>("ApplicationId")
@@ -43,6 +45,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 
             modelBuilder.Entity<AppealFile>(entity =>
             {
+                entity.ToTable("AppealFile");
+
                 entity.HasOne(appealFile => appealFile.Appeal)
                     .WithMany(appeal => appeal.AppealFiles)
                     .HasPrincipalKey(ea => ea.ApplicationId)
@@ -81,7 +85,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
-        public virtual DbSet<Appeal> Appeal { get; set; }
+        public virtual DbSet<Appeal> Appeals { get; set; }
         public virtual DbSet<AppealFile> AppealFiles { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
