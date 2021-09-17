@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using SFA.DAS.QnA.Api.Types.Page;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Mappers;
 using System;
 using System.Collections.Generic;
@@ -95,6 +94,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
                     Assert.AreEqual(_question.Input.Type, answer.QuestionType);
                     Assert.AreEqual(_tabularData.DataRows[row].Columns[column], answer.Answer);
                     Assert.AreEqual(_tabularData.HeadingTitles[column], answer.ColumnHeading);
+                    Assert.AreEqual(row, answer.RowNumber);
+                    Assert.AreEqual(column, answer.ColumnNumber);
                 }
             }
         }

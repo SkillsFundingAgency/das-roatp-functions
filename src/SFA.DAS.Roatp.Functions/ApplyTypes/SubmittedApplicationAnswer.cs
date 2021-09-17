@@ -13,6 +13,8 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string QuestionType { get; set; }
         public string Answer { get; set; }
         public string ColumnHeading { get; set; }
+        public int? RowNumber { get; set; }
+        public int? ColumnNumber { get; set; }
 
         public virtual ExtractedApplication ExtractedApplication { get; set; }
     }
