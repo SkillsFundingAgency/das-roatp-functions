@@ -73,6 +73,18 @@ namespace SFA.DAS.Roatp.Functions
                 };
                 await managementClient.CreateQueueAsync(adminQueueDescription);
             }
+
+            var appealFileExtractQueue = configuration["AppealFileExtractQueue"];
+            if (!await managementClient.QueueExistsAsync(appealFileExtractQueue))
+            {
+                var appealQueueDescription = new QueueDescription(appealFileExtractQueue)
+                {
+                    LockDuration = lockDuration,
+                    MaxDeliveryCount = maxDeliveryCount,
+                    MaxSizeInMB = maxSizeInMB
+                };
+                await managementClient.CreateQueueAsync(appealQueueDescription);
+            }
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)

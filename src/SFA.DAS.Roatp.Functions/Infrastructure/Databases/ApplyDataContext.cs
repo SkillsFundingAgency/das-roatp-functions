@@ -32,6 +32,28 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     con => JsonConvert.DeserializeObject<FinancialReviewDetails>(con, jsonSerializerSettings));
             });
 
+            modelBuilder.Entity<Appeal>(entity =>
+            {
+                entity.ToTable("Appeal");
+
+                entity.HasOne(appeal => appeal.Apply)
+                    .WithOne(app => app.Appeal)
+                    .HasPrincipalKey<Apply>("ApplicationId")
+                    .HasForeignKey<Appeal>("ApplicationId")
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<AppealFile>(entity =>
+            {
+                entity.ToTable("AppealFile");
+
+                entity.HasOne(appealFile => appealFile.Appeal)
+                    .WithMany(appeal => appeal.AppealFiles)
+                    .HasPrincipalKey(ea => ea.ApplicationId)
+                    .HasForeignKey(saa => saa.ApplicationId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
             modelBuilder.Entity<ExtractedApplication>(entity =>
             {
                 entity.HasOne(ea => ea.Apply)
@@ -63,6 +85,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
+        public virtual DbSet<Appeal> Appeals { get; set; }
+        public virtual DbSet<AppealFile> AppealFiles { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }

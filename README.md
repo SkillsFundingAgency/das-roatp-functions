@@ -29,9 +29,11 @@
     "GatewayExtractSchedule": "0 0 1 * * *",
     "AssessorExtractSchedule": "0 0 1 * * *",
     "FinanceExtractSchedule": "0 0 1 * * *",
+    "AppealExtractSchedule": "0 0 1 * * *",
 	"BankHolidayFulfillmentSchedule": "0 0 1 * * *",
 	"ApplyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
 	"AdminFileExtractQueue": "SFA.DAS.Roatp.Functions.AdminFileExtract",
+	"AppealFileExtractQueue": "SFA.DAS.Roatp.Functions.AppealFileExtract",
 	"DASServiceBusConnectionString": "Connection string pointing to an Azure Service Bus"
   },
   "ConnectionStrings": {
@@ -84,6 +86,16 @@ Note also fires off a Service Bus message to Admin File Extract for any file upl
 
 No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"AdminFileExtractQueue"` for Service Bus information.
 
+### Appeal Extract
+
+No specific configuration - run as Timer Trigger function. See `"AppealExtractSchedule"` for schedule.
+
+Note also fires off a Service Bus message to Appeal File Extract for any file uploads.
+
+### Appeal File Extract
+
+No specific configuration - runs as Service Bus trigger function. See `"DASServiceBusConnectionString"` and `"AppealFileExtractQueue"` for Service Bus information.
 
 ### Bank Holiday Fulfillment
+
 No specific configuration - run as Timer Trigger function. See `"BankHolidayFulfillmentSchedule"` for schedule.
