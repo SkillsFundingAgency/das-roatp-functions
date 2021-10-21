@@ -127,6 +127,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             Assert.IsNotNull(actualAnswer);
             Assert.AreEqual(expectedAnswer.Answer, actualAnswer.Answer);
             Assert.AreEqual(expectedAnswer.ColumnHeading, actualAnswer.ColumnHeading);
+            Assert.AreEqual(expectedAnswer.RowNumber, actualAnswer.RowNumber);
+            Assert.AreEqual(expectedAnswer.ColumnNumber, actualAnswer.ColumnNumber);
         }
 
         [Test]

@@ -17,11 +17,14 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                 var questionId = question.QuestionId;
                 var questionType = question.Input.Type;
 
-                foreach (var row in tabularData.DataRows)
+                for (int row = 0; row < tabularData.DataRows.Count; row++)
                 {
-                    for (int column = 0; column < row.Columns.Count; column++)
+                    var dataRow = tabularData.DataRows[row];
+                    if (dataRow?.Columns is null) continue;
+
+                    for (int column = 0; column < dataRow.Columns.Count; column++)
                     {
-                        string columnAnswer = row.Columns[column];
+                        string columnAnswer = dataRow.Columns[column];
                         string columnHeading = tabularData.HeadingTitles.ElementAtOrDefault(column);
 
                         if (string.IsNullOrEmpty(columnAnswer)) continue;
@@ -35,7 +38,9 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                             QuestionId = questionId,
                             QuestionType = questionType,
                             Answer = columnAnswer,
-                            ColumnHeading = columnHeading
+                            ColumnHeading = columnHeading,
+                            RowNumber = row,
+                            ColumnNumber = column
                         };
 
                         answers.Add(answer);

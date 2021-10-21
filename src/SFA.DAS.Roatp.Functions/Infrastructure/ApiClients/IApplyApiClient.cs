@@ -11,5 +11,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
         Task<Stream> DownloadAssessorClarificationFile(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, string fileName);
 
         Task<Stream> DownloadFinanceClarificationFile(Guid applicationId, string fileName);
+
+        Task<Stream> DownloadAppealFile(Guid applicationId, string fileName);
     }
 }

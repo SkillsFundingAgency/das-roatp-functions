@@ -17,6 +17,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public ApplyData ApplyData { get; set; }
 
         public virtual FinancialReviewDetails FinancialReview { get; set; }
+        public virtual Appeal Appeal { get; set; }
         public virtual ExtractedApplication ExtractedApplication { get; set; }
         public virtual ICollection<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
     }

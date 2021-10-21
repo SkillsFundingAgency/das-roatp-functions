@@ -73,6 +73,18 @@ namespace SFA.DAS.Roatp.Functions
                 };
                 await managementClient.CreateQueueAsync(adminQueueDescription);
             }
+
+            var appealFileExtractQueue = configuration["AppealFileExtractQueue"];
+            if (!await managementClient.QueueExistsAsync(appealFileExtractQueue))
+            {
+                var appealQueueDescription = new QueueDescription(appealFileExtractQueue)
+                {
+                    LockDuration = lockDuration,
+                    MaxDeliveryCount = maxDeliveryCount,
+                    MaxSizeInMB = maxSizeInMB
+                };
+                await managementClient.CreateQueueAsync(appealQueueDescription);
+            }
         }
 
         private static void AddNLog(IFunctionsHostBuilder builder)
@@ -122,6 +134,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
             builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
+            builder.Services.Configure<GovUkApiAuthentication>(config.GetSection("GovUkApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
@@ -159,6 +172,17 @@ namespace SFA.DAS.Roatp.Functions
                 }
             })
             .SetHandlerLifetime(handlerLifeTime);
+
+
+            builder.Services.AddHttpClient<IGovUkApiClient, GovUkApiClient>((serviceProvider, httpClient) =>
+                {
+                    var govUkApiAuthentication = serviceProvider.GetService<IOptions<GovUkApiAuthentication>>().Value;
+                    httpClient.BaseAddress = new Uri(govUkApiAuthentication.ApiBaseAddress);
+                    httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
+
+                })
+                .SetHandlerLifetime(handlerLifeTime);
+
         }
 
         private static void BuildDataContext(IFunctionsHostBuilder builder)

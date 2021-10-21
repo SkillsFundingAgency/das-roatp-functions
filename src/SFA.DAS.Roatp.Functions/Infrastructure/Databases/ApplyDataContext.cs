@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.BankHolidayTypes;
 
 namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 {
@@ -24,6 +25,28 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                 .HasConversion(
                     con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
                     con => JsonConvert.DeserializeObject<ApplyData>(con, jsonSerializerSettings));
+            });
+
+            modelBuilder.Entity<Appeal>(entity =>
+            {
+                entity.ToTable("Appeal");
+
+                entity.HasOne(appeal => appeal.Apply)
+                    .WithOne(app => app.Appeal)
+                    .HasPrincipalKey<Apply>("ApplicationId")
+                    .HasForeignKey<Appeal>("ApplicationId")
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<AppealFile>(entity =>
+            {
+                entity.ToTable("AppealFile");
+
+                entity.HasOne(appealFile => appealFile.Appeal)
+                    .WithMany(appeal => appeal.AppealFiles)
+                    .HasPrincipalKey(ea => ea.ApplicationId)
+                    .HasForeignKey(saa => saa.ApplicationId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             modelBuilder.Entity<ExtractedApplication>(entity =>
@@ -75,10 +98,13 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
+        public virtual DbSet<Appeal> Appeals { get; set; }
+        public virtual DbSet<AppealFile> AppealFiles { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
         public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
+        public virtual DbSet<BankHoliday> BankHoliday { get; set; }
     }
 }

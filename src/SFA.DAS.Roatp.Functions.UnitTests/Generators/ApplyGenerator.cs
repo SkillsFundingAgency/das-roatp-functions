@@ -22,7 +22,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
             };
         }
 
-        public static Apply AddExtractedApplicationDetails(this Apply application, bool hasGatewayFilesExtracted, bool hasAssessorFilesExtracted, bool hasFinanceFilesExtracted)
+        public static Apply AddExtractedApplicationDetails(this Apply application, bool hasGatewayFilesExtracted, bool hasAssessorFilesExtracted, bool hasFinanceFilesExtracted, bool hasAppealFilesExtracted)
         {
             application.ExtractedApplication = new ExtractedApplication
             {
@@ -31,6 +31,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
                 GatewayFilesExtracted = hasGatewayFilesExtracted,
                 AssessorFilesExtracted = hasAssessorFilesExtracted,
                 FinanceFilesExtracted = hasFinanceFilesExtracted,
+                AppealFilesExtracted = hasAppealFilesExtracted,
                 Apply = application
             };
 
@@ -102,6 +103,27 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
 
                 application.FinancialReview.ClarificationRequestedOn = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value;
                 application.FinancialReview.ClarificationFiles = clarificationFiles;
+            }
+
+            return application;
+        }
+
+        public static Apply AddAppealDetails(this Apply application, DateTime? appealSubmittedDate, bool hasAppealFiles)
+        {
+            application.Appeal = new Appeal { ApplicationId = application.ApplicationId, AppealSubmittedDate = appealSubmittedDate };
+
+            if (hasAppealFiles)
+            {
+                List<AppealFile> appealFiles = new List<AppealFile>
+                {
+                    new AppealFile
+                    {
+                        ApplicationId = application.ApplicationId,
+                        FileName = "file.pdf"
+                    }
+                };
+
+                application.Appeal.AppealFiles = appealFiles;
             }
 
             return application;
