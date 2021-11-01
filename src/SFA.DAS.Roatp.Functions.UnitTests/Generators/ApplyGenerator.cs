@@ -82,22 +82,27 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
 
         public static Apply AddFinancialReviewDetails(this Apply application, string financialReviewStatus, bool hasClarificationFiles)
         {
-            application.FinancialReviewStatus = financialReviewStatus;
-
-            application.FinancialGrade = new FinancialReviewDetails();
+            application.FinancialReview = new FinancialReviewDetails
+            {
+                ApplicationId = application.ApplicationId,
+                Status = financialReviewStatus,
+                Apply = application
+            };
 
             if (hasClarificationFiles)
             {
-                List<ClarificationFile> clarificationFiles = new List<ClarificationFile>
+                var clarificationFiles = new List<FinancialReviewClarificationFile>
                 {
-                    new ClarificationFile
+                    new FinancialReviewClarificationFile
                     {
-                        Filename = "file.pdf"
+                        ApplicationId = application.ApplicationId,
+                        Filename = "file.pdf",
+                        FinancialReview = application.FinancialReview
                     }
                 };
 
-                application.FinancialGrade.ClarificationRequestedOn = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value;
-                application.FinancialGrade.ClarificationFiles = clarificationFiles;
+                application.FinancialReview.ClarificationRequestedOn = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value;
+                application.FinancialReview.ClarificationFiles = clarificationFiles;
             }
 
             return application;

@@ -50,8 +50,10 @@ namespace SFA.DAS.Roatp.Functions
             var applications = await _applyDataContext.Apply
                                 .AsNoTracking()
                                 .Include(x => x.ExtractedApplication)
+                                .Include(x => x.FinancialReview)
+                                .Include(x => x.FinancialReview.ClarificationFiles)
                                 .Where(app => app.ExtractedApplication != null && !app.ExtractedApplication.FinanceFilesExtracted)
-                                .Where(app => app.FinancialReviewStatus == "Pass" || app.FinancialReviewStatus == "Fail" || app.FinancialReviewStatus == "Exempt")
+                                .Where(app => app.FinancialReview.Status == "Pass" || app.FinancialReview.Status == "Fail" || app.FinancialReview.Status == "Exempt")
                                 .ToListAsync();
 
             return applications;
@@ -61,9 +63,9 @@ namespace SFA.DAS.Roatp.Functions
         {
             _logger.LogDebug($"Enqueuing finance files for extract for application {application.ApplicationId}");
 
-            if (application.FinancialGrade?.ClarificationFiles != null)
+            if (application.FinancialReview?.ClarificationFiles != null)
             {
-                var clarificationFiles = application.FinancialGrade.ClarificationFiles.Where(x => x.Filename != null);
+                var clarificationFiles = application.FinancialReview.ClarificationFiles.Where(x => x.Filename != null);
 
                 foreach (var file in clarificationFiles)
                 {

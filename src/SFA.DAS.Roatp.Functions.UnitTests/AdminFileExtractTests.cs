@@ -93,7 +93,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         [Test]
         public async Task Run_Downloads_and_Saves_Finance_File_Into_BlobStorage()
         {
-            var financeClarificationFile = new ClarificationFile { Filename = "file.pdf" };
+            var financeClarificationFile = new FinancialReviewClarificationFile { Filename = "file.pdf" };
 
             var request = new AdminFileExtractRequest(_applicationId, financeClarificationFile);
             await _sut.Run(request);
