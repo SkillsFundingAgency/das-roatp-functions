@@ -16,5 +16,6 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
 
         public virtual Apply Apply { get; set; }
         public virtual ICollection<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
+        public virtual ICollection<OrganisationAnswer> OrganisationAnswers { get; set; }
     }
 }

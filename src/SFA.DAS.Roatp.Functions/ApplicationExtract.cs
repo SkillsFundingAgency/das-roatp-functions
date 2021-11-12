@@ -49,6 +49,7 @@ namespace SFA.DAS.Roatp.Functions
 
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 await SaveExtractedAnswersForApplication(applicationId, answers);
+                await SaveOrganisationAnswersForApplication(applicationId, answers);
             }
         }
 
@@ -205,6 +206,48 @@ namespace SFA.DAS.Roatp.Functions
                 catch (DbUpdateException ex)
                 {
                     _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
+                    await dataContextTransaction.RollbackAsync();
+                }
+            }
+        }
+
+        public async Task SaveOrganisationAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            _logger.LogDebug($"Saving organisational answers for application {applicationId}");
+
+            using (var dataContextTransaction = _applyDataContext.Database.BeginTransaction())
+            {
+                var existingAnswers = _applyDataContext.OrganisationAnswers.Where(ans => ans.ApplicationId == applicationId);
+                _applyDataContext.OrganisationAnswers.RemoveRange(existingAnswers);
+
+                //var existingApplications = _applyDataContext.ExtractedApplications.Where(app => app.ApplicationId == applicationId);
+                //_applyDataContext.ExtractedApplications.RemoveRange(existingApplications);
+
+                if (answers != null && answers.Any())
+                {
+                    var organisationAnswer = OrganisationAnswerMapper.TransposeToOrganisationAnswer(applicationId, answers);
+                    _applyDataContext.OrganisationAnswers.Add(organisationAnswer);
+                }
+
+                //var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };
+                //_applyDataContext.ExtractedApplications.Add(application);
+
+                try
+                {
+                    await _applyDataContext.SaveChangesAsync();
+                    await dataContextTransaction.CommitAsync();
+
+                    _logger.LogInformation($"Organisational answers successfully saved for application {applicationId}");
+                }
+#pragma warning disable CA1031
+                catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType() != typeof(ApplyDataContext))
+                {
+                    // Safe to ignore as it is the Unit Tests executing and it doesn't currently mock Transactions
+                }
+#pragma warning restore CA1031
+                catch (DbUpdateException ex)
+                {
+                    _logger.LogError(ex, $"Unable to save organisational answers for Application: {applicationId}");
                     await dataContextTransaction.RollbackAsync();
                 }
             }

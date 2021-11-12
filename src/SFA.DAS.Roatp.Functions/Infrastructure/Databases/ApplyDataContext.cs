@@ -95,6 +95,15 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(cf => cf.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            modelBuilder.Entity<OrganisationAnswer>(entity =>
+            {
+                entity.HasOne(saa => saa.ExtractedApplication)
+                    .WithMany(ea => ea.OrganisationAnswers)
+                    .HasPrincipalKey(ea => ea.ApplicationId)
+                    .HasForeignKey(saa => saa.ApplicationId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
@@ -102,6 +111,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<AppealFile> AppealFiles { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
+        public virtual DbSet<OrganisationAnswer> OrganisationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
         public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
