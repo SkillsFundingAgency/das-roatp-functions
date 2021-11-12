@@ -27,6 +27,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string ProviderRoute { get; set; }
         public string LevyPayingEmployer { get; set; }
 
+        public string HasParentCompany { get; set; }
         public string ParentCompanyOrCharityNumber { get; set; }
         public string ParentCompanyOrCharityName { get; set; }
         public string CompaniesHouseDirectors { get; set; }

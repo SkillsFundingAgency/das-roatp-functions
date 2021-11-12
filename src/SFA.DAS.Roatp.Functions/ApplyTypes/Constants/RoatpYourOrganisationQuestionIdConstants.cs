@@ -2,8 +2,14 @@
 {
     public static class RoatpYourOrganisationQuestionIdConstants
     {
-        public const string WebsiteManuallyEntered = "YO-41";
+        public const string HasParentCompany = "YO-20";
+        public const string ParentCompanyNumber = "YO-21";
+        public const string ParentCompanyName = "YO-22";
+        
+
         public const string IcoNumber = "YO-30";
+        public const string WebsiteManuallyEntered = "YO-41";
+        
         public const string CompaniesHouseDirectors = "YO-70";
         public const string CompaniesHousePSCs = "YO-71";
         public const string CompaniesHouseDetailsConfirmed = "YO-75";

@@ -35,6 +35,14 @@ namespace SFA.DAS.Roatp.Functions.Mappers
                 answer.OnRoatp = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.Preamble, RoatpPreambleQuestionIdConstants.OnRoatp);
                 answer.ProviderRoute = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.ProviderRoute, RoatpPreambleQuestionIdConstants.ApplyProviderRoute);
                 answer.LevyPayingEmployer = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.Preamble, RoatpPreambleQuestionIdConstants.LevyPayingEmployer);
+
+                answer.HasParentCompany = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.PartnershipType);
+                answer.ParentCompanyOrCharityNumber = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.ParentCompanyNumber);
+                answer.ParentCompanyOrCharityName = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.ParentCompanyName);
+                answer.CompaniesHouseDirectors = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.CompaniesHouseDirectors);
+                answer.CompaniesHousePSCs = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.CompaniesHousePSCs);
+                answer.CharityComissionTrustees = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.CharityCommissionTrustees);
+                answer.PeopleInControl = submittedAnswers.GetAnswerForPage(RoatpWorkflowPageIds.YourOrganisationParentCompanyCheck, RoatpYourOrganisationQuestionIdConstants.AddPeopleInControl);
             }
 
             return answer;
