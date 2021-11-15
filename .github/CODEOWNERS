@@ -6,4 +6,4 @@ GitVersion.yml      @SkillsFundingAgency/das-platform-engineering
 # CODEOWNERS file for das-roatp-oversight.
 # The following users will be automatically added as Reviewers to all PRs.
 
-* @MarkFCain @martin-lush @chrisfoster76 @MAli99 @DevenKShah
+* @MarkFCain @chrisfoster76 @MAli99 @DevenKShah
