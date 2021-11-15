@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
@@ -57,7 +55,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string ApprenticeshipsOfstedGrade { get; set; }
         public string HadMonitoringVisit { get; set; }
         public string HadTwoInsufficientMonitoringVisits { get; set; }
-        public string HadMonitoringVisitWithinLast18Months { get; set; }
+        public string HadMonitoringVisitGradedInadequateInLast18Months { get; set; }
         public string MaintainedFundingSinceFullOfstedInspection { get; set; }
         public string HadShortOfstedInspectionWithinLast3Years { get; set; }
         public string MaintainedGradeInShortOfstedInspection { get; set; }

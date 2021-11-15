@@ -9,7 +9,10 @@
 
         public const string IcoNumber = "YO-30";
         public const string WebsiteManuallyEntered = "YO-41";
-        
+
+        public const string ActivelyTradingForMainSupporting = "YO-50";
+        public const string ActivelyTradingForEmployer = "YO-60";
+
         public const string CompaniesHouseDirectors = "YO-70";
         public const string CompaniesHousePSCs = "YO-71";
         public const string CompaniesHouseDetailsConfirmed = "YO-75";

@@ -38,6 +38,8 @@
             public const string FundedESFA = "210";
             public const string SupportedByOFS = "220";
             public const string OrganisationDescription = "230";
+            public const string ActivelyTradingForMainSupporting = "50";
+            public const string ActivelyTradingForEmployer = "60";
         }
 
         public static class ExperienceAndAccreditations
@@ -53,8 +55,8 @@
             public const string HasMaintainedFundingSinceInspection = "320";
             public const string HasHadShortInspectionWithinLast3Years = "330";
             public const string HasMaintainedFullGradeInShortInspection = "340";
-            public const string FullInspectionApprenticeshipGradeNonOfsFunded = "300";
-            public const string FullInspectionApprenticeshipGradeOfsFunded = "301";
+            public const string FullInspectionApprenticeshipGradeOfsFunded = "300";
+            public const string FullInspectionApprenticeshipGradeNonOfsFunded = "301";
             public const string GradeWithinLast3YearsOfsFunded = "310";
             public const string GradeWithinLast3YearsNonOfsFunded = "311";
             public const string IsPostGradTrainingOnlyApprenticeship = "250";
