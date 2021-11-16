@@ -2,7 +2,7 @@
 
 namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
-    public class OrganisationAnswer
+    public class SubmittedOrganisationAnswer
     {
         public int Id { get; set; }
         public Guid ApplicationId { get; set; }

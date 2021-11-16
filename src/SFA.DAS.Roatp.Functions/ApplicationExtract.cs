@@ -217,16 +217,16 @@ namespace SFA.DAS.Roatp.Functions
 
             using (var dataContextTransaction = _applyDataContext.Database.BeginTransaction())
             {
-                var existingAnswers = _applyDataContext.OrganisationAnswers.Where(ans => ans.ApplicationId == applicationId);
-                _applyDataContext.OrganisationAnswers.RemoveRange(existingAnswers);
+                var existingAnswers = _applyDataContext.SubmittedOrganisationAnswers.Where(ans => ans.ApplicationId == applicationId);
+                _applyDataContext.SubmittedOrganisationAnswers.RemoveRange(existingAnswers);
 
                 //var existingApplications = _applyDataContext.ExtractedApplications.Where(app => app.ApplicationId == applicationId);
                 //_applyDataContext.ExtractedApplications.RemoveRange(existingApplications);
 
                 if (answers != null && answers.Any())
                 {
-                    var organisationAnswer = OrganisationAnswerMapper.TransposeToOrganisationAnswer(applicationId, answers);
-                    _applyDataContext.OrganisationAnswers.Add(organisationAnswer);
+                    var organisationAnswer = SubmittedOrganisationAnswerMapper.TransposeToSubmittedOrganisationAnswer(applicationId, answers);
+                    _applyDataContext.SubmittedOrganisationAnswers.Add(organisationAnswer);
                 }
 
                 //var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };

@@ -6,16 +6,16 @@ using System.Linq;
 
 namespace SFA.DAS.Roatp.Functions.Mappers
 {
-    public static class OrganisationAnswerMapper
+    public static class SubmittedOrganisationAnswerMapper
     {
         private static string GetAnswerForPage(this IReadOnlyList<SubmittedApplicationAnswer> submittedAnswers, string pageId, string questionId)
         {
             return submittedAnswers.FirstOrDefault(ans => ans.PageId == pageId && ans.QuestionId == questionId)?.Answer;
         }
 
-        public static OrganisationAnswer TransposeToOrganisationAnswer(Guid applicationId, IReadOnlyList<SubmittedApplicationAnswer> submittedAnswers)
+        public static SubmittedOrganisationAnswer TransposeToSubmittedOrganisationAnswer(Guid applicationId, IReadOnlyList<SubmittedApplicationAnswer> submittedAnswers)
         {
-            var answer = new OrganisationAnswer { ApplicationId = applicationId };
+            var answer = new SubmittedOrganisationAnswer { ApplicationId = applicationId };
 
             if (submittedAnswers != null)
             {

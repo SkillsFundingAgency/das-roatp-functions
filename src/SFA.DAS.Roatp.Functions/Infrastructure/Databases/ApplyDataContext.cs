@@ -96,10 +96,10 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .OnDelete(DeleteBehavior.NoAction);
             });
 
-            modelBuilder.Entity<OrganisationAnswer>(entity =>
+            modelBuilder.Entity<SubmittedOrganisationAnswer>(entity =>
             {
                 entity.HasOne(saa => saa.ExtractedApplication)
-                    .WithMany(ea => ea.OrganisationAnswers)
+                    .WithMany(ea => ea.SubmittedOrganisationAnswers)
                     .HasPrincipalKey(ea => ea.ApplicationId)
                     .HasForeignKey(saa => saa.ApplicationId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
@@ -111,7 +111,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<AppealFile> AppealFiles { get; set; }
         public virtual DbSet<ExtractedApplication> ExtractedApplications { get; set; }
         public virtual DbSet<SubmittedApplicationAnswer> SubmittedApplicationAnswers { get; set; }
-        public virtual DbSet<OrganisationAnswer> OrganisationAnswers { get; set; }
+        public virtual DbSet<SubmittedOrganisationAnswer> SubmittedOrganisationAnswers { get; set; }
         public virtual DbSet<AssessorClarificationOutcome> AssessorClarificationOutcomes { get; set; }
         public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
