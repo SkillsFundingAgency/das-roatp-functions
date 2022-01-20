@@ -54,14 +54,6 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         }
 
         [Test]
-        public async Task Run_Logs_Information_Message()
-        {
-            await _sut.Run(_timerInfo, _applyFileExtractQueue.Object);
-
-            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
-        }
-
-        [Test]
         public async Task GetApplicationsToExtract_Contains_Expected_Applications()
         {
             var expectedApplicationId = _application.ApplicationId;
@@ -167,6 +159,25 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
 
             _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        }
+
+        [Test]
+        public async Task LoadOrganisationManagementForApplication_Loads_OrganisationManagement()
+        {
+            var applicationId = _application.ApplicationId;
+            var organisationId = _application.OrganisationId;
+
+            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+            await _sut.LoadOrganisationManagementForApplication(applicationId, applicationAnswers);
+
+            var organisationManagementAnswers = _applyDataContext.OrganisationManagement.AsQueryable().Where(app => app.OrganisationId == organisationId).ToList();
+
+            CollectionAssert.IsNotEmpty(organisationManagementAnswers);
+            Assert.IsTrue(organisationManagementAnswers.Count == 3);
+            Assert.IsTrue(organisationManagementAnswers[0].TimeInRoleMonths == 26);
+            Assert.IsTrue(organisationManagementAnswers[1].TimeInRoleMonths == 13);
+            Assert.IsTrue(organisationManagementAnswers[2].TimeInRoleMonths == 39);
         }
     }
 }

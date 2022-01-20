@@ -11,6 +11,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
             return new Apply
             {
                 ApplicationId = applicationId,
+                OrganisationId = Guid.NewGuid(),
                 ApplicationStatus = applicationStatus,
                 ApplyData = new ApplyData
                 {

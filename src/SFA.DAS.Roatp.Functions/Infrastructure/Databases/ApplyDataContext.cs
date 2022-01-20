@@ -95,6 +95,11 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(cf => cf.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            modelBuilder.Entity<OrganisationManagement>(entity =>
+            {
+                entity.ToTable("OrganisationManagement");
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
@@ -106,5 +111,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
         public virtual DbSet<BankHoliday> BankHoliday { get; set; }
+        public virtual DbSet<OrganisationManagement> OrganisationManagement { get; set; }
     }
 }

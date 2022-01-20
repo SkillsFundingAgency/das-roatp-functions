@@ -21,6 +21,9 @@ namespace SFA.DAS.Roatp.Functions
         private readonly ILogger<ApplicationExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
         private readonly IQnaApiClient _qnaApiClient;
+        private const int DeliveringApprenticeshipTraining = 7;
+        private const int ManagementHierarchy = 3;
+        private const int MonthsInYear = 12;
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient)
         {
@@ -46,9 +49,14 @@ namespace SFA.DAS.Roatp.Functions
             foreach (var applicationId in applications)
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
-
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-                await SaveExtractedAnswersForApplication(applicationId, answers);
+                
+                using (var transaction = _applyDataContext.Database.BeginTransaction())
+                {
+                    await SaveExtractedAnswersForApplication(applicationId, answers);
+                    await LoadOrganisationManagementForApplication(applicationId, answers);
+                    await transaction.CommitAsync();
+                }
             }
         }
 
@@ -171,8 +179,7 @@ namespace SFA.DAS.Roatp.Functions
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogDebug($"Saving extracted answers for application {applicationId}");
-
-            using (var dataContextTransaction = _applyDataContext.Database.BeginTransaction())
+            try
             {
                 var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
                 _applyDataContext.SubmittedApplicationAnswers.RemoveRange(existingAnswers);
@@ -189,24 +196,13 @@ namespace SFA.DAS.Roatp.Functions
                 var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };
                 _applyDataContext.ExtractedApplications.Add(application);
 
-                try
-                {
-                    await _applyDataContext.SaveChangesAsync();
-                    await dataContextTransaction.CommitAsync();
+                await _applyDataContext.SaveChangesAsync();
 
-                    _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
-                }
-#pragma warning disable CA1031
-                catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType() != typeof(ApplyDataContext))
-                {
-                    // Safe to ignore as it is the Unit Tests executing and it doesn't currently mock Transactions
-                }
-#pragma warning restore CA1031
-                catch (DbUpdateException ex)
-                {
-                    _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
-                    await dataContextTransaction.RollbackAsync();
-                }
+                _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
             }
         }
 
@@ -217,6 +213,82 @@ namespace SFA.DAS.Roatp.Functions
             foreach (var submittedApplicationAnswer in applyFiles)
             {
                 await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
+            }
+        }
+
+        private List<OrganisationManagement> LoadOrganisationManagementAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            var organisationManagementAnswers = new List<OrganisationManagement>();
+
+            var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
+            var submittedAnswersOrganisationManagement = answers.Where(answer => answer.SequenceNumber == DeliveringApprenticeshipTraining && answer.SectionNumber == ManagementHierarchy).GroupBy(a => a.RowNumber).ToList();
+
+            foreach (var managementHierarchyPerson in submittedAnswersOrganisationManagement)
+            {
+                var organisationManagement = new OrganisationManagement
+                {
+                    OrganisationId = application.OrganisationId,
+                };
+                foreach (var personDetails in managementHierarchyPerson)
+                {
+                    switch (personDetails.ColumnHeading)
+                    {
+                        case "First Name":
+                            organisationManagement.FirstName = personDetails.Answer;
+                            break;
+                        case "Last Name":
+                            organisationManagement.LastName = personDetails.Answer;
+                            break;
+                        case "Job role":
+                            organisationManagement.JobRole = personDetails.Answer;
+                            break;
+                        case "Years in role":
+                            organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer) * MonthsInYear; 
+                            break;
+                        case "Months in role":
+                            organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer);
+                            break;
+                        case "Part of another organisation":
+                            organisationManagement.IsPartOfAnyOtherOrganisation = personDetails.Answer.Equals("Yes") ? true : false;
+                            break;
+                        case "Organisation details":
+                            organisationManagement.OtherOrganisationNames = personDetails.Answer;
+                            break;
+                        case "Month":
+                            organisationManagement.DateOfBirthMonth = int.Parse(personDetails.Answer);
+                            break;
+                        case "Year":
+                            organisationManagement.DateOfBirthYear = int.Parse(personDetails.Answer);
+                            break;
+                        case "Email":
+                            organisationManagement.Email = personDetails.Answer;
+                            break;
+                        case "Contact number":
+                            organisationManagement.ContactNumber = personDetails.Answer;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                organisationManagementAnswers.Add(organisationManagement);
+            }
+            return organisationManagementAnswers;
+        }
+        
+        public async Task LoadOrganisationManagementForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            _logger.LogDebug($"OrganisationManagement extract for application {applicationId}");
+            try
+            {
+                var organisationManagementAnswers = LoadOrganisationManagementAnswers(applicationId, answers);
+                _applyDataContext.OrganisationManagement.AddRange(organisationManagementAnswers);
+                await _applyDataContext.SaveChangesAsync();
+
+                _logger.LogInformation($"OrganisationManagement successfully extract for application {applicationId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to extract OrganisationManagement for Application: {applicationId}");
             }
         }
     }
