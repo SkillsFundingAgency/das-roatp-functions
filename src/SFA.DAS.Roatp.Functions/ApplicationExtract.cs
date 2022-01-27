@@ -24,6 +24,12 @@ namespace SFA.DAS.Roatp.Functions
         private const int DeliveringApprenticeshipTraining = 7;
         private const int ManagementHierarchy = 3;
         private const int MonthsInYear = 12;
+        private const string QuestionIdCompaniesHouseDirectors = "YO-70";
+        private const string QuestionIdCompaniesHousePSCs = "YO-71";
+        private const string QuestionIdCharityTrustees = "YO-80";
+        private const string QuestionIdOrganisationNameSoleTrade = "PRE-20";
+        private const string QuestionIdPartnership = "YO-110";
+        private const string QuestionIdSoleTrade = "YO-120";
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient)
         {
@@ -50,14 +56,119 @@ namespace SFA.DAS.Roatp.Functions
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-                
                 using (var transaction = _applyDataContext.Database.BeginTransaction())
                 {
                     await SaveExtractedAnswersForApplication(applicationId, answers);
                     await LoadOrganisationManagementForApplication(applicationId, answers);
+                    await LoadOrganisationPersonnelForApplication(applicationId, answers);
                     await transaction.CommitAsync();
                 }
             }
+        }
+
+        public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            _logger.LogDebug($"Load Organisation Personnel for application {applicationId}");
+            
+            try
+            {
+                var organisationPersonnel = new List<OrganisationPersonnel>();
+                var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
+
+                var submittedAnswersCompaniesHouseDirectors = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
+                organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
+
+                var submittedAnswersCompaniesHousePsCs = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePSCs, PersonnelType.PersonWithSignificantControl);
+                organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
+
+                var submittedAnswersCharityTrustees = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
+                organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
+
+                var submittedAnswersSoleTrade = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrade, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersSoleTrade);
+
+                var submittedAnswersPartnership = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersPartnership);
+
+                _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
+
+                await _applyDataContext.SaveChangesAsync();
+
+                _logger.LogInformation($"Organisation Personnel successfully load for application {applicationId}");
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to load Organisation Personnel for Application: {applicationId}");
+            }
+        }
+
+        private static List<OrganisationPersonnel> ExtractOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        {
+            var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
+            var organisationPersonnel = new List<OrganisationPersonnel>();
+
+            if (personnelType == PersonnelType.PersonInControl && questionId == QuestionIdSoleTrade)
+            {
+                var submittedAnswersOrganisationNameSoleTrade = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
+                if (submittedAnswersOrganisationPersonnel.Count > 0)
+                {
+                    foreach (var person in submittedAnswersOrganisationPersonnel)
+                    {
+                        var orgPersonnel = new OrganisationPersonnel
+                        {
+                            OrganisationId = organisationId,
+                            PersonnelType = (int)personnelType,
+                            Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
+                        };
+                        foreach (SubmittedApplicationAnswer record in person)
+                        {
+                            var dobArray = record.Answer.Split(",");
+                            orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
+                            orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
+                        }
+                        organisationPersonnel.Add(orgPersonnel);
+                    }
+                }
+                else
+                {
+                    var orgPersonnel = new OrganisationPersonnel
+                    {
+                        OrganisationId = organisationId,
+                        PersonnelType = (int)personnelType,
+                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
+                    };
+                    organisationPersonnel.Add(orgPersonnel);
+                }
+            }
+            else
+            {
+                foreach (var person in submittedAnswersOrganisationPersonnel)
+                {
+                    var orgPersonnel = new OrganisationPersonnel
+                    {
+                        OrganisationId = organisationId,
+                        PersonnelType = (int)personnelType,
+                    };
+                    foreach (var record in person)
+                    {
+                        switch (record.ColumnHeading)
+                        {
+                            case "Name":
+                                orgPersonnel.Name = record.Answer;
+                                break;
+                            case "Date of birth":
+                                var dob = Convert.ToDateTime(record.Answer);
+                                orgPersonnel.DateOfBirthMonth = dob.Month;
+                                orgPersonnel.DateOfBirthYear = dob.Year;
+                                break;
+                        }
+                    }
+                    organisationPersonnel.Add(orgPersonnel);
+                }
+            }
+
+            return organisationPersonnel;
         }
 
         public async Task<List<Guid>> GetApplicationsToExtract(DateTime executionDateTime)
