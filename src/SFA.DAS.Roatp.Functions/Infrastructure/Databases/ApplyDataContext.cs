@@ -100,6 +100,11 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
             {
                 entity.ToTable("OrganisationManagement");
             });
+
+            modelBuilder.Entity<OrganisationPersonnel>(entity =>
+            {
+                entity.ToTable("OrganisationPersonnel");
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
@@ -112,5 +117,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
         public virtual DbSet<BankHoliday> BankHoliday { get; set; }
         public virtual DbSet<OrganisationManagement> OrganisationManagement { get; set; }
+        public virtual DbSet<OrganisationPersonnel> OrganisationPersonnel { get; set; }
     }
 }
