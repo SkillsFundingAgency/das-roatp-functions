@@ -95,6 +95,42 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(cf => cf.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            modelBuilder.Entity<Organisations>(entity =>
+            {
+                entity.ToTable("Organisations");
+            });
+
+
+            modelBuilder.Entity<OrganisationSectors>(entity =>
+            {
+                entity.ToTable("OrganisationSectors");
+            });
+
+            modelBuilder.Entity<OrganisationSectorExperts>(entity =>
+            {
+                entity.ToTable("OrganisationSectorExperts");
+
+                entity.HasOne(organisationSectorExperts => organisationSectorExperts.OrganisationSectors)
+                    .WithMany(organisationSectors => organisationSectors.OrganisationSectorExperts)
+                    .HasForeignKey(s => s.OrganisationSectorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // example from appealFile....
+                //entity.HasOne(appealFile => appealFile.Appeal)
+                //    .WithMany(appeal => appeal.AppealFiles)
+                //    .HasPrincipalKey(ea => ea.ApplicationId)
+                //    .HasForeignKey(saa => saa.ApplicationId)
+                //    .OnDelete(DeleteBehavior.NoAction);
+            });
+            modelBuilder.Entity<OrganisationSectorExpertDeliveredTrainingTypes>(entity =>
+            {
+                entity.ToTable("OrganisationSectorExpertDeliveredTrainingTypes");
+                entity.HasOne(osedtt => osedtt.OrganisationSectorExperts)
+                    .WithMany(osedtt => osedtt.OrganisationSectorExpertDeliveredTrainingTypes)
+                    .HasForeignKey(s => s.OrganisationSectorExpertId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
@@ -106,5 +142,9 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<FinancialReviewDetails> FinancialReview { get; set; }
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
         public virtual DbSet<BankHoliday> BankHoliday { get; set; }
+
+        public virtual DbSet<OrganisationSectors> OrganisationSectors { get; set; }
+        public virtual DbSet<OrganisationSectorExperts> OrganisationSectorExperts { get; set; }
+        public virtual DbSet<OrganisationSectorExpertDeliveredTrainingTypes> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
     }
 }

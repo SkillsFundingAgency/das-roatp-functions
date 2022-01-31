@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SFA.DAS.Roatp.Functions.Services.Sectors;
+using static System.Boolean;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -21,12 +23,15 @@ namespace SFA.DAS.Roatp.Functions
         private readonly ILogger<ApplicationExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
         private readonly IQnaApiClient _qnaApiClient;
+        private readonly ISectorProcessingService _sectorProcessingService;
 
-        public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient)
+
+        public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
             _qnaApiClient = qnaApiClient;
+            _sectorProcessingService = sectorProcessingService;
         }
 
 
@@ -49,6 +54,9 @@ namespace SFA.DAS.Roatp.Functions
 
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 await SaveExtractedAnswersForApplication(applicationId, answers);
+
+
+                await SaveSectorDetailsForApplication(applicationId, answers);
             }
         }
 
@@ -91,6 +99,39 @@ namespace SFA.DAS.Roatp.Functions
 
             return answers;
         }
+
+
+        private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
+        {
+            var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
+            var sectorsToAdd =  _sectorProcessingService.BuildSectorDetails(answers, organisationId);
+
+            if (sectorsToAdd != null && sectorsToAdd.Any())
+            {
+                try
+                {
+
+                    _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
+                    await _applyDataContext.SaveChangesAsync();
+
+                    _logger.LogInformation(
+                        $"OrganisationSectors successfully extracted for application {applicationId}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Unable to extract OrganisationSectors for Application: {applicationId}");
+                }
+            }
+            else
+            {
+                {
+                    _logger.LogInformation(
+                        $"No OrganisationSectors present to extract for application {applicationId}");
+                }
+            }
+        }
+
+   
 
         private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
         {

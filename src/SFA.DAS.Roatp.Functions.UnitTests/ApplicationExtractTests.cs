@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -21,6 +22,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
     {
         private Mock<ILogger<ApplicationExtract>> _logger;
         private Mock<IQnaApiClient> _qnaApiClient;
+        private Mock<ISectorProcessingService> _sectorProcessingService;
         private ApplyDataContext _applyDataContext;
         private Mock<IAsyncCollector<ApplyFileExtractRequest>> _applyFileExtractQueue;
         private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
@@ -36,6 +38,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         {
             _logger = new Mock<ILogger<ApplicationExtract>>();
             _qnaApiClient = new Mock<IQnaApiClient>();
+            _sectorProcessingService = new Mock<ISectorProcessingService>();
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
             _inProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "In Progress", null);
@@ -50,7 +53,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _applyFileExtractQueue = new Mock<IAsyncCollector<ApplyFileExtractRequest>>();
 
-            _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object);
+            _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _sectorProcessingService.Object);
         }
 
         [Test]
@@ -58,7 +61,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         {
             await _sut.Run(_timerInfo, _applyFileExtractQueue.Object);
 
-            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
         }
 
         [Test]
