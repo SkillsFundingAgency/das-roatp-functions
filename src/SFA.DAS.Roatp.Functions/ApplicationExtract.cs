@@ -13,8 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SFA.DAS.Roatp.Functions.Services.Interfaces;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
-using static System.Boolean;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -100,13 +100,25 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
-
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
         {
+            var sectorPageId = "7600";
             var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
-            var sectorsToAdd =  _sectorProcessingService.BuildSectorDetails(answers, organisationId);
+            var sectorChoices = answers.Where(x => x.PageId == sectorPageId).ToList();
 
-            if (sectorsToAdd != null && sectorsToAdd.Any())
+            var sectorsToAdd = new List<OrganisationSectors>();
+            foreach (var sectorChoice in sectorChoices)
+            {
+                var sectorDescription = sectorChoice.Answer;
+                var sector = await _sectorProcessingService.GatherSectorDetails(answers, organisationId, sectorDescription);
+                var sectorExperts = await _sectorProcessingService.GatherSectorExpertsDetails(answers, sectorDescription);
+                sectorExperts.OrganisationSectorExpertDeliveredTrainingTypes = await _sectorProcessingService.GatherSectorDeliveredTrainingTypes(answers, sectorDescription);
+                sector.OrganisationSectorExperts.Add(sectorExperts);
+
+                sectorsToAdd.Add(sector);
+            }
+
+            if (sectorsToAdd.Any())
             {
                 try
                 {
@@ -124,10 +136,8 @@ namespace SFA.DAS.Roatp.Functions
             }
             else
             {
-                {
-                    _logger.LogInformation(
+                _logger.LogInformation(
                         $"No OrganisationSectors present to extract for application {applicationId}");
-                }
             }
         }
 

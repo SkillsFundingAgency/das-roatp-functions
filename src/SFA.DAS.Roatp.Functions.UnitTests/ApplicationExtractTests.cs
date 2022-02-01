@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SFA.DAS.Roatp.Functions.Services.Interfaces;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests

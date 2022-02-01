@@ -1,37 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.Services.Interfaces;
 
 namespace SFA.DAS.Roatp.Functions.Services.Sectors
 {
-    public   class SectorProcessingService: ISectorProcessingService
+    public  class SectorProcessingService: ISectorProcessingService
     {
-        public   List<OrganisationSectors> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId)
-        {
-            var sectorChoices = answers.Where(x => x.PageId == "7600").ToList();
+        private const string ResponseYes = "Yes";
+        private const string ExperienceOfDeliveringNoExperience = "No experience";
+        private const string ExperienceOfDeliveringLessThanAYear = "Less than a year";
+        private const string ExperienceOfDeliveringOneToTwoYears = "One to 2 years";
+        private const string ExperienceOfDeliveringThreeToFiveYears = "3 to 5 years";
+        private const string ExperienceOfDeliveringOverFiveYears = "Over 5 years";
+        private const string TypeOfApprenticeshipDeliveredNoneDelivered = "No apprenticeship training delivered";
+        private const string ExperienceOfTrainingApprenticesNoExperience = "No experience";
+        private const string TypicalDurationOfTrainingApprenticesNoTrainingDelivered = "No training delivered";
+        private const string HowTrainingDeliveredOther = "Other";
 
-            var sectorsToAdd = new List<OrganisationSectors>();
-            foreach (var sectorChoice in sectorChoices)
-            {
-                var sectorDescription = sectorChoice.Answer;
-                var sector = GatherSectorDetails(answers, organisationId, sectorDescription);
-                var sectorExperts = GatherSectorExpertsDetails(answers, sectorDescription);
-               var deliveredTrainingTypes = GatherSectorDeliveredTrainingTypes(answers, sectorDescription);
-               foreach (var trainingType in deliveredTrainingTypes)
-               {
-                   trainingType.OrganisationSectorExperts = sectorExperts;
-               }
-               sectorExperts.OrganisationSectorExpertDeliveredTrainingTypes = deliveredTrainingTypes;
-                sector.OrganisationSectorExperts.Add(sectorExperts);
-
-                sectorsToAdd.Add(sector);
-            }
-
-            return sectorsToAdd;
-        }
-
-        private   OrganisationSectors GatherSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId,
+        public async Task<OrganisationSectors> GatherSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId,
             string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
@@ -51,7 +40,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             return sector;
         }
 
-        private   OrganisationSectorExperts GatherSectorExpertsDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
+        public async Task<OrganisationSectorExperts> GatherSectorExpertsDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
             string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
@@ -66,7 +55,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                 answers.FirstOrDefault(x => x.QuestionId == sectorDetails.TimeInRole)?.Answer;
             var isPartOfAnyOtherOrganisation = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.IsPartOfAnyOtherOrganisations)?.Answer;
-            var isPartOfAnyOtherOrganisationValue = false || isPartOfAnyOtherOrganisation == "Yes";
+            var isPartOfAnyOtherOrganisationValue = false || isPartOfAnyOtherOrganisation == ResponseYes;
 
             sectorExperts.IsPartOfAnyOtherOrganisation = isPartOfAnyOtherOrganisationValue;
             sectorExperts.OtherOrganisationNames = answers
@@ -86,65 +75,65 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             sectorExperts.Email = answers.FirstOrDefault(x => x.QuestionId == sectorDetails.Email)?.Answer;
             var experienceOfDelivering = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.ExperienceOfDelivering)?.Answer;
-            if (experienceOfDelivering != "No experience")
+            if (experienceOfDelivering != ExperienceOfDeliveringNoExperience)
                 sectorExperts.SectorTrainingExperienceDuration = experienceOfDelivering;
 
            switch (experienceOfDelivering)
            {
-               case "Less than a year":
+               case ExperienceOfDeliveringLessThanAYear:
                    sectorExperts.SectorTrainingExperienceDetails = answers.FirstOrDefault(x => x.QuestionId == $"{sectorDetails.ExperienceOfDelivering}-1")?.Answer;
                    break;
-               case "One to 2 years":
+               case ExperienceOfDeliveringOneToTwoYears:
                    sectorExperts.SectorTrainingExperienceDetails = answers.FirstOrDefault(x => x.QuestionId == $"{sectorDetails.ExperienceOfDelivering}-2")?.Answer;
                    break;
-               case "3 to 5 years":
+               case ExperienceOfDeliveringThreeToFiveYears:
                    sectorExperts.SectorTrainingExperienceDetails = answers.FirstOrDefault(x => x.QuestionId == $"{sectorDetails.ExperienceOfDelivering}-3")?.Answer;
                    break;
-               case "Over 5 years":
+                case ExperienceOfDeliveringOverFiveYears:
                    sectorExperts.SectorTrainingExperienceDetails = answers.FirstOrDefault(x => x.QuestionId == $"{sectorDetails.ExperienceOfDelivering}-4")?.Answer;
                    break;
            }
 
             var isQualifiedForSector = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.DoTheyHaveQualifications)?.Answer;
-            var isQualifiedForSectorValue = false || isQualifiedForSector == "Yes";
+            var isQualifiedForSectorValue = false || isQualifiedForSector == ResponseYes;
             sectorExperts.IsQualifiedForSector = isQualifiedForSectorValue;
             sectorExperts.QualificationDetails = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.QualificationDetails)?.Answer;
             var isApprovedByAwardingBodies = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.IsApprovedByAwardingBodies)?.Answer;
-            var isApprovedByAwardingBodiesValue = false || isApprovedByAwardingBodies == "Yes";
+            var isApprovedByAwardingBodiesValue = false || isApprovedByAwardingBodies == ResponseYes;
             sectorExperts.IsApprovedByAwardingBodies = isApprovedByAwardingBodiesValue;
             sectorExperts.AwardingBodyNames = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.NamesOfAwardingBodies)?.Answer;
             var hasSectorOrTradeBodyMembership = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.HasSectorOrTradeBodyMembership)?.Answer;
-            var hasSectorOrTradeBodyMembershipValue = false || hasSectorOrTradeBodyMembership == "Yes";
+            var hasSectorOrTradeBodyMembershipValue = false || hasSectorOrTradeBodyMembership == ResponseYes;
             sectorExperts.HasSectorOrTradeBodyMembership = hasSectorOrTradeBodyMembershipValue;
             sectorExperts.SectorOrTradeBodyNames = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.SectorOrTradeBodyNames)?.Answer;
             var typeOfApprenticeshipDelivered = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.WhatTypeOfTrainingDelivered)?.Answer;
 
-            if (typeOfApprenticeshipDelivered!= "No apprenticeship training delivered")
+            if (typeOfApprenticeshipDelivered!= TypeOfApprenticeshipDeliveredNoneDelivered)
                 sectorExperts.TypeOfApprenticeshipDelivered = typeOfApprenticeshipDelivered;
 
             var experienceInTrainingApprentices = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.ExperienceOfDeliveringTraining)?.Answer;
 
-            if (experienceInTrainingApprentices!="No experience")
+            if (experienceInTrainingApprentices!= ExperienceOfTrainingApprenticesNoExperience) 
                 sectorExperts.ExperienceInTrainingApprentices = experienceInTrainingApprentices;
             
             var typicalDurationOfTrainingApprentices = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.TypicalDurationOfTraining)?.Answer;
 
-            if (typicalDurationOfTrainingApprentices!="No training delivered")
+            if (typicalDurationOfTrainingApprentices!= TypicalDurationOfTrainingApprenticesNoTrainingDelivered)
                 sectorExperts.TypicalDurationOfTrainingApprentices = typicalDurationOfTrainingApprentices;
            
             return sectorExperts;
         }
-    
-        private  List<OrganisationSectorExpertDeliveredTrainingTypes> GatherSectorDeliveredTrainingTypes(IReadOnlyCollection<SubmittedApplicationAnswer> answers, string sectorDescription)
+
+        public async Task<List<OrganisationSectorExpertDeliveredTrainingTypes>> GatherSectorDeliveredTrainingTypes(IReadOnlyCollection<SubmittedApplicationAnswer> answers, string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
             if (sectorDetails == null) return null;
@@ -157,7 +146,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                 foreach (var howTrainingDelivered in howTrainingDeliveredSelections)
                 {
                     var trainingType = new OrganisationSectorExpertDeliveredTrainingTypes();
-                    if (howTrainingDelivered.Answer != "Other")
+                    if (howTrainingDelivered.Answer != HowTrainingDeliveredOther)
                     {
                         trainingType.DeliveredTrainingType = howTrainingDelivered.Answer;
                     }
@@ -172,7 +161,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
            return sectorExpertDeliveredTrainingTypesList;
         }
 
-        private  SectorLookupDetails GetSectorQuestionIdsForSectorDescription(string sectorDescription)
+
+        private SectorLookupDetails GetSectorQuestionIdsForSectorDescription(string sectorDescription)
         {
             switch (sectorDescription)
             {
@@ -210,11 +200,5 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                     return null;
             }
         }
-    }
-
-    public interface ISectorProcessingService
-    {
-        List<OrganisationSectors> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
-            Guid organisationId);
     }
 }
