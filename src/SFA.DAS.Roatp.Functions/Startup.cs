@@ -209,10 +209,7 @@ namespace SFA.DAS.Roatp.Functions
         private static void BuildDependencyInjection(IFunctionsHostBuilder builder)
         {
             builder.Services.AddScoped<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
-            builder.Services.AddSingleton<ISectorProcessingService>((s) =>
-            {
-                return new SectorProcessingService();
-            });
+            builder.Services.AddTransient<ISectorProcessingService,SectorProcessingService>();
         }
     }
 }

@@ -115,13 +115,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .WithMany(organisationSectors => organisationSectors.OrganisationSectorExperts)
                     .HasForeignKey(s => s.OrganisationSectorId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                // example from appealFile....
-                //entity.HasOne(appealFile => appealFile.Appeal)
-                //    .WithMany(appeal => appeal.AppealFiles)
-                //    .HasPrincipalKey(ea => ea.ApplicationId)
-                //    .HasForeignKey(saa => saa.ApplicationId)
-                //    .OnDelete(DeleteBehavior.NoAction);
             });
             modelBuilder.Entity<OrganisationSectorExpertDeliveredTrainingTypes>(entity =>
             {
