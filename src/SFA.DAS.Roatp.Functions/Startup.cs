@@ -17,8 +17,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus.Management;
+using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Services.Interfaces;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
+
 
 [assembly: FunctionsStartup(typeof(SFA.DAS.Roatp.Functions.Startup))]
 
