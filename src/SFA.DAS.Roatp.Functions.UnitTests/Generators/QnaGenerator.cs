@@ -17,7 +17,57 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
             };
         }
 
-        private static Section GenerateSection(Guid applicationId, int sequenceNo, int sectionNo, string pageId, string questionId, string inputType, string answer)
+        public static Section GenerateSection(Guid applicationId, int sequenceNo, int sectionNo, string pageId, string questionId, string inputType, string answer, List<Option> options)
+        {
+           
+            return new Section
+            {
+                Id = Guid.NewGuid(),
+                ApplicationId = applicationId,
+                SequenceNo = sequenceNo,
+                SectionNo = sectionNo,
+                QnAData = new QnAData
+                {
+                    Pages = new List<Page>
+                    {
+                        new Page
+                        {
+                            PageId = pageId,
+                            Active = true,
+                            Complete = true,
+                            Questions = new List<Question>
+                            {
+                                new Question
+                                {
+                                    QuestionId = questionId,
+                                    Input = new Input
+                                    {
+                                        Type = inputType,
+                                        Options = options
+                                    },
+                                }
+                            },
+                            PageOfAnswers = new List<PageOfAnswers>
+                            {
+                                new PageOfAnswers
+                                {
+                                    Answers = new List<Answer>
+                                    {
+                                        new Answer
+                                        {
+                                            QuestionId = questionId,
+                                            Value = answer
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        public static Section GenerateSection(Guid applicationId, int sequenceNo, int sectionNo, string pageId, string questionId, string inputType, string answer)
         {
             return new Section
             {

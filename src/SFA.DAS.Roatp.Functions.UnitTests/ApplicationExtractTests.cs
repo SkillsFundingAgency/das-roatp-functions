@@ -14,8 +14,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using SFA.DAS.Roatp.Functions.Services.Interfaces;
-using SFA.DAS.Roatp.Functions.Services.Sectors;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using SFA.DAS.QnA.Api.Types.Page;
+using SFA.DAS.Roatp.Functions.Services;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -160,6 +162,111 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
             Assert.IsNotNull(extractedApplication);
+        }
+
+
+        [Test]
+        public async Task SaveSectorDetailsForApplication_Saves_Sectors_Experts_And_TrainingTypes_Entry()
+        {
+            const string businessDeliveredTrainingType = "other business training";
+            var applicationId = _application.ApplicationId;
+            
+            var optionAgriculture = new Option
+            {
+                Value = "Agriculture&comma; environmental and animal care",
+                Label = "Agriculture, environmental and animal care"
+            };
+            var optionBusiness = new Option
+            {
+                Value = "Business and administration",
+                Label = "Business and administration"
+            };
+            var options = new List<Option>
+            {
+                optionAgriculture,
+                optionBusiness
+            };
+            var section = QnaGenerator.GenerateSection(applicationId, 7, 6, "7600", "DAT-7600", "CheckboxList",
+                "Agriculture&comma; environmental and animal care,Business and administration", options);
+            var sections = new List<Section> { section };
+            var sectorAgriculture = new OrganisationSectors
+            {
+                SectorName = "Agriculture, environmental and animal care",
+                OrganisationSectorExperts = new List<OrganisationSectorExperts>()
+            };
+            var sectorExpertAgriculture = new OrganisationSectorExperts
+            {
+                FirstName = "Aggie"
+            };
+
+            var sectorAgricultureTrainingTypes = new List<OrganisationSectorExpertDeliveredTrainingTypes>
+            {
+                new OrganisationSectorExpertDeliveredTrainingTypes
+                {
+                    DeliveredTrainingType = "other agriculture training"
+                }
+            };
+
+            var sectorBusiness = new OrganisationSectors
+            {
+                SectorName = "Business and administration",
+                OrganisationSectorExperts = new List<OrganisationSectorExperts>()
+            };
+            var sectorExpertBusiness = new OrganisationSectorExperts
+            {
+                FirstName = "Brian"
+            };
+
+            var sectorBusinessTrainingTypes = new List<OrganisationSectorExpertDeliveredTrainingTypes>
+            {
+                new OrganisationSectorExpertDeliveredTrainingTypes
+                {
+                    DeliveredTrainingType = businessDeliveredTrainingType
+                },
+                new OrganisationSectorExpertDeliveredTrainingTypes
+                {
+                    DeliveredTrainingType = "e-learning business training"
+                }
+            };
+
+            _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(applicationId)).ReturnsAsync(sections);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorDetails(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(), It.IsAny<Guid>(),
+                    "Agriculture&comma; environmental and animal care")).ReturnsAsync(sectorAgriculture);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorExpertsDetails(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(), 
+                    "Agriculture&comma; environmental and animal care")).ReturnsAsync(sectorExpertAgriculture);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorDeliveredTrainingTypes(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(),
+                    "Agriculture&comma; environmental and animal care")).ReturnsAsync(sectorAgricultureTrainingTypes);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorDetails(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(), It.IsAny<Guid>(),
+                    "Business and administration")).ReturnsAsync(sectorBusiness);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorExpertsDetails(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(),
+                    "Business and administration")).ReturnsAsync(sectorExpertBusiness);
+            _sectorProcessingService.Setup(x =>
+                x.GatherSectorDeliveredTrainingTypes(It.IsAny<IReadOnlyCollection<SubmittedApplicationAnswer>>(),
+                    "Business and administration")).ReturnsAsync(sectorBusinessTrainingTypes);
+
+            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+            await _sut.SaveSectorDetailsForApplication(applicationId, applicationAnswers);
+
+            var actualSectors = _applyDataContext.OrganisationSectors.ToList();
+            var actualSectorExperts = _applyDataContext.OrganisationSectorExperts.ToList();
+            var actualDeliveredTrainingTypes = _applyDataContext.OrganisationSectorExpertDeliveredTrainingTypes.ToList();
+
+            Assert.AreEqual(2,actualSectors.Count);
+            Assert.AreEqual(2, actualSectorExperts.Count); 
+            Assert.AreEqual(3, actualDeliveredTrainingTypes.Count);
+            var actualSector = actualSectors.FirstOrDefault(x => x.SectorName ==sectorBusiness.SectorName);
+            Assert.AreEqual(actualSector.SectorName,sectorBusiness.SectorName);
+            var actualSectorExpert = actualSectorExperts.FirstOrDefault(x => x.OrganisationSectorId == actualSector.Id);
+            Assert.AreEqual(actualSectorExpert.FirstName, sectorExpertBusiness.FirstName);
+            var actualTrainingTypes = actualDeliveredTrainingTypes.Where(x=> x.OrganisationSectorExpertId == actualSectorExpert.Id);
+            Assert.AreEqual(2,actualTrainingTypes.Count());
+            Assert.AreEqual(1, actualTrainingTypes.Count(x=>x.DeliveredTrainingType==businessDeliveredTrainingType));
         }
 
         [Test]

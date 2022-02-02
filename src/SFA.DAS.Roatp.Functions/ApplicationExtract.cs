@@ -13,8 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SFA.DAS.Roatp.Functions.Services.Interfaces;
-using SFA.DAS.Roatp.Functions.Services.Sectors;
+using SFA.DAS.Roatp.Functions.Services;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -24,7 +23,6 @@ namespace SFA.DAS.Roatp.Functions
         private readonly ApplyDataContext _applyDataContext;
         private readonly IQnaApiClient _qnaApiClient;
         private readonly ISectorProcessingService _sectorProcessingService;
-
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
         {
@@ -54,8 +52,6 @@ namespace SFA.DAS.Roatp.Functions
 
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 await SaveExtractedAnswersForApplication(applicationId, answers);
-
-
                 await SaveSectorDetailsForApplication(applicationId, answers);
             }
         }
@@ -100,7 +96,7 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
-        private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
+        public async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
         {
             var sectorPageId = "7600";
             var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;

@@ -1,6 +1,6 @@
 ﻿using SFA.DAS.Roatp.Functions.ApplyTypes;
 
-namespace SFA.DAS.Roatp.Functions.Services.Sectors
+namespace SFA.DAS.Roatp.Functions.Services
 {
     public static class SectorQuestionDetails
         {

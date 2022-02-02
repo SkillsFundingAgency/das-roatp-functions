@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 
-namespace SFA.DAS.Roatp.Functions.Services.Interfaces
+namespace SFA.DAS.Roatp.Functions.Services
 {
     public interface ISectorProcessingService
     {

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
-using SFA.DAS.Roatp.Functions.Services.Interfaces;
 
-namespace SFA.DAS.Roatp.Functions.Services.Sectors
+namespace SFA.DAS.Roatp.Functions.Services
 {
-    public  class SectorProcessingService: ISectorProcessingService
+    public class SectorProcessingService: ISectorProcessingService
     {
         private const string ResponseYes = "Yes";
         private const string ExperienceOfDeliveringNoExperience = "No experience";
@@ -19,6 +18,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
         private const string ExperienceOfTrainingApprenticesNoExperience = "No experience";
         private const string TypicalDurationOfTrainingApprenticesNoTrainingDelivered = "No training delivered";
         private const string HowTrainingDeliveredOther = "Other";
+
 
         public async Task<OrganisationSectors> GatherSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId,
             string sectorDescription)
@@ -160,7 +160,6 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
 
            return sectorExpertDeliveredTrainingTypesList;
         }
-
 
         private SectorLookupDetails GetSectorQuestionIdsForSectorDescription(string sectorDescription)
         {
