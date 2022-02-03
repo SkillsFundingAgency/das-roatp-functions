@@ -51,8 +51,13 @@ namespace SFA.DAS.Roatp.Functions
                 var answers = await ExtractAnswersForApplication(applicationId);
 
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-                await SaveExtractedAnswersForApplication(applicationId, answers);
-                await SaveSectorDetailsForApplication(applicationId, answers);
+                using (var transaction = _applyDataContext.Database.BeginTransaction())
+                {
+                    await SaveExtractedAnswersForApplication(applicationId, answers);
+                    await SaveSectorDetailsForApplication(applicationId, answers);
+                    await transaction.CommitAsync();
+                }
+
             }
         }
 
@@ -98,9 +103,9 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
         {
-            var sectorPageId = "7600";
+            var sectorSelectionPageId = "7600";
             var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
-            var sectorChoices = answers.Where(x => x.PageId == sectorPageId).ToList();
+            var sectorChoices = answers.Where(x => x.PageId == sectorSelectionPageId).ToList();
 
             var sectorsToAdd = new List<OrganisationSectors>();
             foreach (var sectorChoice in sectorChoices)
@@ -218,8 +223,7 @@ namespace SFA.DAS.Roatp.Functions
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogDebug($"Saving extracted answers for application {applicationId}");
-
-            using (var dataContextTransaction = _applyDataContext.Database.BeginTransaction())
+            try
             {
                 var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
                 _applyDataContext.SubmittedApplicationAnswers.RemoveRange(existingAnswers);
@@ -236,24 +240,13 @@ namespace SFA.DAS.Roatp.Functions
                 var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };
                 _applyDataContext.ExtractedApplications.Add(application);
 
-                try
-                {
-                    await _applyDataContext.SaveChangesAsync();
-                    await dataContextTransaction.CommitAsync();
+                await _applyDataContext.SaveChangesAsync();
 
-                    _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
-                }
-#pragma warning disable CA1031
-                catch (NullReferenceException) when (dataContextTransaction is null && _applyDataContext.GetType() != typeof(ApplyDataContext))
-                {
-                    // Safe to ignore as it is the Unit Tests executing and it doesn't currently mock Transactions
-                }
-#pragma warning restore CA1031
-                catch (DbUpdateException ex)
-                {
-                    _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
-                    await dataContextTransaction.RollbackAsync();
-                }
+                _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
             }
         }
 
