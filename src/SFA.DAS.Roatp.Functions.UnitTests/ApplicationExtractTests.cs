@@ -58,14 +58,6 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         }
 
         [Test]
-        public async Task Run_Logs_Information_Message()
-        {
-            await _sut.Run(_timerInfo, _applyFileExtractQueue.Object);
-
-            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
-        }
-
-        [Test]
         public async Task GetApplicationsToExtract_Contains_Expected_Applications()
         {
             var expectedApplicationId = _application.ApplicationId;
