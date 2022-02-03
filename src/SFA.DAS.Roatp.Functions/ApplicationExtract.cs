@@ -123,9 +123,15 @@ namespace SFA.DAS.Roatp.Functions
                         };
                         foreach (SubmittedApplicationAnswer record in person)
                         {
-                            var dobArray = record.Answer.Split(",");
-                            orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
-                            orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
+                            if(record.Answer != null)
+                            {
+                                var dobArray = record.Answer.Split(",");
+                                if(dobArray.Length == 2)
+                                {
+                                    orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
+                                    orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
+                                }
+                            }
                         }
                         organisationPersonnel.Add(orgPersonnel);
                     }
