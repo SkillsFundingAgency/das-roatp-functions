@@ -75,19 +75,19 @@ namespace SFA.DAS.Roatp.Functions
                 var organisationPersonnel = new List<OrganisationPersonnel>();
                 var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
 
-                var submittedAnswersCompaniesHouseDirectors = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
+                var submittedAnswersCompaniesHouseDirectors = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
                 organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
 
-                var submittedAnswersCompaniesHousePsCs = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePSCs, PersonnelType.PersonWithSignificantControl);
+                var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePSCs, PersonnelType.PersonWithSignificantControl);
                 organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
 
-                var submittedAnswersCharityTrustees = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
+                var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
                 organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
 
-                var submittedAnswersSoleTrade = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrade, PersonnelType.PersonInControl);
+                var submittedAnswersSoleTrade = ExtractSoleTradeOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrade, PersonnelType.PersonInControl);
                 organisationPersonnel.AddRange(submittedAnswersSoleTrade);
 
-                var submittedAnswersPartnership = ExtractOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
+                var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
                 organisationPersonnel.AddRange(submittedAnswersPartnership);
 
                 _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
@@ -103,51 +103,43 @@ namespace SFA.DAS.Roatp.Functions
             }
         }
 
-        private static List<OrganisationPersonnel> ExtractOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        private static List<OrganisationPersonnel> ExtractTabularAnswerOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        {
+            var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
+            var organisationPersonnel = new List<OrganisationPersonnel>();
+            foreach (var person in submittedAnswersOrganisationPersonnel)
+            {
+                var orgPersonnel = new OrganisationPersonnel
+                {
+                    OrganisationId = organisationId,
+                    PersonnelType = (int)personnelType,
+                };
+                foreach (var record in person)
+                {
+                    switch (record.ColumnHeading)
+                    {
+                        case "Name":
+                            orgPersonnel.Name = record.Answer;
+                            break;
+                        case "Date of birth":
+                            var dob = Convert.ToDateTime(record.Answer);
+                            orgPersonnel.DateOfBirthMonth = dob.Month;
+                            orgPersonnel.DateOfBirthYear = dob.Year;
+                            break;
+                    }
+                }
+                organisationPersonnel.Add(orgPersonnel);
+            }
+            return organisationPersonnel;
+        }
+
+        private static List<OrganisationPersonnel> ExtractSoleTradeOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
         {
             var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
             var organisationPersonnel = new List<OrganisationPersonnel>();
 
-            if (personnelType == PersonnelType.PersonInControl && questionId == QuestionIdSoleTrade)
-            {
-                var submittedAnswersOrganisationNameSoleTrade = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
-                if (submittedAnswersOrganisationPersonnel.Count > 0)
-                {
-                    foreach (var person in submittedAnswersOrganisationPersonnel)
-                    {
-                        var orgPersonnel = new OrganisationPersonnel
-                        {
-                            OrganisationId = organisationId,
-                            PersonnelType = (int)personnelType,
-                            Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
-                        };
-                        foreach (SubmittedApplicationAnswer record in person)
-                        {
-                            if(record.Answer != null)
-                            {
-                                var dobArray = record.Answer.Split(",");
-                                if(dobArray.Length == 2)
-                                {
-                                    orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
-                                    orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
-                                }
-                            }
-                        }
-                        organisationPersonnel.Add(orgPersonnel);
-                    }
-                }
-                else
-                {
-                    var orgPersonnel = new OrganisationPersonnel
-                    {
-                        OrganisationId = organisationId,
-                        PersonnelType = (int)personnelType,
-                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
-                    };
-                    organisationPersonnel.Add(orgPersonnel);
-                }
-            }
-            else
+            var submittedAnswersOrganisationNameSoleTrade = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
+            if (submittedAnswersOrganisationPersonnel.Count > 0)
             {
                 foreach (var person in submittedAnswersOrganisationPersonnel)
                 {
@@ -155,23 +147,32 @@ namespace SFA.DAS.Roatp.Functions
                     {
                         OrganisationId = organisationId,
                         PersonnelType = (int)personnelType,
+                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
                     };
-                    foreach (var record in person)
+                    foreach (SubmittedApplicationAnswer record in person)
                     {
-                        switch (record.ColumnHeading)
+                        if (record.Answer != null)
                         {
-                            case "Name":
-                                orgPersonnel.Name = record.Answer;
-                                break;
-                            case "Date of birth":
-                                var dob = Convert.ToDateTime(record.Answer);
-                                orgPersonnel.DateOfBirthMonth = dob.Month;
-                                orgPersonnel.DateOfBirthYear = dob.Year;
-                                break;
+                            var dobArray = record.Answer.Split(",");
+                            if (dobArray.Length == 2)
+                            {
+                                orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
+                                orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
+                            }
                         }
                     }
                     organisationPersonnel.Add(orgPersonnel);
                 }
+            }
+            else
+            {
+                var orgPersonnel = new OrganisationPersonnel
+                {
+                    OrganisationId = organisationId,
+                    PersonnelType = (int)personnelType,
+                    Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
+                };
+                organisationPersonnel.Add(orgPersonnel);
             }
 
             return organisationPersonnel;
