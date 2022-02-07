@@ -25,7 +25,7 @@ namespace SFA.DAS.Roatp.Functions
         private const int ManagementHierarchy = 3;
         private const int MonthsInYear = 12;
         private const string QuestionIdCompaniesHouseDirectors = "YO-70";
-        private const string QuestionIdCompaniesHousePSCs = "YO-71";
+        private const string QuestionIdCompaniesHousePsCs = "YO-71";
         private const string QuestionIdCharityTrustees = "YO-80";
         private const string QuestionIdOrganisationNameSoleTrade = "PRE-20";
         private const string QuestionIdPartnership = "YO-110";
@@ -78,7 +78,7 @@ namespace SFA.DAS.Roatp.Functions
                 var submittedAnswersCompaniesHouseDirectors = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
                 organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
 
-                var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePSCs, PersonnelType.PersonWithSignificantControl);
+                var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePsCs, PersonnelType.PersonWithSignificantControl);
                 organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
 
                 var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
@@ -147,19 +147,15 @@ namespace SFA.DAS.Roatp.Functions
                     {
                         OrganisationId = organisationId,
                         PersonnelType = (int)personnelType,
-                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
+                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault()?.Answer
                     };
-                    foreach (SubmittedApplicationAnswer record in person)
+                    foreach (var record in person)
                     {
-                        if (record.Answer != null)
-                        {
-                            var dobArray = record.Answer.Split(",");
-                            if (dobArray.Length == 2)
-                            {
-                                orgPersonnel.DateOfBirthMonth = byte.Parse(dobArray[0]);
-                                orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
-                            }
-                        }
+                        if (record.Answer == null) continue;
+                        var dobArray = record.Answer.Split(",");
+                        if (dobArray.Length != 2) continue;
+                        orgPersonnel.DateOfBirthMonth = int.Parse(dobArray[0]);
+                        orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
                     }
                     organisationPersonnel.Add(orgPersonnel);
                 }
@@ -170,11 +166,10 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     OrganisationId = organisationId,
                     PersonnelType = (int)personnelType,
-                    Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault().Answer
+                    Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault()?.Answer
                 };
                 organisationPersonnel.Add(orgPersonnel);
             }
-
             return organisationPersonnel;
         }
 
