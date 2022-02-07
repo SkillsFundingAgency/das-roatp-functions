@@ -114,7 +114,7 @@ namespace SFA.DAS.Roatp.Functions
             {
                 {
                     _logger.LogInformation(
-                        $"No OrganisationSector present to extract for application {applicationId}");
+                        $"No sectors present to extract for application {applicationId}");
                 }
             }
             else
