@@ -8,8 +8,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Agriculture&comma; environmental and animal care";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Agriculture, environmental and animal care",
                         WhatStandardsOffered = "DAT-7610AA-1",
@@ -43,8 +43,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Business and administration";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Business and administration",
                         WhatStandardsOffered = "DAT-7615AA-1",
@@ -78,8 +78,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Care services";
               
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Care services",
                         WhatStandardsOffered = "DAT-7620AA-1",
@@ -113,8 +113,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Catering and hospitality";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Catering and hospitality",
                         WhatStandardsOffered = "DAT-7625AA-1",
@@ -148,8 +148,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Construction";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Construction",
                         WhatStandardsOffered = "DAT-7630AA-1",
@@ -183,8 +183,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Creative and design";
 
-            public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+            public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Creative and design",
                         WhatStandardsOffered = "DAT-7635AA-1",
@@ -218,8 +218,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Digital";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Digital",
                         WhatStandardsOffered = "DAT-7640AA-1",
@@ -253,8 +253,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Education and childcare";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Education and childcare",
                         WhatStandardsOffered = "DAT-7645AA-1",
@@ -288,8 +288,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Engineering and manufacturing";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Engineering and manufacturing",
                         WhatStandardsOffered = "DAT-7650AA-1",
@@ -323,8 +323,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Hair and beauty";
      
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Hair and beauty",
                         WhatStandardsOffered = "DAT-7655AA-1",
@@ -358,8 +358,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Health and science";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Health and science",
                         WhatStandardsOffered = "DAT-7660AA-1",
@@ -393,8 +393,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Legal&comma; finance and accounting";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Legal, finance and accounting",
                         WhatStandardsOffered = "DAT-7665AA-1",
@@ -428,8 +428,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Protective services";
 
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Protective services",
                         WhatStandardsOffered = "DAT-7670AA-1",
@@ -463,8 +463,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 public const string Description = "Sales&comma; marketing and procurement";
                
-                public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Sales, marketing and procurement",
                         WhatStandardsOffered = "DAT-7675AA-1",
@@ -497,8 +497,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             public static class TransportAndLogistics
             {
                 public const string Description = "Transport and logistics";
-                 public static SectorLookupDetails SectorLookupDetails =>
-                    new SectorLookupDetails
+                 public static SectorDetails SectorDetails =>
+                    new SectorDetails
                     {
                         Name = "Transport and logistics",
                         WhatStandardsOffered = "DAT-7680AA-1",

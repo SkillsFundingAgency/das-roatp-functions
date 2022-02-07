@@ -172,40 +172,40 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
            return sectorExpertDeliveredTrainingTypesList;
         }
 
-        private  SectorLookupDetails GetSectorQuestionIdsForSectorDescription(string sectorDescription)
+        private  SectorDetails GetSectorQuestionIdsForSectorDescription(string sectorDescription)
         {
             switch (sectorDescription)
             {
                 case SectorQuestionDetails.AgricultureEnvironmentalAndAnimalCare.Description:
-                    return SectorQuestionDetails.AgricultureEnvironmentalAndAnimalCare.SectorLookupDetails;
+                    return SectorQuestionDetails.AgricultureEnvironmentalAndAnimalCare.SectorDetails;
                 case SectorQuestionDetails.BusinessAndAdministration.Description:
-                    return SectorQuestionDetails.BusinessAndAdministration.SectorLookupDetails;
+                    return SectorQuestionDetails.BusinessAndAdministration.SectorDetails;
                 case SectorQuestionDetails.CareServices.Description:
-                    return SectorQuestionDetails.CareServices.SectorLookupDetails;
+                    return SectorQuestionDetails.CareServices.SectorDetails;
                 case SectorQuestionDetails.CateringAndHospitality.Description:
-                    return SectorQuestionDetails.CateringAndHospitality.SectorLookupDetails;
+                    return SectorQuestionDetails.CateringAndHospitality.SectorDetails;
                 case SectorQuestionDetails.Construction.Description:
-                    return SectorQuestionDetails.Construction.SectorLookupDetails;
+                    return SectorQuestionDetails.Construction.SectorDetails;
                 case SectorQuestionDetails.CreativeAndDesign.Description:
-                    return SectorQuestionDetails.CreativeAndDesign.SectorLookupDetails;
+                    return SectorQuestionDetails.CreativeAndDesign.SectorDetails;
                 case SectorQuestionDetails.Digital.Description:
-                    return SectorQuestionDetails.Digital.SectorLookupDetails;
+                    return SectorQuestionDetails.Digital.SectorDetails;
                 case SectorQuestionDetails.EducationAndChildcare.Description:
-                    return SectorQuestionDetails.EducationAndChildcare.SectorLookupDetails;
+                    return SectorQuestionDetails.EducationAndChildcare.SectorDetails;
                 case SectorQuestionDetails.EngineeringAndManufacturing.Description:
-                    return SectorQuestionDetails.EngineeringAndManufacturing.SectorLookupDetails;
+                    return SectorQuestionDetails.EngineeringAndManufacturing.SectorDetails;
                 case SectorQuestionDetails.HairAndBeauty.Description:
-                    return SectorQuestionDetails.HairAndBeauty.SectorLookupDetails;
+                    return SectorQuestionDetails.HairAndBeauty.SectorDetails;
                 case SectorQuestionDetails.HealthAndScience.Description:
-                    return SectorQuestionDetails.HealthAndScience.SectorLookupDetails;
+                    return SectorQuestionDetails.HealthAndScience.SectorDetails;
                 case SectorQuestionDetails.LegalFinanceAndAccounting.Description:
-                    return SectorQuestionDetails.LegalFinanceAndAccounting.SectorLookupDetails;
+                    return SectorQuestionDetails.LegalFinanceAndAccounting.SectorDetails;
                 case SectorQuestionDetails.ProtectiveServices.Description:
-                    return SectorQuestionDetails.ProtectiveServices.SectorLookupDetails;
+                    return SectorQuestionDetails.ProtectiveServices.SectorDetails;
                 case SectorQuestionDetails.SalesMarketingAndProcurement.Description:
-                    return SectorQuestionDetails.SalesMarketingAndProcurement.SectorLookupDetails;
+                    return SectorQuestionDetails.SalesMarketingAndProcurement.SectorDetails;
                 case SectorQuestionDetails.TransportAndLogistics.Description:
-                    return SectorQuestionDetails.TransportAndLogistics.SectorLookupDetails;
+                    return SectorQuestionDetails.TransportAndLogistics.SectorDetails;
                 default:
                     return null;
             }

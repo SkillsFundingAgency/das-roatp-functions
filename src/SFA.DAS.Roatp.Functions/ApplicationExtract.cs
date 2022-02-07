@@ -37,7 +37,6 @@ namespace SFA.DAS.Roatp.Functions
             _sectorProcessingService = sectorProcessingService;
         }
 
-
         [FunctionName("ApplicationExtract")]
         public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
             [ServiceBus("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue)
@@ -105,7 +104,6 @@ namespace SFA.DAS.Roatp.Functions
 
             return answers;
         }
-
 
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
         {
@@ -209,7 +207,6 @@ namespace SFA.DAS.Roatp.Functions
                     submittedQuestionAnswers.AddRange(submittedFurtherQuestionAnswers);
                 }
             }
-
             return submittedQuestionAnswers;
         }
 

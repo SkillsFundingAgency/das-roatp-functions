@@ -1,6 +1,6 @@
 ﻿namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
-    public  class SectorLookupDetails
+    public  class SectorDetails
     {
         public string Name { get; set; }
         public string HowManyStarts { get; set; }
