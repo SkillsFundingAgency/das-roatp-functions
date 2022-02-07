@@ -2,7 +2,7 @@
 
 namespace SFA.DAS.Roatp.Functions.ApplyTypes
 {
-    public class OrganisationSectorExperts
+    public class OrganisationSectorExpert
     {
         public int Id { get; set; }
         public int OrganisationSectorId { get; set; }
@@ -27,7 +27,7 @@ namespace SFA.DAS.Roatp.Functions.ApplyTypes
         public string TypeOfApprenticeshipDelivered { get; set; }
         public string ExperienceInTrainingApprentices { get; set; }
         public string TypicalDurationOfTrainingApprentices { get; set; }
-        public virtual OrganisationSectors OrganisationSectors { get; set; }
-        public virtual ICollection<OrganisationSectorExpertDeliveredTrainingTypes> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
+        public virtual OrganisationSector OrganisationSector { get; set; }
+        public virtual ICollection<OrganisationSectorExpertDeliveredTrainingType> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
     }
 }

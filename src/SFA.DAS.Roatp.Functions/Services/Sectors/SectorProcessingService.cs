@@ -7,11 +7,11 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
 {
     public   class SectorProcessingService: ISectorProcessingService
     {
-        public   List<OrganisationSectors> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId)
+        public   List<OrganisationSector> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId)
         {
             var sectorChoices = answers.Where(x => x.PageId == "7600").ToList();
 
-            var sectorsToAdd = new List<OrganisationSectors>();
+            var sectorsToAdd = new List<OrganisationSector>();
             foreach (var sectorChoice in sectorChoices)
             {
                 var sectorDescription = sectorChoice.Answer;
@@ -20,7 +20,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                var deliveredTrainingTypes = GatherSectorDeliveredTrainingTypes(answers, sectorDescription);
                foreach (var trainingType in deliveredTrainingTypes)
                {
-                   trainingType.OrganisationSectorExperts = sectorExperts;
+                   trainingType.OrganisationSectorExpert = sectorExperts;
                }
                sectorExperts.OrganisationSectorExpertDeliveredTrainingTypes = deliveredTrainingTypes;
                 sector.OrganisationSectorExperts.Add(sectorExperts);
@@ -31,12 +31,12 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             return sectorsToAdd;
         }
 
-        private   OrganisationSectors GatherSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId,
+        private   OrganisationSector GatherSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId,
             string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
             if (sectorDetails == null) return null;
-            var sector = new OrganisationSectors();
+            var sector = new OrganisationSector();
             sector.OrganisationId = organisationId;
             sector.StandardsServed = answers
                 .FirstOrDefault(x => x.QuestionId == sectorDetails.WhatStandardsOffered)?.Answer;
@@ -47,16 +47,16 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                 out var numberOfEmployees);
             sector.NumberOfTrainers = numberOfEmployees;
             sector.SectorName = sectorDetails.Name;
-            sector.OrganisationSectorExperts = new List<OrganisationSectorExperts>();
+            sector.OrganisationSectorExperts = new List<OrganisationSectorExpert>();
             return sector;
         }
 
-        private   OrganisationSectorExperts GatherSectorExpertsDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
+        private   OrganisationSectorExpert GatherSectorExpertsDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
             string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
             if (sectorDetails == null) return null;
-            var sectorExperts = new OrganisationSectorExperts();
+            var sectorExperts = new OrganisationSectorExpert();
             sectorExperts.FirstName =
                 answers.FirstOrDefault(x => x.QuestionId == sectorDetails.FirstName)?.Answer;
             sectorExperts.LastName =
@@ -144,11 +144,11 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             return sectorExperts;
         }
     
-        private  List<OrganisationSectorExpertDeliveredTrainingTypes> GatherSectorDeliveredTrainingTypes(IReadOnlyCollection<SubmittedApplicationAnswer> answers, string sectorDescription)
+        private  List<OrganisationSectorExpertDeliveredTrainingType> GatherSectorDeliveredTrainingTypes(IReadOnlyCollection<SubmittedApplicationAnswer> answers, string sectorDescription)
         {
             var sectorDetails = GetSectorQuestionIdsForSectorDescription(sectorDescription);
             if (sectorDetails == null) return null;
-            var sectorExpertDeliveredTrainingTypesList = new List<OrganisationSectorExpertDeliveredTrainingTypes>();
+            var sectorExpertDeliveredTrainingTypesList = new List<OrganisationSectorExpertDeliveredTrainingType>();
 
             var howTrainingDeliveredSelections =
                 answers.Where(x => x.QuestionId == sectorDetails.HowHaveTheyDeliveredTraining);
@@ -156,7 +156,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
             {
                 foreach (var howTrainingDelivered in howTrainingDeliveredSelections)
                 {
-                    var trainingType = new OrganisationSectorExpertDeliveredTrainingTypes();
+                    var trainingType = new OrganisationSectorExpertDeliveredTrainingType();
                     if (howTrainingDelivered.Answer != "Other")
                     {
                         trainingType.DeliveredTrainingType = howTrainingDelivered.Answer;
@@ -214,7 +214,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
 
     public interface ISectorProcessingService
     {
-        List<OrganisationSectors> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
+        List<OrganisationSector> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers,
             Guid organisationId);
     }
 }

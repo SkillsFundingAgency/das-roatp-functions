@@ -112,32 +112,30 @@ namespace SFA.DAS.Roatp.Functions
             var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
             var sectorsToAdd =  _sectorProcessingService.BuildSectorDetails(answers, organisationId);
 
-            if (sectorsToAdd != null && sectorsToAdd.Any())
+            if (sectorsToAdd == null || !sectorsToAdd.Any())
             {
-                try
                 {
-
-                    _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
-                    await _applyDataContext.SaveChangesAsync();
-
                     _logger.LogInformation(
-                        $"OrganisationSectors successfully extracted for application {applicationId}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Unable to extract OrganisationSectors for Application: {applicationId}");
+                        $"No OrganisationSector present to extract for application {applicationId}");
                 }
             }
             else
             {
+                try
                 {
+                    _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
+                    await _applyDataContext.SaveChangesAsync();
+
                     _logger.LogInformation(
-                        $"No OrganisationSectors present to extract for application {applicationId}");
+                        $"OrganisationSector successfully extracted for application {applicationId}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Unable to extract OrganisationSector for Application: {applicationId}");
+                    throw;
                 }
             }
         }
-
-   
 
         private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
         {

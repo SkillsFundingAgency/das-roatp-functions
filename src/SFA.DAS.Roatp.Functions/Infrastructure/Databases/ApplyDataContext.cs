@@ -101,32 +101,31 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                 entity.ToTable("OrganisationManagement");
             });
 
-            modelBuilder.Entity<Organisations>(entity =>
+            modelBuilder.Entity<Organisation>(entity =>
             {
                 entity.ToTable("Organisations");
             });
 
-            modelBuilder.Entity<OrganisationSectors>(entity =>
+            modelBuilder.Entity<OrganisationSector>(entity =>
             {
                 entity.ToTable("OrganisationSectors");
             });
 
-            modelBuilder.Entity<OrganisationSectorExperts>(entity =>
+            modelBuilder.Entity<OrganisationSectorExpert>(entity =>
             {
                 entity.ToTable("OrganisationSectorExperts");
 
-                entity.HasOne(organisationSectorExperts => organisationSectorExperts.OrganisationSectors)
+                entity.HasOne(organisationSectorExperts => organisationSectorExperts.OrganisationSector)
                     .WithMany(organisationSectors => organisationSectors.OrganisationSectorExperts)
                     .HasForeignKey(s => s.OrganisationSectorId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-            modelBuilder.Entity<OrganisationSectorExpertDeliveredTrainingTypes>(entity =>
+            modelBuilder.Entity<OrganisationSectorExpertDeliveredTrainingType>(entity =>
             {
                 entity.ToTable("OrganisationSectorExpertDeliveredTrainingTypes");
-                entity.HasOne(osedtt => osedtt.OrganisationSectorExperts)
+                entity.HasOne(osedtt => osedtt.OrganisationSectorExpert)
                     .WithMany(osedtt => osedtt.OrganisationSectorExpertDeliveredTrainingTypes)
-                    .HasForeignKey(s => s.OrganisationSectorExpertId)
-                    .OnDelete(DeleteBehavior.NoAction);
+                    .HasForeignKey(s => s.OrganisationSectorExpertId);
             });
         }
 
@@ -140,8 +139,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
         public virtual DbSet<BankHoliday> BankHoliday { get; set; }
         public virtual DbSet<OrganisationManagement> OrganisationManagement { get; set; }
-        public virtual DbSet<OrganisationSectors> OrganisationSectors { get; set; }
-        public virtual DbSet<OrganisationSectorExperts> OrganisationSectorExperts { get; set; }
-        public virtual DbSet<OrganisationSectorExpertDeliveredTrainingTypes> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
+        public virtual DbSet<OrganisationSector> OrganisationSectors { get; set; }
+        public virtual DbSet<OrganisationSectorExpert> OrganisationSectorExperts { get; set; }
+        public virtual DbSet<OrganisationSectorExpertDeliveredTrainingType> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
     }
 }
