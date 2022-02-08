@@ -29,7 +29,9 @@ namespace SFA.DAS.Roatp.Functions
         private const string QuestionIdCharityTrustees = "YO-80";
         private const string QuestionIdOrganisationNameSoleTrade = "PRE-20";
         private const string QuestionIdPartnership = "YO-110";
-        private const string QuestionIdSoleTrade = "YO-120";
+        private const string QuestionIdSoleTrader = "YO-120";
+        private const string QuestionIdSoleTraderOrPartnership = "YO-100";
+        private const string SoleTraderType = "Sole trader";
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient)
         {
@@ -84,7 +86,7 @@ namespace SFA.DAS.Roatp.Functions
                 var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
                 organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
 
-                var submittedAnswersSoleTrade = ExtractSoleTradeOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrade, PersonnelType.PersonInControl);
+                var submittedAnswersSoleTrade = ExtractSoleTraderOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrader, PersonnelType.PersonInControl);
                 organisationPersonnel.AddRange(submittedAnswersSoleTrade);
 
                 var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
@@ -133,13 +135,15 @@ namespace SFA.DAS.Roatp.Functions
             return organisationPersonnel;
         }
 
-        private static List<OrganisationPersonnel> ExtractSoleTradeOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        private static List<OrganisationPersonnel> ExtractSoleTraderOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
         {
             var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
             var organisationPersonnel = new List<OrganisationPersonnel>();
 
-            var submittedAnswersOrganisationNameSoleTrade = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
-            if (submittedAnswersOrganisationPersonnel.Count > 0)
+            var submittedAnswersOrganisationSoleTrader = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
+            var submittedAnswersOrganisationTypeSoleTraderOrPartnership = answers.Where(answer => answer.QuestionId == QuestionIdSoleTraderOrPartnership);
+
+            if (submittedAnswersOrganisationPersonnel.Count > 0 && submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any())
             {
                 foreach (var person in submittedAnswersOrganisationPersonnel)
                 {
@@ -147,7 +151,7 @@ namespace SFA.DAS.Roatp.Functions
                     {
                         OrganisationId = organisationId,
                         PersonnelType = (int)personnelType,
-                        Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault()?.Answer
+                        Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
                     };
                     foreach (var record in person)
                     {
@@ -160,13 +164,14 @@ namespace SFA.DAS.Roatp.Functions
                     organisationPersonnel.Add(orgPersonnel);
                 }
             }
-            else
+            else if(submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any() && 
+                   submittedAnswersOrganisationTypeSoleTraderOrPartnership.FirstOrDefault()?.Answer == SoleTraderType)
             {
                 var orgPersonnel = new OrganisationPersonnel
                 {
                     OrganisationId = organisationId,
                     PersonnelType = (int)personnelType,
-                    Name = submittedAnswersOrganisationNameSoleTrade.FirstOrDefault()?.Answer
+                    Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
                 };
                 organisationPersonnel.Add(orgPersonnel);
             }
