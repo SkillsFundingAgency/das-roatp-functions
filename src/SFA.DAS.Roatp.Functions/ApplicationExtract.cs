@@ -112,13 +112,11 @@ namespace SFA.DAS.Roatp.Functions
 
             if (sectorsToAdd == null || !sectorsToAdd.Any())
             {
-                {
-                    _logger.LogInformation(
-                        $"No sectors present to extract for application {applicationId}");
-                }
+                _logger.LogInformation(
+                    $"No sectors present to extract for application {applicationId}");
+                return;
             }
-            else
-            {
+
                 try
                 {
                     _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
@@ -132,7 +130,7 @@ namespace SFA.DAS.Roatp.Functions
                     _logger.LogError(ex, $"Unable to extract OrganisationSector for Application: {applicationId}");
                     throw;
                 }
-            }
+            
         }
 
         private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
