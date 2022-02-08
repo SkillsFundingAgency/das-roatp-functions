@@ -114,7 +114,7 @@ namespace SFA.DAS.Roatp.Functions
                 var orgPersonnel = new OrganisationPersonnel
                 {
                     OrganisationId = organisationId,
-                    PersonnelType = (int)personnelType,
+                    PersonnelType = personnelType,
                 };
                 foreach (var record in person)
                 {
@@ -150,7 +150,7 @@ namespace SFA.DAS.Roatp.Functions
                     var orgPersonnel = new OrganisationPersonnel
                     {
                         OrganisationId = organisationId,
-                        PersonnelType = (int)personnelType,
+                        PersonnelType = personnelType,
                         Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
                     };
                     foreach (var record in person)
@@ -170,7 +170,7 @@ namespace SFA.DAS.Roatp.Functions
                 var orgPersonnel = new OrganisationPersonnel
                 {
                     OrganisationId = organisationId,
-                    PersonnelType = (int)personnelType,
+                    PersonnelType = personnelType,
                     Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
                 };
                 organisationPersonnel.Add(orgPersonnel);

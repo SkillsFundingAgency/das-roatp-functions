@@ -95,16 +95,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(cf => cf.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
-
-            modelBuilder.Entity<OrganisationManagement>(entity =>
-            {
-                entity.ToTable("OrganisationManagement");
-            });
-
-            modelBuilder.Entity<OrganisationPersonnel>(entity =>
-            {
-                entity.ToTable("OrganisationPersonnel");
-            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }

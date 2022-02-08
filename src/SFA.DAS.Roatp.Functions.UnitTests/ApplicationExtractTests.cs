@@ -192,10 +192,10 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
             
             Assert.IsNotNull(loadedOrganisationPersonnel);
-            Assert.True(loadedOrganisationPersonnel.Where(a=>a.PersonnelType == (int)PersonnelType.CompanyDirector).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == (int)PersonnelType.PersonWithSignificantControl).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == (int)PersonnelType.CharityTrustee).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == (int)PersonnelType.PersonInControl).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a=>a.PersonnelType == PersonnelType.CompanyDirector).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count() > 0);
         }
     }
 }
