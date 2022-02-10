@@ -30,6 +30,7 @@ namespace SFA.DAS.Roatp.Functions
         private const string QuestionIdOrganisationNameSoleTrade = "PRE-20";
         private const string QuestionIdPartnership = "YO-110";
         private const string QuestionIdSoleTrader = "YO-120";
+        private const string QuestionIdAddPeopleManualEntry = "YO-130";
         private const string QuestionIdSoleTraderOrPartnership = "YO-100";
         private const string SoleTraderType = "Sole trader";
 
@@ -91,6 +92,9 @@ namespace SFA.DAS.Roatp.Functions
 
                 var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
                 organisationPersonnel.AddRange(submittedAnswersPartnership);
+
+                var submittedAnswersAddPeopleManualEntry = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdAddPeopleManualEntry, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersAddPeopleManualEntry);
 
                 _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
 
