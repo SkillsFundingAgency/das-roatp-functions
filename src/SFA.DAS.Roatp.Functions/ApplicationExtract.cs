@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SFA.DAS.Roatp.Functions.Services.Sectors;
+using static System.Boolean;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -21,17 +23,19 @@ namespace SFA.DAS.Roatp.Functions
         private readonly ILogger<ApplicationExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
         private readonly IQnaApiClient _qnaApiClient;
+        private readonly ISectorProcessingService _sectorProcessingService;
         private const int DeliveringApprenticeshipTraining = 7;
         private const int ManagementHierarchy = 3;
         private const int MonthsInYear = 12;
 
-        public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient)
+
+        public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
             _qnaApiClient = qnaApiClient;
+            _sectorProcessingService = sectorProcessingService;
         }
-
 
         [FunctionName("ApplicationExtract")]
         public async Task Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer,
@@ -50,10 +54,11 @@ namespace SFA.DAS.Roatp.Functions
             {
                 var answers = await ExtractAnswersForApplication(applicationId);
                 await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-                
+
                 using (var transaction = _applyDataContext.Database.BeginTransaction())
                 {
                     await SaveExtractedAnswersForApplication(applicationId, answers);
+                    await SaveSectorDetailsForApplication(applicationId, answers);
                     await LoadOrganisationManagementForApplication(applicationId, answers);
                     await transaction.CommitAsync();
                 }
@@ -98,6 +103,34 @@ namespace SFA.DAS.Roatp.Functions
             }
 
             return answers;
+        }
+
+        private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
+        {
+            var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
+            var sectorsToAdd = _sectorProcessingService.BuildSectorDetails(answers, organisationId);
+
+            if (sectorsToAdd == null || !sectorsToAdd.Any())
+            {
+                _logger.LogInformation(
+                    $"No sectors present to extract for application {applicationId}");
+                return;
+            }
+
+                try
+                {
+                    _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
+                    await _applyDataContext.SaveChangesAsync();
+
+                    _logger.LogInformation(
+                        $"OrganisationSector successfully extracted for application {applicationId}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Unable to extract OrganisationSector for Application: {applicationId}");
+                    throw;
+                }
+            
         }
 
         private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
@@ -172,7 +205,6 @@ namespace SFA.DAS.Roatp.Functions
                     submittedQuestionAnswers.AddRange(submittedFurtherQuestionAnswers);
                 }
             }
-
             return submittedQuestionAnswers;
         }
 
@@ -243,7 +275,7 @@ namespace SFA.DAS.Roatp.Functions
                             organisationManagement.JobRole = personDetails.Answer;
                             break;
                         case "Years in role":
-                            organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer) * MonthsInYear; 
+                            organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer) * MonthsInYear;
                             break;
                         case "Months in role":
                             organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer);
@@ -274,7 +306,7 @@ namespace SFA.DAS.Roatp.Functions
             }
             return organisationManagementAnswers;
         }
-        
+
         public async Task LoadOrganisationManagementForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogDebug($"OrganisationManagement extract for application {applicationId}");

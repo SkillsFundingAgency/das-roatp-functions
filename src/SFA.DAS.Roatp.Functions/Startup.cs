@@ -18,6 +18,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus.Management;
+using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 [assembly: FunctionsStartup(typeof(SFA.DAS.Roatp.Functions.Startup))]
 
@@ -208,6 +209,10 @@ namespace SFA.DAS.Roatp.Functions
         private static void BuildDependencyInjection(IFunctionsHostBuilder builder)
         {
             builder.Services.AddScoped<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
+            builder.Services.AddSingleton<ISectorProcessingService>((s) =>
+            {
+                return new SectorProcessingService();
+            });
         }
     }
 }
