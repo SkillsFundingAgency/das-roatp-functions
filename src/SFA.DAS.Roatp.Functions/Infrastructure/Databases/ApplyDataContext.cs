@@ -13,8 +13,8 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            var jsonSerializerSettings = new JsonSerializerSettings 
-            { 
+            var jsonSerializerSettings = new JsonSerializerSettings
+            {
                 NullValueHandling = NullValueHandling.Ignore,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
@@ -22,9 +22,9 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
             modelBuilder.Entity<Apply>(entity =>
             {
                 entity.Property(prop => prop.ApplyData)
-                .HasConversion(
-                    con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
-                    con => JsonConvert.DeserializeObject<ApplyData>(con, jsonSerializerSettings));
+                    .HasConversion(
+                        con => JsonConvert.SerializeObject(con, jsonSerializerSettings),
+                        con => JsonConvert.DeserializeObject<ApplyData>(con, jsonSerializerSettings));
             });
 
             modelBuilder.Entity<Appeal>(entity =>
@@ -95,6 +95,30 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
                     .HasForeignKey(cf => cf.ApplicationId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            modelBuilder.Entity<OrganisationManagement>(entity => { entity.ToTable("OrganisationManagement"); });
+
+            modelBuilder.Entity<Organisation>(entity => { entity.ToTable("Organisations"); });
+
+            modelBuilder.Entity<OrganisationSector>(entity => { entity.ToTable("OrganisationSectors"); });
+
+            modelBuilder.Entity<OrganisationSectorExpert>(entity =>
+            {
+                entity.ToTable("OrganisationSectorExperts");
+
+                entity.HasOne(organisationSectorExperts => organisationSectorExperts.OrganisationSector)
+                    .WithMany(organisationSectors => organisationSectors.OrganisationSectorExperts)
+                    .HasForeignKey(s => s.OrganisationSectorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<OrganisationSectorExpertDeliveredTrainingType>(entity =>
+            {
+                entity.ToTable("OrganisationSectorExpertDeliveredTrainingTypes");
+                entity.HasOne(osedtt => osedtt.OrganisationSectorExpert)
+                    .WithMany(osedtt => osedtt.OrganisationSectorExpertDeliveredTrainingTypes)
+                    .HasForeignKey(s => s.OrganisationSectorExpertId);
+            });
         }
 
         public virtual DbSet<Apply> Apply { get; set; }
@@ -107,6 +131,9 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<FinancialReviewClarificationFile> FinancialReviewClarificationFile { get; set; }
         public virtual DbSet<BankHoliday> BankHoliday { get; set; }
         public virtual DbSet<OrganisationManagement> OrganisationManagement { get; set; }
+        public virtual DbSet<OrganisationSector> OrganisationSectors { get; set; }
+        public virtual DbSet<OrganisationSectorExpert> OrganisationSectorExperts { get; set; }
+        public virtual DbSet<OrganisationSectorExpertDeliveredTrainingType> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
         public virtual DbSet<OrganisationPersonnel> OrganisationPersonnel { get; set; }
     }
 }
