@@ -267,15 +267,14 @@ namespace SFA.DAS.Roatp.Functions
 
         private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId = null)
         {
-            var answer = new Answer { QuestionId = questionId };
-
-            var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
-            if (questionTagData != null)
+           var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
+           if (questionTagData == null) return null;
+           var answer = new Answer
             {
-                answer.Value = questionTagData;
-            }
-
-            return answer?.Value == null ? null : answer;
+                QuestionId = questionId,
+                Value = questionTagData
+            };
+            return answer;
         }
 
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
