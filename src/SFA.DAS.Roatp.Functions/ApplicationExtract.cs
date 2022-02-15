@@ -242,7 +242,7 @@ namespace SFA.DAS.Roatp.Functions
         {
             try
             {
-                var partnershipAnwers = await ExtractPartnershipAnwersByTag(applicationId, AddPartners, QuestionIdPartnership);
+                var partnershipAnwers = await ExtractAnwersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
                 if (partnershipAnwers!= null)
                 {
                     var tabularData = JsonConvert.DeserializeObject<TabularData>(partnershipAnwers.Value);
@@ -263,7 +263,7 @@ namespace SFA.DAS.Roatp.Functions
             }
         }
 
-        private async Task<Answer> ExtractPartnershipAnwersByTag(Guid applicationId, string questionTag, string questionId = null)
+        private async Task<Answer> ExtractAnwersByQuestionTag(Guid applicationId, string questionTag, string questionId = null)
         {
             var answer = new Answer { QuestionId = questionId };
 
