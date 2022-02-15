@@ -229,41 +229,43 @@ namespace SFA.DAS.Roatp.Functions
                 }
             }
             //Extract QuestionId Y0-110 answer even if it is inactive, there is an issue setting answer active to false while adding orgnisation type answer to the tabular list as the last entry
-            var hasPartnershipAnswers = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
-            if(!hasPartnershipAnswers)
+            var hasPartnershipAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
+            if(!hasPartnershipAnswersExtracted)
             {
-                await ExtractPartnershipAnwers(applicationId, answers);
+                await ExtractPartnershipAnswers(applicationId, answers);
             }
 
             return answers;
         }
 
-        private async Task ExtractPartnershipAnwers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        private async Task ExtractPartnershipAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             try
             {
-                var partnershipAnwers = await ExtractAnwersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
-                if (partnershipAnwers!= null)
+                var partnershipAnswers = await ExtractAnswersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
+                if (partnershipAnswers!= null)
                 {
-                    var tabularData = JsonConvert.DeserializeObject<TabularData>(partnershipAnwers.Value);
+                    var tabularData = JsonConvert.DeserializeObject<TabularData>(partnershipAnswers.Value);
 
                     var question = new Question
                     {
                         QuestionId = QuestionIdPartnership,
-                        Input = new Input()
+                        Input = new Input
+                        {
+                            Type = TabularDataType
+                        }
                     };
-                    question.Input.Type = TabularDataType;
                     var partnershipTabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
                     answers.AddRange(partnershipTabularAnswers);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Unable to extracted Partnership anwers for Application: {applicationId}");
+                _logger.LogError(ex, $"Unable to extracted Partnership answers for Application: {applicationId}");
             }
         }
 
-        private async Task<Answer> ExtractAnwersByQuestionTag(Guid applicationId, string questionTag, string questionId = null)
+        private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId = null)
         {
             var answer = new Answer { QuestionId = questionId };
 
@@ -273,11 +275,7 @@ namespace SFA.DAS.Roatp.Functions
                 answer.Value = questionTagData;
             }
 
-            if (answer?.Value == null)
-            {
-                return null;
-            }
-            return answer;
+            return answer?.Value == null ? null : answer;
         }
 
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
@@ -323,9 +321,7 @@ namespace SFA.DAS.Roatp.Functions
                     var submittedQuestionAnswers = ExtractQuestionAnswers(applicationId, sequenceNumber, sectionNumber, page.PageId, question, pageAnswers);
                     submittedPageAnswers.AddRange(submittedQuestionAnswers);
                 }
-
             }
-
             return submittedPageAnswers;
         }
 
@@ -383,7 +379,6 @@ namespace SFA.DAS.Roatp.Functions
             }
             return submittedQuestionAnswers;
         }
-    
 
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
