@@ -265,7 +265,7 @@ namespace SFA.DAS.Roatp.Functions
             }
         }
 
-        private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId = null)
+        private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId)
         {
            var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
            if (questionTagData == null) return null;
