@@ -37,6 +37,12 @@ namespace SFA.DAS.Roatp.Functions
         private const string QuestionIdSoleTraderOrPartnership = "YO-100";
         private const string SoleTraderType = "Sole trader";
 
+        private const string PageIdPartnershipAddPartners = "110";
+        public const string AddPartners = "AddPartners";
+        private const string TabularDataType = "TabularData";
+        public const int YourOrganisation = 1;
+        public const int WhosInControl = 3;
+
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
         {
@@ -224,8 +230,53 @@ namespace SFA.DAS.Roatp.Functions
                     }
                 }
             }
+            //Extract QuestionId Y0-110 answer even if it is inactive, there is an issue setting answer active to false while adding orgnisation type answer to the tabular list as the last entry
+            var hasPartnershipAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
+            if(!hasPartnershipAnswersExtracted)
+            {
+                await ExtractPartnershipAnswers(applicationId, answers);
+            }
 
             return answers;
+        }
+
+        private async Task ExtractPartnershipAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            try
+            {
+                var partnershipAnswers = await ExtractAnswersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
+                if (partnershipAnswers!= null)
+                {
+                    var tabularData = JsonConvert.DeserializeObject<TabularData>(partnershipAnswers.Value);
+
+                    var question = new Question
+                    {
+                        QuestionId = QuestionIdPartnership,
+                        Input = new Input
+                        {
+                            Type = TabularDataType
+                        }
+                    };
+                    var partnershipTabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
+                    answers.AddRange(partnershipTabularAnswers);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to extracted Partnership answers for Application: {applicationId}");
+            }
+        }
+
+        private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId)
+        {
+           var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
+           if (questionTagData == null) return null;
+           var answer = new Answer
+            {
+                QuestionId = questionId,
+                Value = questionTagData
+            };
+            return answer;
         }
 
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
@@ -272,7 +323,6 @@ namespace SFA.DAS.Roatp.Functions
                     submittedPageAnswers.AddRange(submittedQuestionAnswers);
                 }
             }
-
             return submittedPageAnswers;
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SFA.DAS.QnA.Api.Types;
+using SFA.DAS.QnA.Api.Types.Page;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,6 +33,11 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
             {
                 return null;
             }
+        }
+
+        public async Task<string> GetTabularDataByTag(Guid applicationId, string questionTag)
+        {
+            return await Get<string>($"Applications/{applicationId}/applicationData/{questionTag}");
         }
     }
 }
