@@ -27,6 +27,15 @@ namespace SFA.DAS.Roatp.Functions
         private const int DeliveringApprenticeshipTraining = 7;
         private const int ManagementHierarchy = 3;
         private const int MonthsInYear = 12;
+        private const string QuestionIdCompaniesHouseDirectors = "YO-70";
+        private const string QuestionIdCompaniesHousePsCs = "YO-71";
+        private const string QuestionIdCharityTrustees = "YO-80";
+        private const string QuestionIdOrganisationNameSoleTrade = "PRE-20";
+        private const string QuestionIdPartnership = "YO-110";
+        private const string QuestionIdSoleTrader = "YO-120";
+        private const string QuestionIdAddPeopleManualEntry = "YO-130";
+        private const string QuestionIdSoleTraderOrPartnership = "YO-100";
+        private const string SoleTraderType = "Sole trader";
 
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
@@ -60,9 +69,123 @@ namespace SFA.DAS.Roatp.Functions
                     await SaveExtractedAnswersForApplication(applicationId, answers);
                     await SaveSectorDetailsForApplication(applicationId, answers);
                     await LoadOrganisationManagementForApplication(applicationId, answers);
+                    await LoadOrganisationPersonnelForApplication(applicationId, answers);
                     await transaction.CommitAsync();
                 }
             }
+        }
+
+        public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        {
+            _logger.LogDebug($"Load Organisation Personnel for application {applicationId}");
+            
+            try
+            {
+                var organisationPersonnel = new List<OrganisationPersonnel>();
+                var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
+
+                var submittedAnswersCompaniesHouseDirectors = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
+                organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
+
+                var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePsCs, PersonnelType.PersonWithSignificantControl);
+                organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
+
+                var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
+                organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
+
+                var submittedAnswersSoleTrade = ExtractSoleTraderOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrader, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersSoleTrade);
+
+                var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersPartnership);
+
+                var submittedAnswersAddPeopleManualEntry = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdAddPeopleManualEntry, PersonnelType.PersonInControl);
+                organisationPersonnel.AddRange(submittedAnswersAddPeopleManualEntry);
+
+                _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
+
+                await _applyDataContext.SaveChangesAsync();
+
+                _logger.LogInformation($"Organisation Personnel successfully load for application {applicationId}");
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to load Organisation Personnel for Application: {applicationId}");
+            }
+        }
+
+        private static List<OrganisationPersonnel> ExtractTabularAnswerOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        {
+            var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
+            var organisationPersonnel = new List<OrganisationPersonnel>();
+            foreach (var person in submittedAnswersOrganisationPersonnel)
+            {
+                var orgPersonnel = new OrganisationPersonnel
+                {
+                    OrganisationId = organisationId,
+                    PersonnelType = personnelType,
+                };
+                foreach (var record in person)
+                {
+                    switch (record.ColumnHeading)
+                    {
+                        case "Name":
+                            orgPersonnel.Name = record.Answer;
+                            break;
+                        case "Date of birth":
+                            var dob = Convert.ToDateTime(record.Answer);
+                            orgPersonnel.DateOfBirthMonth = dob.Month;
+                            orgPersonnel.DateOfBirthYear = dob.Year;
+                            break;
+                    }
+                }
+                organisationPersonnel.Add(orgPersonnel);
+            }
+            return organisationPersonnel;
+        }
+
+        private static List<OrganisationPersonnel> ExtractSoleTraderOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
+        {
+            var submittedAnswersOrganisationPersonnel = answers.Where(answer => answer.QuestionId == questionId).GroupBy(a => a.RowNumber).ToList();
+            var organisationPersonnel = new List<OrganisationPersonnel>();
+
+            var submittedAnswersOrganisationSoleTrader = answers.Where(answer => answer.QuestionId == QuestionIdOrganisationNameSoleTrade);
+            var submittedAnswersOrganisationTypeSoleTraderOrPartnership = answers.Where(answer => answer.QuestionId == QuestionIdSoleTraderOrPartnership);
+
+            if (submittedAnswersOrganisationPersonnel.Count > 0 && submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any())
+            {
+                foreach (var person in submittedAnswersOrganisationPersonnel)
+                {
+                    var orgPersonnel = new OrganisationPersonnel
+                    {
+                        OrganisationId = organisationId,
+                        PersonnelType = personnelType,
+                        Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
+                    };
+                    foreach (var record in person)
+                    {
+                        if (record.Answer == null) continue;
+                        var dobArray = record.Answer.Split(",");
+                        if (dobArray.Length != 2) continue;
+                        orgPersonnel.DateOfBirthMonth = int.Parse(dobArray[0]);
+                        orgPersonnel.DateOfBirthYear = int.Parse(dobArray[1]);
+                    }
+                    organisationPersonnel.Add(orgPersonnel);
+                }
+            }
+            else if(submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any() && 
+                   submittedAnswersOrganisationTypeSoleTraderOrPartnership.FirstOrDefault()?.Answer == SoleTraderType)
+            {
+                var orgPersonnel = new OrganisationPersonnel
+                {
+                    OrganisationId = organisationId,
+                    PersonnelType = personnelType,
+                    Name = submittedAnswersOrganisationSoleTrader.FirstOrDefault()?.Answer
+                };
+                organisationPersonnel.Add(orgPersonnel);
+            }
+            return organisationPersonnel;
         }
 
         public async Task<List<Guid>> GetApplicationsToExtract(DateTime executionDateTime)

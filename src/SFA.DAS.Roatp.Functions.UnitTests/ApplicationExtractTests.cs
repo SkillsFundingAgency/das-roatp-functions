@@ -182,5 +182,23 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             Assert.IsTrue(organisationManagementAnswers[1].TimeInRoleMonths == 13);
             Assert.IsTrue(organisationManagementAnswers[2].TimeInRoleMonths == 39);
         }
+
+        [Test]
+        public async Task LoadOrganisationPersonnelForApplication_Loads_OrganisationPersonnel()
+        {
+            var applicationId = _application.ApplicationId;
+            var organisationId = _application.OrganisationId;
+            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+            await _sut.LoadOrganisationPersonnelForApplication(applicationId, applicationAnswers);
+
+            var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
+            
+            Assert.IsNotNull(loadedOrganisationPersonnel);
+            Assert.True(loadedOrganisationPersonnel.Where(a=>a.PersonnelType == PersonnelType.CompanyDirector).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count() > 0);
+            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count() > 0);
+        }
     }
 }

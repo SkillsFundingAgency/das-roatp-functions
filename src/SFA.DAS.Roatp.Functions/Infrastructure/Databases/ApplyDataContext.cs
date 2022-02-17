@@ -134,5 +134,6 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.Databases
         public virtual DbSet<OrganisationSector> OrganisationSectors { get; set; }
         public virtual DbSet<OrganisationSectorExpert> OrganisationSectorExperts { get; set; }
         public virtual DbSet<OrganisationSectorExpertDeliveredTrainingType> OrganisationSectorExpertDeliveredTrainingTypes { get; set; }
+        public virtual DbSet<OrganisationPersonnel> OrganisationPersonnel { get; set; }
     }
 }
