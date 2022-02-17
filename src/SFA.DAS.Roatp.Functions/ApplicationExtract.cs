@@ -36,11 +36,13 @@ namespace SFA.DAS.Roatp.Functions
         private const string QuestionIdAddPeopleManualEntry = "YO-130";
         private const string QuestionIdSoleTraderOrPartnership = "YO-100";
         private const string SoleTraderType = "Sole trader";
+
         private const string PageIdPartnershipAddPartners = "110";
         public const string AddPartners = "AddPartners";
         private const string TabularDataType = "TabularData";
         public const int YourOrganisation = 1;
         public const int WhosInControl = 3;
+
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
         {
