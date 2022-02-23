@@ -63,21 +63,30 @@ namespace SFA.DAS.Roatp.Functions
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
 
-            var applications = await GetApplicationsToExtract(DateTime.Now);
-
-            foreach (var applicationId in applications)
+            try
             {
-                var answers = await ExtractAnswersForApplication(applicationId);
-                await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
+                var applications = await GetApplicationsToExtract(DateTime.Now);
 
-                using (var transaction = _applyDataContext.Database.BeginTransaction())
+                foreach (var applicationId in applications)
                 {
-                    await SaveExtractedAnswersForApplication(applicationId, answers);
-                    await SaveSectorDetailsForApplication(applicationId, answers);
-                    await LoadOrganisationManagementForApplication(applicationId, answers);
-                    await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                    await transaction.CommitAsync();
+                    var answers = await ExtractAnswersForApplication(applicationId);
+
+                    using (var transaction = _applyDataContext.Database.BeginTransaction())
+                    {
+                        await SaveExtractedAnswersForApplication(applicationId, answers);
+                        await SaveSectorDetailsForApplication(applicationId, answers);
+                        await LoadOrganisationManagementForApplication(applicationId, answers);
+                        await LoadOrganisationPersonnelForApplication(applicationId, answers);
+                        await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
+
+                        await transaction.CommitAsync();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error while processing the ApplicationExtract function at: {DateTime.Now}");
+                throw;
             }
         }
 
@@ -212,31 +221,37 @@ namespace SFA.DAS.Roatp.Functions
         public async Task<List<SubmittedApplicationAnswer>> ExtractAnswersForApplication(Guid applicationId)
         {
             _logger.LogDebug($"Extracting answers for application {applicationId}");
-
             var answers = new List<SubmittedApplicationAnswer>();
 
-            var sections = await _qnaApiClient.GetAllSectionsForApplication(applicationId);
-
-            if (sections != null)
+            try
             {
-                foreach (var section in sections)
-                {
-                    var completedPages = section.QnAData.Pages.Where(pg => pg.Active && pg.Complete && !pg.NotRequired);
 
-                    foreach (var page in completedPages)
+                var sections = await _qnaApiClient.GetAllSectionsForApplication(applicationId);
+
+                if (sections != null)
+                {
+                    foreach (var section in sections)
                     {
-                        var submittedPageAnswers = ExtractPageAnswers(applicationId, section.SequenceNo, section.SectionNo, page);
-                        answers.AddRange(submittedPageAnswers);
+                        var completedPages = section.QnAData.Pages.Where(pg => pg.Active && pg.Complete && !pg.NotRequired);
+
+                        foreach (var page in completedPages)
+                        {
+                            var submittedPageAnswers = ExtractPageAnswers(applicationId, section.SequenceNo, section.SectionNo, page);
+                            answers.AddRange(submittedPageAnswers);
+                        }
                     }
                 }
+                //Extract QuestionId Y0-110 answer even if it is inactive, there is an issue setting answer active to false while adding orgnisation type answer to the tabular list as the last entry
+                var hasPartnershipAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
+                if (!hasPartnershipAnswersExtracted)
+                {
+                    await ExtractPartnershipAnswers(applicationId, answers);
+                }
             }
-            //Extract QuestionId Y0-110 answer even if it is inactive, there is an issue setting answer active to false while adding orgnisation type answer to the tabular list as the last entry
-            var hasPartnershipAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
-            if(!hasPartnershipAnswersExtracted)
+            catch (Exception ex)
             {
-                await ExtractPartnershipAnswers(applicationId, answers);
+                _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
             }
-
             return answers;
         }
 
@@ -413,11 +428,19 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task EnqueueApplyFilesForExtract(IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue, List<SubmittedApplicationAnswer> answers)
         {
-            var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            foreach (var submittedApplicationAnswer in applyFiles)
+            _logger.LogDebug($"Starting Enqueue ApplyFiles for extract");
+            try
             {
-                await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
+                var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                foreach (var submittedApplicationAnswer in applyFiles)
+                {
+                    await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to Enqueue ApplyFiles for extract");
             }
         }
 
