@@ -241,6 +241,7 @@ namespace SFA.DAS.Roatp.Functions
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
+                throw;
             }
             return answers;
         }
@@ -271,6 +272,7 @@ namespace SFA.DAS.Roatp.Functions
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to extracted Partnership answers for Application: {applicationId}");
+                throw;
             }
         }
 
