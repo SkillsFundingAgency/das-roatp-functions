@@ -77,10 +77,9 @@ namespace SFA.DAS.Roatp.Functions
                         await SaveSectorDetailsForApplication(applicationId, answers);
                         await LoadOrganisationManagementForApplication(applicationId, answers);
                         await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                        await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-
                         await transaction.CommitAsync();
                     }
+                    await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 }
             }
             catch (Exception ex)
@@ -92,42 +91,33 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
-            _logger.LogDebug($"Load Organisation Personnel for application {applicationId}");
-            
-            try
-            {
-                var organisationPersonnel = new List<OrganisationPersonnel>();
-                var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
+            _logger.LogInformation($"Load Organisation Personnel for application {applicationId}");
 
-                var submittedAnswersCompaniesHouseDirectors = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
-                organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
+            var organisationPersonnel = new List<OrganisationPersonnel>();
+            var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
 
-                var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePsCs, PersonnelType.PersonWithSignificantControl);
-                organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
+            var submittedAnswersCompaniesHouseDirectors = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHouseDirectors, PersonnelType.CompanyDirector);
+            organisationPersonnel.AddRange(submittedAnswersCompaniesHouseDirectors);
 
-                var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
-                organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
+            var submittedAnswersCompaniesHousePsCs = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCompaniesHousePsCs, PersonnelType.PersonWithSignificantControl);
+            organisationPersonnel.AddRange(submittedAnswersCompaniesHousePsCs);
 
-                var submittedAnswersSoleTrade = ExtractSoleTraderOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrader, PersonnelType.PersonInControl);
-                organisationPersonnel.AddRange(submittedAnswersSoleTrade);
+            var submittedAnswersCharityTrustees = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdCharityTrustees, PersonnelType.CharityTrustee);
+            organisationPersonnel.AddRange(submittedAnswersCharityTrustees);
 
-                var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
-                organisationPersonnel.AddRange(submittedAnswersPartnership);
+            var submittedAnswersSoleTrade = ExtractSoleTraderOrganisationPersonnel(answers, application.OrganisationId, QuestionIdSoleTrader, PersonnelType.PersonInControl);
+            organisationPersonnel.AddRange(submittedAnswersSoleTrade);
 
-                var submittedAnswersAddPeopleManualEntry = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdAddPeopleManualEntry, PersonnelType.PersonInControl);
-                organisationPersonnel.AddRange(submittedAnswersAddPeopleManualEntry);
+            var submittedAnswersPartnership = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdPartnership, PersonnelType.PersonInControl);
+            organisationPersonnel.AddRange(submittedAnswersPartnership);
 
-                _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
+            var submittedAnswersAddPeopleManualEntry = ExtractTabularAnswerOrganisationPersonnel(answers, application.OrganisationId, QuestionIdAddPeopleManualEntry, PersonnelType.PersonInControl);
+            organisationPersonnel.AddRange(submittedAnswersAddPeopleManualEntry);
 
-                await _applyDataContext.SaveChangesAsync();
+            _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
+            await _applyDataContext.SaveChangesAsync();
 
-                _logger.LogInformation($"Organisation Personnel successfully load for application {applicationId}");
-            }
-
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unable to load Organisation Personnel for Application: {applicationId}");
-            }
+            _logger.LogInformation($"Organisation Personnel successfully load for application {applicationId}");
         }
 
         private static List<OrganisationPersonnel> ExtractTabularAnswerOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
@@ -205,7 +195,7 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task<List<Guid>> GetApplicationsToExtract(DateTime executionDateTime)
         {
-            _logger.LogDebug($"Getting list of applications to extract.");
+            _logger.LogInformation($"Getting list of applications to extract.");
 
             var applications = await _applyDataContext.Apply
                                 .AsNoTracking()
@@ -220,7 +210,7 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task<List<SubmittedApplicationAnswer>> ExtractAnswersForApplication(Guid applicationId)
         {
-            _logger.LogDebug($"Extracting answers for application {applicationId}");
+            _logger.LogInformation($"Extracting answers for application {applicationId}");
             var answers = new List<SubmittedApplicationAnswer>();
 
             try
@@ -259,6 +249,8 @@ namespace SFA.DAS.Roatp.Functions
         {
             try
             {
+                _logger.LogInformation($"Extract Partnership answers for application {applicationId}");
+
                 var partnershipAnswers = await ExtractAnswersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
                 if (partnershipAnswers!= null)
                 {
@@ -296,30 +288,20 @@ namespace SFA.DAS.Roatp.Functions
 
         private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
         {
+            _logger.LogInformation($"Saving OrganisationSector details for application {applicationId}");
+
             var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
             var sectorsToAdd = _sectorProcessingService.BuildSectorDetails(answers, organisationId);
 
             if (sectorsToAdd == null || !sectorsToAdd.Any())
             {
-                _logger.LogInformation(
-                    $"No sectors present to extract for application {applicationId}");
+                _logger.LogInformation($"No sectors present to extract for application {applicationId}");
                 return;
             }
+            _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
+            await _applyDataContext.SaveChangesAsync();
 
-                try
-                {
-                    _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
-                    await _applyDataContext.SaveChangesAsync();
-
-                    _logger.LogInformation(
-                        $"OrganisationSector successfully extracted for application {applicationId}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Unable to extract OrganisationSector for Application: {applicationId}");
-                    throw;
-                }
-            
+            _logger.LogInformation($"OrganisationSector successfully extracted for application {applicationId}");
         }
 
         private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
@@ -398,50 +380,38 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
-            _logger.LogDebug($"Saving extracted answers for application {applicationId}");
-            try
+            _logger.LogInformation($"Saving extracted answers for application {applicationId}");
+            var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
+            _applyDataContext.SubmittedApplicationAnswers.RemoveRange(existingAnswers);
+
+            var existingApplications = _applyDataContext.ExtractedApplications.Where(app => app.ApplicationId == applicationId);
+            _applyDataContext.ExtractedApplications.RemoveRange(existingApplications);
+
+            if (answers != null && answers.Any())
             {
-                var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
-                _applyDataContext.SubmittedApplicationAnswers.RemoveRange(existingAnswers);
-
-                var existingApplications = _applyDataContext.ExtractedApplications.Where(app => app.ApplicationId == applicationId);
-                _applyDataContext.ExtractedApplications.RemoveRange(existingApplications);
-
-                if (answers != null && answers.Any())
-                {
-                    answers.ForEach(a => a.ApplicationId = applicationId);
-                    _applyDataContext.SubmittedApplicationAnswers.AddRange(answers);
-                }
-
-                var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };
-                _applyDataContext.ExtractedApplications.Add(application);
-
-                await _applyDataContext.SaveChangesAsync();
-
-                _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
+                answers.ForEach(a => a.ApplicationId = applicationId);
+                _applyDataContext.SubmittedApplicationAnswers.AddRange(answers);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unable to save extracted answers for Application: {applicationId}");
-            }
+
+            var application = new ExtractedApplication { ApplicationId = applicationId, ExtractedDate = DateTime.UtcNow };
+            _applyDataContext.ExtractedApplications.Add(application);
+            await _applyDataContext.SaveChangesAsync();
+
+            _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
         }
+    
 
         public async Task EnqueueApplyFilesForExtract(IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue, List<SubmittedApplicationAnswer> answers)
         {
-            _logger.LogDebug($"Starting Enqueue ApplyFiles for extract");
-            try
-            {
-                var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
+            _logger.LogInformation($"Starting enqueue ApplyFiles for extract");
 
-                foreach (var submittedApplicationAnswer in applyFiles)
-                {
-                    await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
-                }
-            }
-            catch (Exception ex)
+            var applyFiles = answers.Where(answer => "FILEUPLOAD".Equals(answer.QuestionType, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (var submittedApplicationAnswer in applyFiles)
             {
-                _logger.LogError(ex, $"Unable to Enqueue ApplyFiles for extract");
+                await applyFileExtractQueue.AddAsync(new ApplyFileExtractRequest(submittedApplicationAnswer));
             }
+            _logger.LogInformation($"Enqueued ApplyFiles for extract");
         }
 
         private List<OrganisationManagement> LoadOrganisationManagementAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
@@ -505,19 +475,13 @@ namespace SFA.DAS.Roatp.Functions
 
         public async Task LoadOrganisationManagementForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
-            _logger.LogDebug($"OrganisationManagement extract for application {applicationId}");
-            try
-            {
-                var organisationManagementAnswers = LoadOrganisationManagementAnswers(applicationId, answers);
-                _applyDataContext.OrganisationManagement.AddRange(organisationManagementAnswers);
-                await _applyDataContext.SaveChangesAsync();
+            _logger.LogInformation($"OrganisationManagement extract for application {applicationId}");
+            
+            var organisationManagementAnswers = LoadOrganisationManagementAnswers(applicationId, answers);
+            _applyDataContext.OrganisationManagement.AddRange(organisationManagementAnswers);
+            await _applyDataContext.SaveChangesAsync();
 
-                _logger.LogInformation($"OrganisationManagement successfully extract for application {applicationId}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unable to extract OrganisationManagement for Application: {applicationId}");
-            }
+            _logger.LogInformation($"OrganisationManagement successfully extract for application {applicationId}");
         }
     }
 }
