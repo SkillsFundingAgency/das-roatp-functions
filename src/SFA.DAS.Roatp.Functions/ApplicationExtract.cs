@@ -240,8 +240,13 @@ namespace SFA.DAS.Roatp.Functions
                 }
 
                 //Extract QuestionId Y0-130 answer even if it is NotRequired case
-                var hasAddPeopleIncontrolManualEntryAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdAddPeopleManualEntry);
-                if (!hasAddPeopleIncontrolManualEntryAnswersExtracted)
+                // In case where the organisation is a company or charity and we were not able to get PSCs from companies house
+                // or charity commission then PSCs are entered manually. 
+                // However the NotRequired flag is set to true  on any of these filed TRUE UKRLPVerificationCompany, UKRLPVerificationCharity, UKRLPVerificationSoleTraderPartnership
+                // and the answers could be missed. 
+                // Hence need to check again and populate this manual entry answers if they exists
+                var hasAddPeopleInControlManualEntryAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdAddPeopleManualEntry);
+                if (!hasAddPeopleInControlManualEntryAnswersExtracted)
                 {
                     await ExtractAnswers(applicationId, answers, QuestionIdAddPeopleManualEntry, AddPeopleInControl);
                 }
@@ -261,21 +266,18 @@ namespace SFA.DAS.Roatp.Functions
                 _logger.LogInformation($"Extract Partnership answers for application {applicationId}");
 
                 var answersbyQuestionTag = await ExtractAnswersByQuestionTag(applicationId, questionTag, questionId);
-                if (answersbyQuestionTag != null)
+                if (answersbyQuestionTag == null) return;
+                var tabularData = JsonConvert.DeserializeObject<TabularData>(answersbyQuestionTag.Value);
+                var question = new Question
                 {
-                    var tabularData = JsonConvert.DeserializeObject<TabularData>(answersbyQuestionTag.Value);
-
-                    var question = new Question
+                    QuestionId = questionId,
+                    Input = new Input
                     {
-                        QuestionId = questionId,
-                        Input = new Input
-                        {
-                            Type = TabularDataType
-                        }
-                    };
-                    var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
-                    answers.AddRange(tabularAnswers);
-                }
+                        Type = TabularDataType
+                    }
+                };
+                var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
+                answers.AddRange(tabularAnswers);
             }
             catch (Exception ex)
             {
