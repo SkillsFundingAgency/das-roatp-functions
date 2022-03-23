@@ -39,6 +39,7 @@ namespace SFA.DAS.Roatp.Functions
 
         private const string PageIdPartnershipAddPartners = "110";
         public const string AddPartners = "AddPartners";
+        public const string AddPeopleInControl = "AddPeopleInControl";
         private const string TabularDataType = "TabularData";
         public const int YourOrganisation = 1;
         public const int WhosInControl = 3;
@@ -235,7 +236,19 @@ namespace SFA.DAS.Roatp.Functions
                 var hasPartnershipAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdPartnership);
                 if (!hasPartnershipAnswersExtracted)
                 {
-                    await ExtractPartnershipAnswers(applicationId, answers);
+                    await ExtractAnswers(applicationId, answers, QuestionIdPartnership, AddPartners);
+                }
+
+                //Extract QuestionId Y0-130 answer even if it is NotRequired case
+                // In case where the organisation is a company or charity and we were not able to get PSCs from companies house
+                // or charity commission then PSCs are entered manually. 
+                // However the NotRequired flag is set to true  on any of these filed TRUE UKRLPVerificationCompany, UKRLPVerificationCharity, UKRLPVerificationSoleTraderPartnership
+                // and the answers could be missed. 
+                // Hence need to check again and populate this manual entry answers if they exists
+                var hasAddPeopleInControlManualEntryAnswersExtracted = answers.Any(answer => answer.QuestionId == QuestionIdAddPeopleManualEntry);
+                if (!hasAddPeopleInControlManualEntryAnswersExtracted)
+                {
+                    await ExtractAnswers(applicationId, answers, QuestionIdAddPeopleManualEntry, AddPeopleInControl);
                 }
             }
             catch (Exception ex)
@@ -246,32 +259,29 @@ namespace SFA.DAS.Roatp.Functions
             return answers;
         }
 
-        private async Task ExtractPartnershipAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers)
+        private async Task ExtractAnswers(Guid applicationId, List<SubmittedApplicationAnswer> answers, string questionId, string questionTag)
         {
             try
             {
                 _logger.LogInformation($"Extract Partnership answers for application {applicationId}");
 
-                var partnershipAnswers = await ExtractAnswersByQuestionTag(applicationId, AddPartners, QuestionIdPartnership);
-                if (partnershipAnswers!= null)
+                var answersbyQuestionTag = await ExtractAnswersByQuestionTag(applicationId, questionTag, questionId);
+                if (answersbyQuestionTag == null) return;
+                var tabularData = JsonConvert.DeserializeObject<TabularData>(answersbyQuestionTag.Value);
+                var question = new Question
                 {
-                    var tabularData = JsonConvert.DeserializeObject<TabularData>(partnershipAnswers.Value);
-
-                    var question = new Question
+                    QuestionId = questionId,
+                    Input = new Input
                     {
-                        QuestionId = QuestionIdPartnership,
-                        Input = new Input
-                        {
-                            Type = TabularDataType
-                        }
-                    };
-                    var partnershipTabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
-                    answers.AddRange(partnershipTabularAnswers);
-                }
+                        Type = TabularDataType
+                    }
+                };
+                var tabularAnswers = TabularDataMapper.GetAnswers(applicationId, YourOrganisation, WhosInControl, PageIdPartnershipAddPartners, question, tabularData);
+                answers.AddRange(tabularAnswers);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Unable to extracted Partnership answers for Application: {applicationId}");
+                _logger.LogError(ex, $"Unable to extracted {questionTag} answers for Application: {applicationId}");
                 throw;
             }
         }
