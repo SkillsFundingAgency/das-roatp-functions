@@ -168,11 +168,7 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                         var trainingOtherValue = answers.FirstOrDefault(x =>
                                 x.QuestionId == sectorDetails.HowHaveTheyDeliveredTrainingOther)?.Answer;
 
-                        if (String.IsNullOrEmpty(trainingOtherValue))
-                            trainingType.DeliveredTrainingType = DeliveredTrainingTypeOther;
-                        else
-                            trainingType.DeliveredTrainingType = answers.FirstOrDefault(x =>
-                                    x.QuestionId == sectorDetails.HowHaveTheyDeliveredTrainingOther)?.Answer;
+                        trainingType.DeliveredTrainingType = String.IsNullOrEmpty(trainingOtherValue) ? DeliveredTrainingTypeOther : trainingOtherValue;
                     }
                     sectorExpertDeliveredTrainingTypesList.Add(trainingType);
                 }
