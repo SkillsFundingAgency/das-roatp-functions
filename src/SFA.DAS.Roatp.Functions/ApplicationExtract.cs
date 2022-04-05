@@ -64,6 +64,8 @@ namespace SFA.DAS.Roatp.Functions
             }
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
+            
+            var currentApplicationId = new Guid();
 
             try
             {
@@ -71,6 +73,7 @@ namespace SFA.DAS.Roatp.Functions
 
                 foreach (var applicationId in applications)
                 {
+                    currentApplicationId = applicationId;
                     try
                     {
                         var answers = await ExtractAnswersForApplication(applicationId);
@@ -93,7 +96,7 @@ namespace SFA.DAS.Roatp.Functions
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error while processing the ApplicationExtract function at: {DateTime.Now}");
+                _logger.LogError(ex, $"Error while processing the ApplicationExtract function for application {currentApplicationId}");
                 throw;
             }
         }
