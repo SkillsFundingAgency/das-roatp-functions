@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
 using static System.Boolean;
+using Microsoft.Data.SqlClient;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -84,9 +85,9 @@ namespace SFA.DAS.Roatp.Functions
                         }
                         await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                     }
-                    catch (Exception ex)
+                    catch (SqlException ex)
                     {
-                        _logger.LogError(ex, $"Error while processing the ApplicationExtract for application {applicationId} at: {DateTime.Now}");
+                        _logger.LogError(ex, "Error while processing the ApplicationExtract for application {applicationId}", applicationId);
                     }
                 }
             }
@@ -257,7 +258,7 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     await ExtractAnswers(applicationId, answers, QuestionIdAddPeopleManualEntry, AddPeopleInControl);
                 }
-            }
+           }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
