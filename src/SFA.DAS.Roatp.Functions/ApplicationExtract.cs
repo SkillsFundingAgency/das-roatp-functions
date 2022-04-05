@@ -65,7 +65,7 @@ namespace SFA.DAS.Roatp.Functions
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
             
-            var currentApplicationId = new Guid();
+            var currentApplicationId = Guid.Empty;
 
             try
             {
