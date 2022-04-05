@@ -96,7 +96,7 @@ namespace SFA.DAS.Roatp.Functions
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error while processing the ApplicationExtract function for application {currentApplicationId}");
+                _logger.LogError(ex, "Error while processing the ApplicationExtract function for application {applicationId}", currentApplicationId);
                 throw;
             }
         }
