@@ -70,17 +70,24 @@ namespace SFA.DAS.Roatp.Functions
 
                 foreach (var applicationId in applications)
                 {
-                    var answers = await ExtractAnswersForApplication(applicationId);
-
-                    using (var transaction = _applyDataContext.Database.BeginTransaction())
+                    try
                     {
-                        await SaveExtractedAnswersForApplication(applicationId, answers);
-                        await SaveSectorDetailsForApplication(applicationId, answers);
-                        await LoadOrganisationManagementForApplication(applicationId, answers);
-                        await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                        await transaction.CommitAsync();
+                        var answers = await ExtractAnswersForApplication(applicationId);
+
+                        using (var transaction = _applyDataContext.Database.BeginTransaction())
+                        {
+                            await SaveExtractedAnswersForApplication(applicationId, answers);
+                            await SaveSectorDetailsForApplication(applicationId, answers);
+                            await LoadOrganisationManagementForApplication(applicationId, answers);
+                            await LoadOrganisationPersonnelForApplication(applicationId, answers);
+                            await transaction.CommitAsync();
+                        }
+                        await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                     }
-                    await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error while processing the ApplicationExtract for application {applicationId} at: {DateTime.Now}");
+                    }
                 }
             }
             catch (Exception ex)
