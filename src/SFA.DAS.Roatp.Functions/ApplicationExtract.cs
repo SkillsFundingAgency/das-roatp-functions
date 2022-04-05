@@ -39,11 +39,12 @@ namespace SFA.DAS.Roatp.Functions
         private const string SoleTraderType = "Sole trader";
 
         private const string PageIdPartnershipAddPartners = "110";
-        public const string AddPartners = "AddPartners";
-        public const string AddPeopleInControl = "AddPeopleInControl";
+        private const string AddPartners = "AddPartners";
+        private const string AddPeopleInControl = "AddPeopleInControl";
         private const string TabularDataType = "TabularData";
-        public const int YourOrganisation = 1;
-        public const int WhosInControl = 3;
+        private const int YourOrganisation = 1;
+        private const int WhosInControl = 3;
+        private const string ErrorMessage = "Error while processing the ApplicationExtract for application {applicationId}";
 
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
@@ -65,15 +66,11 @@ namespace SFA.DAS.Roatp.Functions
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
             
-            var currentApplicationId = Guid.Empty;
 
-            try
-            {
                 var applications = await GetApplicationsToExtract(DateTime.Now);
 
                 foreach (var applicationId in applications)
                 {
-                    currentApplicationId = applicationId;
                     try
                     {
                         var answers = await ExtractAnswersForApplication(applicationId);
@@ -90,15 +87,14 @@ namespace SFA.DAS.Roatp.Functions
                     }
                     catch (SqlException ex)
                     {
-                        _logger.LogError(ex, "Error while processing the ApplicationExtract for application {applicationId}", applicationId);
+                        _logger.LogError(ex, ErrorMessage, applicationId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ErrorMessage, applicationId);
+                        throw;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while processing the ApplicationExtract function for application {applicationId}", currentApplicationId);
-                throw;
-            }
         }
 
         public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
