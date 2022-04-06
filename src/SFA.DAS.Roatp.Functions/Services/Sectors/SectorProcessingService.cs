@@ -7,6 +7,8 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
 {
     public class SectorProcessingService : ISectorProcessingService
     {
+        private const string DeliveredTrainingTypeOther = "Other";
+
         public List<OrganisationSector> BuildSectorDetails(IReadOnlyCollection<SubmittedApplicationAnswer> answers, Guid organisationId)
         {
             var sectorChoices = answers.Where(x => x.PageId == "7600").ToList();
@@ -157,14 +159,17 @@ namespace SFA.DAS.Roatp.Functions.Services.Sectors
                 foreach (var howTrainingDelivered in howTrainingDeliveredSelections)
                 {
                     var trainingType = new OrganisationSectorExpertDeliveredTrainingType();
-                    if (howTrainingDelivered.Answer != "Other")
+                    if (howTrainingDelivered.Answer != DeliveredTrainingTypeOther)
                     {
                         trainingType.DeliveredTrainingType = howTrainingDelivered.Answer;
                     }
                     else
-                        trainingType.DeliveredTrainingType = answers.FirstOrDefault(x =>
-                            x.QuestionId == sectorDetails.HowHaveTheyDeliveredTrainingOther)?.Answer;
+                    {
+                        var trainingOtherValue = answers.FirstOrDefault(x =>
+                                x.QuestionId == sectorDetails.HowHaveTheyDeliveredTrainingOther)?.Answer;
 
+                        trainingType.DeliveredTrainingType = String.IsNullOrEmpty(trainingOtherValue) ? DeliveredTrainingTypeOther : trainingOtherValue;
+                    }
                     sectorExpertDeliveredTrainingTypesList.Add(trainingType);
                 }
             }

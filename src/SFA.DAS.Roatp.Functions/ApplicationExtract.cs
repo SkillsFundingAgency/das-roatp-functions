@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
 using static System.Boolean;
+using Microsoft.Data.SqlClient;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -38,11 +39,12 @@ namespace SFA.DAS.Roatp.Functions
         private const string SoleTraderType = "Sole trader";
 
         private const string PageIdPartnershipAddPartners = "110";
-        public const string AddPartners = "AddPartners";
-        public const string AddPeopleInControl = "AddPeopleInControl";
+        private const string AddPartners = "AddPartners";
+        private const string AddPeopleInControl = "AddPeopleInControl";
         private const string TabularDataType = "TabularData";
-        public const int YourOrganisation = 1;
-        public const int WhosInControl = 3;
+        private const int YourOrganisation = 1;
+        private const int WhosInControl = 3;
+        private const string ErrorMessage = "Error while processing the ApplicationExtract for application {applicationId}";
 
 
         public ApplicationExtract(ILogger<ApplicationExtract> log, ApplyDataContext applyDataContext, IQnaApiClient qnaApiClient, ISectorProcessingService sectorProcessingService)
@@ -63,31 +65,36 @@ namespace SFA.DAS.Roatp.Functions
             }
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
+            
 
-            try
-            {
                 var applications = await GetApplicationsToExtract(DateTime.Now);
 
                 foreach (var applicationId in applications)
                 {
-                    var answers = await ExtractAnswersForApplication(applicationId);
-
-                    using (var transaction = _applyDataContext.Database.BeginTransaction())
+                    try
                     {
-                        await SaveExtractedAnswersForApplication(applicationId, answers);
-                        await SaveSectorDetailsForApplication(applicationId, answers);
-                        await LoadOrganisationManagementForApplication(applicationId, answers);
-                        await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                        await transaction.CommitAsync();
+                        var answers = await ExtractAnswersForApplication(applicationId);
+
+                        using (var transaction = _applyDataContext.Database.BeginTransaction())
+                        {
+                            await SaveExtractedAnswersForApplication(applicationId, answers);
+                            await SaveSectorDetailsForApplication(applicationId, answers);
+                            await LoadOrganisationManagementForApplication(applicationId, answers);
+                            await LoadOrganisationPersonnelForApplication(applicationId, answers);
+                            await transaction.CommitAsync();
+                        }
+                        await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                     }
-                    await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
+                    catch (SqlException ex)
+                    {
+                        _logger.LogError(ex, ErrorMessage, applicationId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ErrorMessage, applicationId);
+                        throw;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error while processing the ApplicationExtract function at: {DateTime.Now}");
-                throw;
-            }
         }
 
         public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
@@ -250,7 +257,7 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     await ExtractAnswers(applicationId, answers, QuestionIdAddPeopleManualEntry, AddPeopleInControl);
                 }
-            }
+           }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
