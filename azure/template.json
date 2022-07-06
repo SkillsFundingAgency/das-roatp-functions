@@ -65,6 +65,10 @@
         },
         "sharedSQLServerName": {
             "type": "string"
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
         }
     },
     "variables": {
@@ -88,7 +92,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-06-01",
             "resourceGroup": "[variables('resourceGroupName')]",
-            "name": "app-service-plan",
+            "name": "[concat('app-service-plan-', parameters('utcValue'))]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -113,7 +117,7 @@
         },
         {
             "apiVersion": "2020-06-01",
-            "name": "roatp-functions-worker-subnet",
+            "name": "[concat('roatp-functions-worker-subnet-', parameters('utcValue'))]",
             "resourceGroup": "[parameters('sharedEnvResourceGroup')]",
             "type": "Microsoft.Resources/deployments",
             "properties": {
@@ -143,7 +147,7 @@
         },
         {
             "apiVersion": "2021-04-01",
-            "name": "roatp-functions-worker-sql-firewall-rule",
+            "name": "[concat('roatp-functions-worker-sql-firewall-rule-', parameters('utcValue'))]",
             "resourceGroup": "[parameters('sharedEnvResourceGroup')]",
             "type": "Microsoft.Resources/deployments",
             "properties": {
@@ -157,14 +161,14 @@
                         "value": "[parameters('sharedSQLServerName')]"
                     },
                     "subnetResourceIdList": {
-                        "value": "[createArray(reference('roatp-functions-worker-subnet').outputs.SubnetResourceId.value)]"
+                        "value": "[createArray(reference(concat('roatp-functions-worker-subnet-', parameters('utcValue'))).outputs.SubnetResourceId.value)]"
                     }
                 }
             }
         },
         {
             "apiVersion": "2020-06-01",
-            "name": "application-insights",
+            "name": "[concat('application-insights-', parameters('utcValue'))]",
             "resourceGroup": "[variables('resourceGroupName')]",
             "type": "Microsoft.Resources/deployments",
             "properties": {
@@ -188,7 +192,7 @@
         },
         {
             "apiVersion": "2020-06-01",
-            "name": "function-app",
+            "name": "[concat('function-app-', parameters('utcValue'))]",
             "resourceGroup": "[variables('resourceGroupName')]",
             "type": "Microsoft.Resources/deployments",
             "properties": {
@@ -211,14 +215,14 @@
                         "value": "[parameters('functionAppAllowedIps')]"
                     },
                     "subnetResourceId": {
-                        "value": "[reference('roatp-functions-worker-subnet').outputs.SubnetResourceId.value]"
+                        "value": "[reference(concat('roatp-functions-worker-subnet-', parameters('utcValue'))).outputs.SubnetResourceId.value]"
                     },
                     "functionAppAppSettings": {
                         "value": {
                             "array": [
                                 {
                                     "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                                    "value": "[reference('application-insights').outputs.InstrumentationKey.value]"
+                                    "value": "[reference(concat('application-insights-', parameters('utcValue'))).outputs.InstrumentationKey.value]"
                                 },
                                 {
                                     "name": "ConfigNames",
@@ -275,7 +279,7 @@
         },
         {
             "apiVersion": "2020-06-01",
-            "name": "function-app-sb-role-assignment",
+            "name": "[concat('function-app-sb-role-assignment-', parameters('utcValue'))]",
             "type": "Microsoft.Resources/deployments",
             "resourceGroup": "[parameters('sharedEnvResourceGroup')]",
             "properties": {
@@ -286,7 +290,7 @@
                 },
                 "parameters": {
                     "principalId": {
-                        "value": "[reference('function-app').outputs.managedServiceIdentityId.value]"
+                        "value": "[reference(concat('function-app-', parameters('utcValue'))).outputs.managedServiceIdentityId.value]"
                     },
                     "assignmentType": {
                         "value": "ServiceBusOwner"
@@ -297,7 +301,7 @@
                 }
             },
             "dependsOn": [
-                "function-app"
+                "[concat('function-app-', parameters('utcValue'))]"
             ]
         }
     ],
