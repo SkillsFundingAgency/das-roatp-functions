@@ -50,15 +50,14 @@
         "subnetDelegations": {
             "type": "array"
         },
+        "workerAccessRestrictions": {
+            "type": "array"
+        },
         "subnetObject": {
             "type": "object"
         },
         "subnetServiceEndpointList": {
             "type": "array"
-        },
-        "functionAppAllowedIps": {
-            "type": "array",
-            "defaultValue": []
         },
         "sharedServiceBusName": {
             "type": "string"
@@ -212,7 +211,7 @@
                         "value": "[variables('resourceGroupName')]"
                     },
                     "ipSecurityRestrictions": {
-                        "value": "[parameters('functionAppAllowedIps')]"
+                        "value": "[parameters('workerAccessRestrictions')]"
                     },
                     "subnetResourceId": {
                         "value": "[reference(concat('roatp-functions-worker-subnet-', parameters('utcValue'))).outputs.SubnetResourceId.value]"
