@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.BankHolidayTypes;
@@ -24,9 +24,9 @@ namespace SFA.DAS.Roatp.Functions
             _govUkApiClient = govUkApiClient;
         }
 
-        [FunctionName("BankHolidayFulfillment")]
-        public async Task Run([TimerTrigger("%BankHolidayFulfillmentSchedule%", RunOnStartup = true)] TimerInfo myTimer)
-         {
+        [Function("BankHolidayFulfillment")]
+        public async Task Run([TimerTrigger("0 0 1 * * *", RunOnStartup = true)] TimerInfo myTimer)
+        {
             if (myTimer.IsPastDue)
             {
                 _logger.LogInformation("BankHolidayFulfillment function is running later than scheduled");
@@ -35,17 +35,17 @@ namespace SFA.DAS.Roatp.Functions
             _logger.LogInformation($"BankHolidayFulfillment function executed at: {DateTime.Now}");
 
             var bankHolidays = await GetCurrentBankHolidays();
-            
+
             var bankHolidaysFromExternalSource = await _govUkApiClient.GetBankHolidays();
 
             var bankHolidaysToProcess = new List<BankHoliday>();
-            if (bankHolidaysFromExternalSource.EnglandAndWales?.Events?.Any()==true)
+            if (bankHolidaysFromExternalSource.EnglandAndWales?.Events?.Any() == true)
             {
                 foreach (var bankHoliday in bankHolidaysFromExternalSource.EnglandAndWales.Events)
                 {
                     if (!bankHolidays.Select(x => x.BankHolidayDate).Contains(bankHoliday.Date))
                     {
-                        bankHolidaysToProcess.Add(new BankHoliday {BankHolidayDate = bankHoliday.Date});
+                        bankHolidaysToProcess.Add(new BankHoliday { BankHolidayDate = bankHoliday.Date });
                     }
                 }
             }
@@ -53,7 +53,7 @@ namespace SFA.DAS.Roatp.Functions
             if (bankHolidaysToProcess.Any())
             {
                 _logger.LogInformation($"BankHolidayFulfillment function populating {bankHolidaysToProcess.Count} records");
-                await _applyDataContext.BankHoliday.AddRangeAsync(bankHolidaysToProcess); 
+                await _applyDataContext.BankHoliday.AddRangeAsync(bankHolidaysToProcess);
                 await _applyDataContext.SaveChangesAsync();
             }
             else

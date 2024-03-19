@@ -1,17 +1,18 @@
-﻿using EntityFrameworkCore.Testing.Moq;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
-using Moq;
-using NUnit.Framework;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
-using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
-using SFA.DAS.Roatp.Functions.Requests;
-using SFA.DAS.Roatp.Functions.UnitTests.Generators;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using EntityFrameworkCore.Testing.Moq;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
+using NUnit.Framework.Legacy;
+using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -19,8 +20,9 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
     {
         private Mock<ILogger<AssessorExtract>> _logger;
         private ApplyDataContext _applyDataContext;
-        private Mock<IAsyncCollector<AdminFileExtractRequest>> _adminFileExtractQueue;
-        private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        private readonly TimerInfo _timerInfo = new TimerInfo();
+        private Mock<ServiceBusClient> _serviceBusClient;
+        private Mock<ServiceBusSender> _serviceBusSenderMock;
 
         private Apply _reviewInProgressApplication;
         private Apply _application;
@@ -30,8 +32,13 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         [SetUp]
         public void Setup()
         {
+            _serviceBusSenderMock = new();
             _logger = new Mock<ILogger<AssessorExtract>>();
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
+            _serviceBusClient = new Mock<ServiceBusClient>();
+
+            _serviceBusClient.Setup(x => x.CreateSender(It.IsAny<string>()))
+                .Returns(_serviceBusSenderMock.Object);
 
             _reviewInProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
                     .AddExtractedApplicationDetails(true, false, false, false)
@@ -45,15 +52,13 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _applyDataContext.Set<Apply>().AddRange(applications);
             _applyDataContext.SaveChanges();
 
-            _adminFileExtractQueue = new Mock<IAsyncCollector<AdminFileExtractRequest>>();
-
-            _sut = new AssessorExtract(_logger.Object, _applyDataContext);
+            _sut = new AssessorExtract(_logger.Object, _applyDataContext, _serviceBusClient.Object);
         }
 
         [Test]
         public async Task Run_Logs_Information_Message()
         {
-            await _sut.Run(_timerInfo, _adminFileExtractQueue.Object);
+            await _sut.Run(_timerInfo);
 
             _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
         }
@@ -69,11 +74,11 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         }
 
         [Test]
-        public async Task EnqueueAssessorFilesForExtract_Enqueues_Requests()
+        public async Task EnqueueAppealFilesForExtract_Enqueues_Requests()
         {
-            await _sut.EnqueueAssessorFilesForExtract(_adminFileExtractQueue.Object, _application);
+            await _sut.EnqueueAssessorFilesForExtract(_application);
 
-            _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _serviceBusSenderMock.Verify(x => x.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
 
         [Test]
@@ -85,7 +90,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
-            Assert.IsTrue(extractedApplication.AssessorFilesExtracted);
+            Assert.That(extractedApplication.AssessorFilesExtracted, Is.True);
         }
     }
 }
