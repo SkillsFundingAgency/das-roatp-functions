@@ -1,15 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
-using Moq;
-using NUnit.Framework;
-using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EntityFrameworkCore.Testing.Moq;
-using Microsoft.Azure.WebJobs;
-using SFA.DAS.Roatp.Functions.BankHolidayTypes;
-using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
+using NUnit.Framework.Legacy;
+using SFA.DAS.Roatp.Functions.BankHolidayTypes;
+using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -19,7 +20,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<ILogger<BankHolidayFulfillment>> _logger;
         private ApplyDataContext _applyDataContext;
         private Mock<IGovUkApiClient> _govUkApiClient;
-        private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        private readonly TimerInfo _timerInfo = new TimerInfo();
 
         private BankHoliday _bankHolidayAlreadyPresentInDatabase;
         private BankHoliday _bankHolidayNotPresentInDatabase;
@@ -40,18 +41,18 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _applyDataContext.Set<BankHoliday>().Add(_bankHolidayAlreadyPresentInDatabase);
             _applyDataContext.SaveChanges();
 
-            _bankHolidayRoot = new BankHolidayRoot 
-            { 
-                EnglandAndWales = new BankHolidays 
-                { 
-                    Events = new List<Event> 
-                    { 
+            _bankHolidayRoot = new BankHolidayRoot
+            {
+                EnglandAndWales = new BankHolidays
+                {
+                    Events = new List<Event>
+                    {
                         new Event { Date = _bankHolidayAlreadyPresentInDatabase.BankHolidayDate },
                         new Event { Date = _bankHolidayNotPresentInDatabase.BankHolidayDate }
-                    } 
+                    }
                 }
             };
-            
+
             _govUkApiClient.Setup(x => x.GetBankHolidays()).ReturnsAsync(_bankHolidayRoot);
 
             _sut = new BankHolidayFulfillment(_applyDataContext, _logger.Object, _govUkApiClient.Object);
@@ -85,7 +86,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var resultantBankHolidays = await _applyDataContext.BankHoliday.AsNoTracking().ToListAsync();
 
             CollectionAssert.AreNotEquivalent(initialBankHolidays, resultantBankHolidays);
-            Assert.Greater(resultantBankHolidays.Count, initialBankHolidays.Count);
+            Assert.That(resultantBankHolidays.Count, Is.GreaterThan(initialBankHolidays.Count));
         }
 
         [Test]

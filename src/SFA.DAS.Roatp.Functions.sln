@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31005.135
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.Roatp.Functions.Con
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B3585EBC-2A7F-4314-BDAE-33B0A31C9ABC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Roatp.Functions.UnitTests", "SFA.DAS.Roatp.Functions.UnitTests\SFA.DAS.Roatp.Functions.UnitTests.csproj", "{A670B943-B3E1-402E-BC5D-95B583FFAD7A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.Roatp.Functions.UnitTests", "SFA.DAS.Roatp.Functions.UnitTests\SFA.DAS.Roatp.Functions.UnitTests.csproj", "{A670B943-B3E1-402E-BC5D-95B583FFAD7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

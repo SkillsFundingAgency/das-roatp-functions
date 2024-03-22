@@ -1,17 +1,18 @@
-﻿using Azure.Storage.Blobs;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -61,7 +62,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         public async Task Run_Logs_Debug_Message()
         {
             var request = new AdminFileExtractRequest(new AssessorClarificationOutcome());
-            await _sut.Run(request);
+            await _sut.Run(JsonConvert.SerializeObject(request));
 
             _logger.Verify(x => x.Log(LogLevel.Debug, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
         }
@@ -72,7 +73,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var gatewayReviewDetails = new GatewayReviewDetails { GatewaySubcontractorDeclarationClarificationUpload = "file.pdf" };
 
             var request = new AdminFileExtractRequest(_applicationId, gatewayReviewDetails);
-            await _sut.Run(request);
+            await _sut.Run(JsonConvert.SerializeObject(request));
 
             _applyApiClient.Verify(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, gatewayReviewDetails.GatewaySubcontractorDeclarationClarificationUpload), Times.Once);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
@@ -84,7 +85,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var assessorClarificationOutcome = new AssessorClarificationOutcome { ApplicationId = _applicationId, ClarificationFile = "file.pdf" };
 
             var request = new AdminFileExtractRequest(assessorClarificationOutcome);
-            await _sut.Run(request);
+            await _sut.Run(JsonConvert.SerializeObject(request));
 
             _applyApiClient.Verify(x => x.DownloadAssessorClarificationFile(assessorClarificationOutcome.ApplicationId, assessorClarificationOutcome.SequenceNumber, assessorClarificationOutcome.SectionNumber, assessorClarificationOutcome.PageId, assessorClarificationOutcome.ClarificationFile), Times.AtLeastOnce);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
@@ -96,7 +97,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var financeClarificationFile = new FinancialReviewClarificationFile { Filename = "file.pdf" };
 
             var request = new AdminFileExtractRequest(_applicationId, financeClarificationFile);
-            await _sut.Run(request);
+            await _sut.Run(JsonConvert.SerializeObject(request));
 
             _applyApiClient.Verify(x => x.DownloadFinanceClarificationFile(_applicationId, financeClarificationFile.Filename), Times.Once);
             _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);

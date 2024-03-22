@@ -1,12 +1,28 @@
-# ![crest](https://assets.publishing.service.gov.uk/government/assets/crests/org_crest_27px-916806dcf065e7273830577de490d5c7c42f36ddec83e907efe62086785f24fb.png) Digital Apprenticeships Service
+## ⛔Never push sensitive information such as client id's, secrets or keys into repositories including in the README file⛔
 
-##  Register of Apprenticeship Training Providers  - Functions
+# _Roatp Functions_
 
-### Developer Setup
+<img src="https://avatars.githubusercontent.com/u/9841374?s=200&v=4" align="right" alt="UK Government logo">
 
-#### Requirements
+[![Build Status](https://sfa-gov-uk.visualstudio.com/Digital%20Apprenticeship%20Service/_apis/build/status%2FApprenticeships%20Providers%2Fdas-roatp-functions?repoName=SkillsFundingAgency%2Fdas-roatp-functions&branchName=refs%2Fpull%2F53%2Fmerge)](https://sfa-gov-uk.visualstudio.com/Digital%20Apprenticeship%20Service/_build/latest?definitionId=2374&repoName=SkillsFundingAgency%2Fdas-roatp-functions&branchName=refs%2Fpull%2F53%2Fmerge)
 
-- Install [.NET Core 3.1](https://www.microsoft.com/net/download)
+[![Quality Gate Status](
+https://sonarcloud.io/api/project_badges/measure?project=SkillsFundingAgency_das-roatp-functions&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SkillsFundingAgency_das-roatp-dunctions)
+
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg?longCache=true&style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
+
+
+## 🚀 Installation
+
+### Pre-Requisites
+* A clone of this repository
+* Clone and run the database publish for das-apply-service: https://github.com/SkillsFundingAgency/das-apply-service
+
+
+### Dependencies
+There are no dependencies, but you will have to have the applyService database running locally (see note about das-apply-service in pre-requisites)
+
+- Install [.NET 8](https://www.microsoft.com/net/download)
 - Install [Azure Functions SDK](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 - Azure Service Bus instance hosted within Azure
 
@@ -19,8 +35,7 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "AppName": "das-roatp-functions",
     "EnvironmentName": "LOCAL",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true",

@@ -1,14 +1,15 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.ServiceBus;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
-using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
-using SFA.DAS.Roatp.Functions.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.Requests;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -16,16 +17,17 @@ namespace SFA.DAS.Roatp.Functions
     {
         private readonly ILogger<AssessorExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
+        private readonly ServiceBusClient _serviceBusClient;
 
-        public AssessorExtract(ILogger<AssessorExtract> log, ApplyDataContext applyDataContext)
+        public AssessorExtract(ILogger<AssessorExtract> log, ApplyDataContext applyDataContext, ServiceBusClient serviceBusClient)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
+            _serviceBusClient = serviceBusClient;
         }
 
-        [FunctionName("AssessorExtract")]
-        public async Task Run([TimerTrigger("%AssessorExtractSchedule%")] TimerInfo myTimer,
-            [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
+        [Function("AssessorExtract")]
+        public async Task Run([TimerTrigger("0 0 1 * * *")] TimerInfo myTimer)
         {
             if (myTimer.IsPastDue)
             {
@@ -38,7 +40,7 @@ namespace SFA.DAS.Roatp.Functions
 
             foreach (var application in applications)
             {
-                await EnqueueAssessorFilesForExtract(clarificationFileExtractQueue, application);
+                await EnqueueAssessorFilesForExtract(application);
                 await MarkAssessorFilesExtractedForApplication(application.ApplicationId);
             }
         }
@@ -58,19 +60,20 @@ namespace SFA.DAS.Roatp.Functions
             return applications;
         }
 
-        public async Task EnqueueAssessorFilesForExtract(IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue, Apply application)
+        public async Task EnqueueAssessorFilesForExtract(Apply application)
         {
             _logger.LogDebug($"Enqueuing assessor files for extract for application {application.ApplicationId}");
-
+            var sender = _serviceBusClient.CreateSender(Environment.GetEnvironmentVariable("AdminFileExtractQueue"));
             if (application.AssessorClarificationOutcomes != null)
             {
                 var clarificationFiles = application.AssessorClarificationOutcomes.Where(x => x.ClarificationFile != null);
 
                 foreach (var file in clarificationFiles)
                 {
-                    await clarificationFileExtractQueue.AddAsync(new AdminFileExtractRequest(file));
+                    var message = new ServiceBusMessage(JsonConvert.SerializeObject(new AdminFileExtractRequest(file)));
+                    await sender.SendMessageAsync(message);
                 }
-            } 
+            }
         }
 
         public async Task MarkAssessorFilesExtractedForApplication(Guid applicationId)
