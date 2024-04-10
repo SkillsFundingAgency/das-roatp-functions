@@ -1,14 +1,15 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.ServiceBus;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
-using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
-using SFA.DAS.Roatp.Functions.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using SFA.DAS.Roatp.Functions.ApplyTypes;
+using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
+using SFA.DAS.Roatp.Functions.Requests;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -16,16 +17,17 @@ namespace SFA.DAS.Roatp.Functions
     {
         private readonly ILogger<AppealExtract> _logger;
         private readonly ApplyDataContext _applyDataContext;
+        private readonly ServiceBusClient _serviceBusClient;
 
-        public AppealExtract(ILogger<AppealExtract> log, ApplyDataContext applyDataContext)
+        public AppealExtract(ILogger<AppealExtract> log, ApplyDataContext applyDataContext, ServiceBusClient serviceBusClient)
         {
             _logger = log;
             _applyDataContext = applyDataContext;
+            _serviceBusClient = serviceBusClient;
         }
 
-        [FunctionName("AppealExtract")]
-        public async Task Run([TimerTrigger("%AppealExtractSchedule%")] TimerInfo myTimer,
-            [ServiceBus("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AppealFileExtractRequest> appealFileExtractQueue)
+        [Function("AppealExtract")]
+        public async Task Run([TimerTrigger("0 0 1 * * *")] TimerInfo myTimer)
         {
             if (myTimer.IsPastDue)
             {
@@ -35,10 +37,9 @@ namespace SFA.DAS.Roatp.Functions
             _logger.LogInformation($"AppealExtract function executed at: {DateTime.Now}");
 
             var appeals = await GetAppealsToExtract();
-
             foreach (var appeal in appeals)
             {
-                await EnqueueAppealFilesForExtract(appealFileExtractQueue, appeal);
+                await EnqueueAppealFilesForExtract(appeal);
                 await MarkAppealFilesExtractedForApplication(appeal.ApplicationId);
             }
         }
@@ -59,7 +60,7 @@ namespace SFA.DAS.Roatp.Functions
             return applications.Select(ap => ap.Appeal).ToList();
         }
 
-        public async Task EnqueueAppealFilesForExtract(IAsyncCollector<AppealFileExtractRequest> appealFileExtractQueue, Appeal appeal)
+        public async Task EnqueueAppealFilesForExtract(Appeal appeal)
         {
             _logger.LogDebug($"Enqueuing appeal files for extract for application {appeal.ApplicationId}");
 
@@ -67,9 +68,12 @@ namespace SFA.DAS.Roatp.Functions
             {
                 var appealFiles = appeal.AppealFiles.Where(x => x.FileName != null);
 
+                var sender = _serviceBusClient.CreateSender(Environment.GetEnvironmentVariable("AppealFileExtractQueue"));
+
                 foreach (var file in appealFiles)
                 {
-                    await appealFileExtractQueue.AddAsync(new AppealFileExtractRequest(file));
+                    var message = new ServiceBusMessage(JsonConvert.SerializeObject(new AppealFileExtractRequest(file)));
+                    await sender.SendMessageAsync(message);
                 }
             }
         }

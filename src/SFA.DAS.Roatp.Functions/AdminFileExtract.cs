@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
@@ -21,14 +22,16 @@ namespace SFA.DAS.Roatp.Functions
             _datamartBlobStorageFactory = datamartBlobStorageFactory;
         }
 
-        [FunctionName("AdminFileExtract")]
-        public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
+        [Function("AdminFileExtract")]
+        public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] string messageContent)
         {
+            AdminFileExtractRequest fileToExtract = JsonConvert.DeserializeObject<AdminFileExtractRequest>(messageContent);
+
             _logger.LogDebug($"Saving {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}");
 
             try
             {
-                switch(fileToExtract.AdminFileType)
+                switch (fileToExtract.AdminFileType)
                 {
                     case AdminFileType.Gateway:
                         await ExtractGatewayFile(fileToExtract);

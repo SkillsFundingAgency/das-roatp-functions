@@ -1,20 +1,22 @@
-﻿using EntityFrameworkCore.Testing.Moq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using EntityFrameworkCore.Testing.Moq;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SFA.DAS.QnA.Api.Types;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Requests;
-using SFA.DAS.Roatp.Functions.UnitTests.Generators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
+using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 
 namespace SFA.DAS.Roatp.Functions.UnitTests
 {
@@ -25,7 +27,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         private Mock<ISectorProcessingService> _sectorProcessingService;
         private ApplyDataContext _applyDataContext;
         private Mock<IAsyncCollector<ApplyFileExtractRequest>> _applyFileExtractQueue;
-        private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        private Mock<ServiceBusClient> _serviceBusClient;
+        private Mock<ServiceBusSender> _serviceBusSenderMock;
 
         private Apply _inProgressApplication;
         private Apply _application;
@@ -40,6 +43,10 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             _qnaApiClient = new Mock<IQnaApiClient>();
             _sectorProcessingService = new Mock<ISectorProcessingService>();
             _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
+            _serviceBusClient = new Mock<ServiceBusClient>();
+            _serviceBusSenderMock = new();
+            _serviceBusClient.Setup(x => x.CreateSender(It.IsAny<string>()))
+                .Returns(_serviceBusSenderMock.Object);
 
             _inProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "In Progress", null);
             _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "Submitted", DateTime.Today.AddDays(-1));
@@ -53,7 +60,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _applyFileExtractQueue = new Mock<IAsyncCollector<ApplyFileExtractRequest>>();
 
-            _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _sectorProcessingService.Object);
+            _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _sectorProcessingService.Object, _serviceBusClient.Object);
         }
 
         [Test]
@@ -91,13 +98,16 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-            Assert.IsNotNull(actualQuestion);
-            Assert.AreEqual(expectedQuestion.ApplicationId, actualQuestion.ApplicationId);
-            Assert.AreEqual(expectedQuestion.SequenceNumber, actualQuestion.SequenceNumber);
-            Assert.AreEqual(expectedQuestion.SectionNumber, actualQuestion.SectionNumber);
-            Assert.AreEqual(expectedQuestion.PageId, actualQuestion.PageId);
-            Assert.AreEqual(expectedQuestion.QuestionId, actualQuestion.QuestionId);
-            Assert.AreEqual(expectedQuestion.QuestionType, actualQuestion.QuestionType);
+            Assert.Multiple(() =>
+            {
+                Assert.That(actualQuestion, Is.Not.Null);
+                Assert.That(expectedQuestion.ApplicationId, Is.EqualTo(actualQuestion.ApplicationId));
+                Assert.That(expectedQuestion.SequenceNumber, Is.EqualTo(actualQuestion.SequenceNumber));
+                Assert.That(expectedQuestion.SectionNumber, Is.EqualTo(actualQuestion.SectionNumber));
+                Assert.That(expectedQuestion.PageId, Is.EqualTo(actualQuestion.PageId));
+                Assert.That(expectedQuestion.QuestionId, Is.EqualTo(actualQuestion.QuestionId));
+                Assert.That(expectedQuestion.QuestionType, Is.EqualTo(actualQuestion.QuestionType));
+            });
         }
 
         [Test]
@@ -119,11 +129,14 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-            Assert.IsNotNull(actualAnswer);
-            Assert.AreEqual(expectedAnswer.Answer, actualAnswer.Answer);
-            Assert.AreEqual(expectedAnswer.ColumnHeading, actualAnswer.ColumnHeading);
-            Assert.AreEqual(expectedAnswer.RowNumber, actualAnswer.RowNumber);
-            Assert.AreEqual(expectedAnswer.ColumnNumber, actualAnswer.ColumnNumber);
+            Assert.Multiple(() =>
+            {
+                Assert.That(actualAnswer, Is.Not.Null);
+                Assert.That(expectedAnswer.Answer, Is.EqualTo(actualAnswer.Answer));
+                Assert.That(expectedAnswer.ColumnHeading, Is.EqualTo(actualAnswer.ColumnHeading));
+                Assert.That(expectedAnswer.RowNumber, Is.EqualTo(actualAnswer.RowNumber));
+                Assert.That(expectedAnswer.ColumnNumber, Is.EqualTo(actualAnswer.ColumnNumber));
+            });
         }
 
         [Test]
@@ -137,7 +150,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var submittedAnswers = _applyDataContext.SubmittedApplicationAnswers.AsQueryable().Where(app => app.ApplicationId == applicationId).ToList();
 
             CollectionAssert.IsNotEmpty(submittedAnswers);
-            Assert.AreEqual(applicationAnswers.Count, submittedAnswers.Count);
+            Assert.That(applicationAnswers.Count, Is.EqualTo(submittedAnswers.Count));
         }
 
         [Test]
@@ -150,7 +163,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
-            Assert.IsNotNull(extractedApplication);
+            Assert.That(extractedApplication, Is.Not.Null);
         }
 
         [Test]
@@ -159,9 +172,9 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var applicationId = _application.ApplicationId;
             var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
 
-            await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
+            await _sut.EnqueueApplyFilesForExtract(applicationAnswers);
 
-            _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _serviceBusSenderMock.Verify(x => x.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
 
         [Test]
@@ -177,10 +190,13 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             var organisationManagementAnswers = _applyDataContext.OrganisationManagement.AsQueryable().Where(app => app.OrganisationId == organisationId).ToList();
 
             CollectionAssert.IsNotEmpty(organisationManagementAnswers);
-            Assert.IsTrue(organisationManagementAnswers.Count == 3);
-            Assert.IsTrue(organisationManagementAnswers[0].TimeInRoleMonths == 26);
-            Assert.IsTrue(organisationManagementAnswers[1].TimeInRoleMonths == 13);
-            Assert.IsTrue(organisationManagementAnswers[2].TimeInRoleMonths == 39);
+            Assert.Multiple(() =>
+            {
+                Assert.That(organisationManagementAnswers.Count, Is.EqualTo(3));
+                Assert.That(organisationManagementAnswers[0].TimeInRoleMonths, Is.EqualTo(26));
+                Assert.That(organisationManagementAnswers[1].TimeInRoleMonths, Is.EqualTo(13));
+                Assert.That(organisationManagementAnswers[2].TimeInRoleMonths, Is.EqualTo(39));
+            });
         }
 
         [Test]
@@ -193,12 +209,15 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
             await _sut.LoadOrganisationPersonnelForApplication(applicationId, applicationAnswers);
 
             var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
-            
-            Assert.IsNotNull(loadedOrganisationPersonnel);
-            Assert.True(loadedOrganisationPersonnel.Where(a=>a.PersonnelType == PersonnelType.CompanyDirector).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count() > 0);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loadedOrganisationPersonnel, Is.Not.Null);
+                Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CompanyDirector).Any());
+                Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Any());
+                Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Any());
+                Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Any());
+            });
         }
     }
 }

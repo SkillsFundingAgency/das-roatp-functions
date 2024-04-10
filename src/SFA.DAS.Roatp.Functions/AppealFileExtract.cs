@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
@@ -21,9 +22,10 @@ namespace SFA.DAS.Roatp.Functions
             _datamartBlobStorageFactory = datamartBlobStorageFactory;
         }
 
-        [FunctionName("AppealFileExtract")]
-        public async Task Run([ServiceBusTrigger("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AppealFileExtractRequest fileToExtract)
+        [Function("AppealFileExtract")]
+        public async Task Run([ServiceBusTrigger("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")] string messageContent)
         {
+            AppealFileExtractRequest fileToExtract = JsonConvert.DeserializeObject<AppealFileExtractRequest>(messageContent);
             _logger.LogDebug($"Saving appeal file into Datamart for application {fileToExtract.ApplicationId} and filename: {fileToExtract.FileName}");
 
             var blobContainerClient = await _datamartBlobStorageFactory.GetAppealBlobContainerClient();

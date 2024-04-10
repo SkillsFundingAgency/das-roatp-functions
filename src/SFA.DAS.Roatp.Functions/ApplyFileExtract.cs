@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
@@ -22,9 +23,11 @@ namespace SFA.DAS.Roatp.Functions
         }
 
 
-        [FunctionName("ApplyFileExtract")]
-        public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
+        [Function("ApplyFileExtract")]
+        public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] string messageContent)
         {
+            ApplyFileExtractRequest fileToExtract = JsonConvert.DeserializeObject<ApplyFileExtractRequest>(messageContent);
+
             _logger.LogDebug($"Saving QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
 
             var blobContainerClient = await _datamartBlobStorageFactory.GetQnABlobContainerClient();
