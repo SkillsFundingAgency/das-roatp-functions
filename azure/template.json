@@ -16,7 +16,7 @@
             "defaultValue": "SFA.DAS.Roatp.Functions"
         },
         "tags": {
-            "type": "object"
+            "type": "string"
         },
         "resourceGroupLocation": {
             "type": "string"
