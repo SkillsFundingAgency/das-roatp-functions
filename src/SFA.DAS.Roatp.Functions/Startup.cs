@@ -1,4 +1,8 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,18 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NLog.Extensions.Logging;
-using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
-using SFA.DAS.Roatp.Functions.NLog;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus.Management;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 [assembly: FunctionsStartup(typeof(SFA.DAS.Roatp.Functions.Startup))]
@@ -28,8 +25,6 @@ namespace SFA.DAS.Roatp.Functions
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            AddNLog(builder);
-
             var serviceProvider = builder.Services.BuildServiceProvider();
             BuildConfigurationSettings(builder, serviceProvider);
 
@@ -86,25 +81,6 @@ namespace SFA.DAS.Roatp.Functions
                 };
                 await managementClient.CreateQueueAsync(appealQueueDescription);
             }
-        }
-
-        private static void AddNLog(IFunctionsHostBuilder builder)
-        {
-            var nLogConfiguration = new NLogConfiguration();
-
-            builder.Services.AddLogging((options) =>
-            {
-                options.AddFilter(typeof(Startup).Namespace, LogLevel.Information);
-                options.SetMinimumLevel(LogLevel.Trace);
-                options.AddNLog(new NLogProviderOptions
-                {
-                    CaptureMessageTemplates = true,
-                    CaptureMessageProperties = true
-                });
-                options.AddConsole();
-
-                nLogConfiguration.ConfigureNLog();
-            });
         }
 
         private static void BuildConfigurationSettings(IFunctionsHostBuilder builder, ServiceProvider serviceProvider)
