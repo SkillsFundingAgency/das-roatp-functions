@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;

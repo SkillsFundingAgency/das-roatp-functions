@@ -84,8 +84,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             var resultantBankHolidays = await _applyDataContext.BankHoliday.AsNoTracking().ToListAsync();
 
-            CollectionAssert.AreNotEquivalent(initialBankHolidays, resultantBankHolidays);
-            Assert.Greater(resultantBankHolidays.Count, initialBankHolidays.Count);
+            Assert.That(initialBankHolidays, Is.Not.EquivalentTo(resultantBankHolidays));
+            Assert.That(resultantBankHolidays.Count, Is.GreaterThan(initialBankHolidays.Count));
         }
 
         [Test]
@@ -95,8 +95,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             var actualBankHolidays = await _sut.GetCurrentBankHolidays();
 
-            CollectionAssert.IsNotEmpty(actualBankHolidays);
-            CollectionAssert.AreEquivalent(expectedBankHolidays, actualBankHolidays);
+            Assert.That(actualBankHolidays, Is.Not.Empty);
+            Assert.That(expectedBankHolidays, Is.EquivalentTo(actualBankHolidays));
         }
     }
 }

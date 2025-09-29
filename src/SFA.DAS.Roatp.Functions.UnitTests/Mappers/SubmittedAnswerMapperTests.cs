@@ -39,7 +39,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -67,14 +67,14 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
         {
             var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            Assert.IsNotNull(result);
-            Assert.AreEqual(_applicationId, result.ApplicationId);
-            Assert.AreEqual(_sequenceNumber, result.SequenceNumber);
-            Assert.AreEqual(_sectionNumber, result.SectionNumber);
-            Assert.AreEqual(_pageId, result.PageId);
-            Assert.AreEqual(_question.QuestionId, result.QuestionId);
-            Assert.AreEqual(_question.Input.Type, result.QuestionType);
-            Assert.AreEqual(_submittedAnswer, result.Answer);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(_applicationId, Is.EqualTo(result.ApplicationId));
+            Assert.That(_sequenceNumber, Is.EqualTo(result.SequenceNumber));
+            Assert.That(_sectionNumber, Is.EqualTo(result.SectionNumber));
+            Assert.That(_pageId, Is.EqualTo(result.PageId));
+            Assert.That(_question.QuestionId, Is.EqualTo(result.QuestionId));
+            Assert.That(_question.Input.Type, Is.EqualTo(result.QuestionType));
+            Assert.That(_submittedAnswer, Is.EqualTo(result.Answer));
         }
     }
 }

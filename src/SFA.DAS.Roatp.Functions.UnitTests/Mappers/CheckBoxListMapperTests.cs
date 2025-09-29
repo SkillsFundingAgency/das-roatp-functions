@@ -55,7 +55,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -85,18 +85,18 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = CheckBoxListMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-            CollectionAssert.IsNotEmpty(result);
-            Assert.AreEqual(expectedItemCount, result.Count);
+            Assert.That(result, Is.Not.Empty);
+            Assert.That(expectedItemCount, Is.EqualTo(result.Count));
 
             for(int index = 0; index < result.Count; index++)
             {
-                Assert.AreEqual(_applicationId, result[index].ApplicationId);
-                Assert.AreEqual(_sequenceNumber, result[index].SequenceNumber);
-                Assert.AreEqual(_sectionNumber, result[index].SectionNumber);
-                Assert.AreEqual(_pageId, result[index].PageId);
-                Assert.AreEqual(_question.QuestionId, result[index].QuestionId);
-                Assert.AreEqual(_question.Input.Type, result[index].QuestionType);
-                Assert.AreEqual(_question.Input.Options[index].Value, result[index].Answer);
+                Assert.That(_applicationId, Is.EqualTo(result[index].ApplicationId));
+                Assert.That(_sequenceNumber, Is.EqualTo(result[index].SequenceNumber));
+                Assert.That(_sectionNumber, Is.EqualTo(result[index].SectionNumber));
+                Assert.That(_pageId, Is.EqualTo(result[index].PageId));
+                Assert.That(_question.QuestionId, Is.EqualTo(result[index].QuestionId));
+                Assert.That(_question.Input.Type, Is.EqualTo(result[index].QuestionType));
+                Assert.That(_question.Input.Options[index].Value, Is.EqualTo(result[index].Answer));
             }
         }
     }

@@ -25,7 +25,7 @@ namespace SFA.DAS.Roatp.Functions
 
         [FunctionName("AssessorExtract")]
         public async Task Run([TimerTrigger("%AssessorExtractSchedule%")] TimerInfo myTimer,
-            [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
+            [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
         {
             if (myTimer.IsPastDue)
             {

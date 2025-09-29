@@ -47,7 +47,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -57,7 +57,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
-            CollectionAssert.IsEmpty(result);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -77,8 +77,8 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
 
             var result = TabularDataMapper.GetAnswers(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _tabularData);
 
-            CollectionAssert.IsNotEmpty(result);
-            Assert.AreEqual(expectedItemCount, result.Count);
+            Assert.That(result, Is. Not.Empty);
+            Assert.That(expectedItemCount, Is.EqualTo(result.Count));
 
             for (int row = 0; row < _tabularData.DataRows.Count; row++)
             {
@@ -86,16 +86,16 @@ namespace SFA.DAS.Roatp.Functions.UnitTests.Mappers
                 {
                     var answer = result[column + (row * _tabularData.DataRows.Count)];
 
-                    Assert.AreEqual(_applicationId, answer.ApplicationId);
-                    Assert.AreEqual(_sequenceNumber, answer.SequenceNumber);
-                    Assert.AreEqual(_sectionNumber, answer.SectionNumber);
-                    Assert.AreEqual(_pageId, answer.PageId);
-                    Assert.AreEqual(_question.QuestionId, answer.QuestionId);
-                    Assert.AreEqual(_question.Input.Type, answer.QuestionType);
-                    Assert.AreEqual(_tabularData.DataRows[row].Columns[column], answer.Answer);
-                    Assert.AreEqual(_tabularData.HeadingTitles[column], answer.ColumnHeading);
-                    Assert.AreEqual(row, answer.RowNumber);
-                    Assert.AreEqual(column, answer.ColumnNumber);
+                    Assert.That(_applicationId, Is.EqualTo(answer.ApplicationId));
+                    Assert.That(_sequenceNumber, Is.EqualTo(answer.SequenceNumber));
+                    Assert.That(_sectionNumber, Is.EqualTo(answer.SectionNumber));
+                    Assert.That(_pageId, Is.EqualTo(answer.PageId));
+                    Assert.That(_question.QuestionId, Is.EqualTo(answer.QuestionId));
+                    Assert.That(_question.Input.Type, Is.EqualTo(answer.QuestionType));
+                    Assert.That(_tabularData.DataRows[row].Columns[column], Is.EqualTo(answer.Answer));
+                    Assert.That(_tabularData.HeadingTitles[column], Is.EqualTo(answer.ColumnHeading));
+                    Assert.That(row, Is.EqualTo(answer.RowNumber));
+                    Assert.That(column, Is.EqualTo(answer.ColumnNumber));
                 }
             }
         }

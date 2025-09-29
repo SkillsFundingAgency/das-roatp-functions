@@ -25,7 +25,7 @@ namespace SFA.DAS.Roatp.Functions
 
         [FunctionName("AppealExtract")]
         public async Task Run([TimerTrigger("%AppealExtractSchedule%")] TimerInfo myTimer,
-            [ServiceBus("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AppealFileExtractRequest> appealFileExtractQueue)
+            [ServiceBus("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")] IAsyncCollector<AppealFileExtractRequest> appealFileExtractQueue)
         {
             if (myTimer.IsPastDue)
             {

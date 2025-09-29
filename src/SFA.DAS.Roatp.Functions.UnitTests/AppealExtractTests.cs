@@ -63,9 +63,9 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
         {
             var actualResults = await _sut.GetAppealsToExtract();
 
-            CollectionAssert.IsNotEmpty(actualResults);
-            CollectionAssert.Contains(actualResults, _application.Appeal);
-            CollectionAssert.DoesNotContain(actualResults, _applicationWithAppealNotYetSubmitted.Appeal);
+            Assert.That(actualResults, Is.Not.Empty);
+            Assert.That(actualResults, Does.Contain(_application.Appeal));
+            Assert.That(actualResults, Does.Not.Contain(_applicationWithAppealNotYetSubmitted.Appeal));
         }
 
         [Test]
@@ -85,7 +85,7 @@ namespace SFA.DAS.Roatp.Functions.UnitTests
 
             var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
-            Assert.IsTrue(extractedApplication.AppealFilesExtracted);
+            Assert.That(extractedApplication.AppealFilesExtracted, Is.True);
         }
     }
 }
