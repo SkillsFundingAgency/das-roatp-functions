@@ -61,7 +61,6 @@ namespace SFA.DAS.Roatp.Functions.Requests
             Filename = info.GetString(nameof(Filename));
         }
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue(nameof(ApplicationId), ApplicationId);
