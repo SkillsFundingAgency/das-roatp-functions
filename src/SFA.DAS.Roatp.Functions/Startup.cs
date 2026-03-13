@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SFA.DAS.Configuration.AzureTableStorage;
 using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
@@ -161,6 +160,20 @@ namespace SFA.DAS.Roatp.Functions
                 })
                 .SetHandlerLifetime(handlerLifeTime);
 
+            builder.Services.AddHttpClient<IRoatpOuterApiClient, RoatpOuterApiClient>((serviceProvider, httpClient) =>
+                {
+                    var roatpOuterApiAuthentication = serviceProvider.GetService<IOptions<RoatpOuterApiAuthentication>>().Value;
+                    httpClient.BaseAddress = new Uri(roatpOuterApiAuthentication.ApiBaseAddress);
+                    httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
+
+                    var configuration = serviceProvider.GetService<IConfiguration>();
+                    if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(roatpOuterApiAuthentication.Identifier);
+                        httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
+                    }
+                })
+                .SetHandlerLifetime(handlerLifeTime);
         }
 
         private static void BuildDataContext(IFunctionsHostBuilder builder)
