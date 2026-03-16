@@ -112,6 +112,7 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
             builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
             builder.Services.Configure<GovUkApiAuthentication>(config.GetSection("GovUkApiAuthentication"));
+            builder.Services.Configure<RoatpOuterApiAuthentication>(config.GetSection("RoatpOuterApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)

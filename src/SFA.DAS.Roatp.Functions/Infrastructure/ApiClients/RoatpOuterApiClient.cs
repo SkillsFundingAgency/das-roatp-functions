@@ -13,7 +13,7 @@ namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
 
         public async Task UpdateProviderNames()
         {
-            var response = await GetResponse("Providers/update-names");
+            var response = await PostResponse("Providers/update-names", true);
         }
     }
 }
