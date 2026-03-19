@@ -2,7 +2,7 @@
 {
     public class RoatpOuterApiAuthentication
     {
-        public string Identifier { get; set; }
-        public string ApiBaseAddress { get; set; }
+        public string BaseUrl { get; set; }
+        public string SubscriptionKey { get; set; }
     }
 }

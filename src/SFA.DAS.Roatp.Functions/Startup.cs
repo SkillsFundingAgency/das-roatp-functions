@@ -164,16 +164,15 @@ namespace SFA.DAS.Roatp.Functions
 
             builder.Services.AddHttpClient<IRoatpOuterApiClient, RoatpOuterApiClient>((serviceProvider, httpClient) =>
                 {
-                    var roatpOuterApiAuthentication = serviceProvider.GetService<IOptions<RoatpOuterApiAuthentication>>().Value;
-                    httpClient.BaseAddress = new Uri(roatpOuterApiAuthentication.ApiBaseAddress);
-                    httpClient.DefaultRequestHeaders.Add(acceptHeaderName, acceptHeaderValue);
-
                     var configuration = serviceProvider.GetService<IConfiguration>();
-                    if (!configuration["EnvironmentName"].Equals("LOCAL", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        var generateTokenTask = BearerTokenGenerator.GenerateTokenAsync(roatpOuterApiAuthentication.Identifier);
-                        httpClient.DefaultRequestHeaders.Authorization = generateTokenTask.GetAwaiter().GetResult();
-                    }
+                    var apiConfig = configuration
+                        .GetSection("RoatpOuterApiAuthentication")
+                        .Get<RoatpOuterApiAuthentication>();
+
+                    httpClient.BaseAddress = new Uri(apiConfig.BaseUrl);
+                    httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                    httpClient.DefaultRequestHeaders.Add("X-Version", "1");
+                    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiConfig.SubscriptionKey);
                 })
                 .SetHandlerLifetime(handlerLifeTime);
         }
