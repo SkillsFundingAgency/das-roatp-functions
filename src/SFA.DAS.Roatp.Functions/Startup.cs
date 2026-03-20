@@ -113,7 +113,6 @@ namespace SFA.DAS.Roatp.Functions
             builder.Services.Configure<QnaApiAuthentication>(config.GetSection("QnaApiAuthentication"));
             builder.Services.Configure<ApplyApiAuthentication>(config.GetSection("ApplyApiAuthentication"));
             builder.Services.Configure<GovUkApiAuthentication>(config.GetSection("GovUkApiAuthentication"));
-            builder.Services.Configure<RoatpOuterApiAuthentication>(config.GetSection("RoatpOuterApiAuthentication"));
         }
 
         private static void BuildHttpClients(IFunctionsHostBuilder builder)
@@ -171,7 +170,7 @@ namespace SFA.DAS.Roatp.Functions
 
                     httpClient.BaseAddress = new Uri(apiConfig.BaseUrl);
                     httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                    httpClient.DefaultRequestHeaders.Add("X-Version", "1");
+                    httpClient.DefaultRequestHeaders.Add("X-Version", apiConfig.ApiVersion);
                     httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiConfig.SubscriptionKey);
                 })
                 .SetHandlerLifetime(handlerLifeTime);
