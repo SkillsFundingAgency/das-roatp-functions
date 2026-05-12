@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -9,13 +14,7 @@ using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Mappers;
 using SFA.DAS.Roatp.Functions.Requests;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
-using static System.Boolean;
-using Microsoft.Data.SqlClient;
 
 namespace SFA.DAS.Roatp.Functions
 {
@@ -65,36 +64,36 @@ namespace SFA.DAS.Roatp.Functions
             }
 
             _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
-            
 
-                var applications = await GetApplicationsToExtract(DateTime.Now);
 
-                foreach (var applicationId in applications)
+            var applications = await GetApplicationsToExtract(DateTime.Now);
+
+            foreach (var applicationId in applications)
+            {
+                try
                 {
-                    try
-                    {
-                        var answers = await ExtractAnswersForApplication(applicationId);
+                    var answers = await ExtractAnswersForApplication(applicationId);
 
-                        using (var transaction = _applyDataContext.Database.BeginTransaction())
-                        {
-                            await SaveExtractedAnswersForApplication(applicationId, answers);
-                            await SaveSectorDetailsForApplication(applicationId, answers);
-                            await LoadOrganisationManagementForApplication(applicationId, answers);
-                            await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                            await transaction.CommitAsync();
-                        }
-                        await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-                    }
-                    catch (SqlException ex)
+                    using (var transaction = _applyDataContext.Database.BeginTransaction())
                     {
-                        _logger.LogError(ex, ErrorMessage, applicationId);
+                        await SaveExtractedAnswersForApplication(applicationId, answers);
+                        await SaveSectorDetailsForApplication(applicationId, answers);
+                        await LoadOrganisationManagementForApplication(applicationId, answers);
+                        await LoadOrganisationPersonnelForApplication(applicationId, answers);
+                        await transaction.CommitAsync();
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, ErrorMessage, applicationId);
-                        throw;
-                    }
+                    await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
                 }
+                catch (SqlException ex)
+                {
+                    _logger.LogError(ex, ErrorMessage, applicationId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ErrorMessage, applicationId);
+                    throw;
+                }
+            }
         }
 
         public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
@@ -187,7 +186,7 @@ namespace SFA.DAS.Roatp.Functions
                     organisationPersonnel.Add(orgPersonnel);
                 }
             }
-            else if(submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any() && 
+            else if (submittedAnswersOrganisationTypeSoleTraderOrPartnership.Any() &&
                    submittedAnswersOrganisationTypeSoleTraderOrPartnership.FirstOrDefault()?.Answer == SoleTraderType)
             {
                 var orgPersonnel = new OrganisationPersonnel
@@ -257,7 +256,7 @@ namespace SFA.DAS.Roatp.Functions
                 {
                     await ExtractAnswers(applicationId, answers, QuestionIdAddPeopleManualEntry, AddPeopleInControl);
                 }
-           }
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
@@ -295,9 +294,9 @@ namespace SFA.DAS.Roatp.Functions
 
         private async Task<Answer> ExtractAnswersByQuestionTag(Guid applicationId, string questionTag, string questionId)
         {
-           var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
-           if (questionTagData == null) return null;
-           var answer = new Answer
+            var questionTagData = await _qnaApiClient.GetTabularDataByTag(applicationId, questionTag);
+            if (questionTagData == null) return null;
+            var answer = new Answer
             {
                 QuestionId = questionId,
                 Value = questionTagData
@@ -418,7 +417,7 @@ namespace SFA.DAS.Roatp.Functions
 
             _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
         }
-    
+
 
         public async Task EnqueueApplyFilesForExtract(IAsyncCollector<ApplyFileExtractRequest> applyFileExtractQueue, List<SubmittedApplicationAnswer> answers)
         {
@@ -495,7 +494,7 @@ namespace SFA.DAS.Roatp.Functions
         public async Task LoadOrganisationManagementForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
         {
             _logger.LogInformation($"OrganisationManagement extract for application {applicationId}");
-            
+
             var organisationManagementAnswers = LoadOrganisationManagementAnswers(applicationId, answers);
             _applyDataContext.OrganisationManagement.AddRange(organisationManagementAnswers);
             await _applyDataContext.SaveChangesAsync();
