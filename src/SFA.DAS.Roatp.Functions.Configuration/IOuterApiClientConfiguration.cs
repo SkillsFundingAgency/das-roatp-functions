@@ -2,7 +2,7 @@
 
 public interface IOuterApiClientConfiguration
 {
-    string ApiBaseUrl { get; }
+    string BaseUrl { get; }
     string SubscriptionKey { get; }
     string ApiVersion { get; }
 }

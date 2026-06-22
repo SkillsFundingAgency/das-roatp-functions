@@ -18,7 +18,7 @@ public class UpdateProviderDetailsFunction
     }
 
     [Function("UpdateProviderDetailsFunction")]
-    public async Task Run([TimerTrigger("%UpdateProviderDetailsFunctionSchedule%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateProviderDetailsFunctionSchedule%", RunOnStartup = false)] TimerInfo myTimer)
     {
         _logger.LogInformation("UpdateProviderDetailsFunction executed at: {date}", DateTime.UtcNow);
 

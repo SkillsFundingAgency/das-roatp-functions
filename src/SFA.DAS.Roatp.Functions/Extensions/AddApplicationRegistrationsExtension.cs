@@ -48,7 +48,7 @@ public static class AddApplicationRegistrationsExtension
             .SetHandlerLifetime(TimeSpan.FromMinutes(5));
         services
             .AddRefitClient<IRoatpOuterApiClient>(refitSettings)
-            .ConfigureHttpClient(c => c.BaseAddress = new Uri(roatpOuterApiConfig.ApiBaseUrl))
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(roatpOuterApiConfig.BaseUrl))
             .AddHttpMessageHandler<DefaultHeadersHandler>()
             .AddHttpMessageHandler(() => new OuterApiAuthenticationHeadersHandlers(roatpOuterApiConfig))
             .SetHandlerLifetime(TimeSpan.FromMinutes(5));
