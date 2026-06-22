@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace SFA.DAS.Roatp.Functions.BankHolidayTypes
+namespace SFA.DAS.Roatp.Functions.BankHolidayTypes;
+
+public class BankHoliday
 {
-    public class BankHoliday
-    {
-        public Guid Id { get; set; }
-        public DateTime BankHolidayDate { get; set; }
-    }
+    public Guid Id { get; set; }
+    public DateTime BankHolidayDate { get; set; }
 }

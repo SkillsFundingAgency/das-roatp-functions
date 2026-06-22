@@ -1,18 +1,17 @@
-﻿using Microsoft.Azure.Services.AppAuthentication;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.Services.AppAuthentication;
 
-namespace SFA.DAS.Roatp.Functions.Infrastructure.Tokens
+namespace SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
+
+public static class SqlTokenGenerator
 {
-    public static class SqlTokenGenerator
+    private const string AzureResource = "https://database.windows.net/";
+
+    public static async Task<string> GenerateTokenAsync()
     {
-        private const string AzureResource = "https://database.windows.net/";
+        var azureServiceTokenProvider = new AzureServiceTokenProvider();
+        var accessToken = await azureServiceTokenProvider.GetAccessTokenAsync(AzureResource);
 
-        public static async Task<string> GenerateTokenAsync()
-        {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var accessToken = await azureServiceTokenProvider.GetAccessTokenAsync(AzureResource);
-
-            return accessToken;
-        }
+        return accessToken;
     }
 }

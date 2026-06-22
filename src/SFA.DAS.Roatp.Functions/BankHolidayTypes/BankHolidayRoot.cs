@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
+﻿using System.Text.Json.Serialization;
 
-namespace SFA.DAS.Roatp.Functions.BankHolidayTypes
+namespace SFA.DAS.Roatp.Functions.BankHolidayTypes;
+
+public class BankHolidayRoot
 {
-    public class BankHolidayRoot
-    {
-        [JsonProperty("england-and-wales")]
-        public BankHolidays EnglandAndWales { get; set; }
-    }
+    [JsonPropertyName("england-and-wales")]
+    public BankHolidays EnglandAndWales { get; set; }
 }

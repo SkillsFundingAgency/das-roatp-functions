@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
+using Refit;
 
-namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients
+namespace SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
+
+public interface IRoatpOuterApiClient
 {
-    public interface IRoatpOuterApiClient
-    {
-        Task UpdateProviderNames();
-    }
+    [Post("/providers/update-names")]
+    Task UpdateProviderNames();
 }

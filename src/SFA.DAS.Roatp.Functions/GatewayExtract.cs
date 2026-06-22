@@ -1,88 +1,85 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.ServiceBus;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Requests;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace SFA.DAS.Roatp.Functions
+namespace SFA.DAS.Roatp.Functions;
+
+public class GatewayExtract
 {
-    public class GatewayExtract
+    private readonly ILogger<GatewayExtract> _logger;
+    private readonly ApplyDataContext _applyDataContext;
+
+    public GatewayExtract(ILogger<GatewayExtract> log, ApplyDataContext applyDataContext)
     {
-        private readonly ILogger<GatewayExtract> _logger;
-        private readonly ApplyDataContext _applyDataContext;
+        _logger = log;
+        _applyDataContext = applyDataContext;
+    }
 
-        public GatewayExtract(ILogger<GatewayExtract> log, ApplyDataContext applyDataContext)
+    [Function("GatewayExtract")]
+    [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
+    public async Task<List<AdminFileExtractRequest>> Run([TimerTrigger("%GatewayExtractSchedule%")] TimerInfo myTimer)
+    {
+        List<AdminFileExtractRequest> clarificationFileExtractQueue = [];
+        if (myTimer.IsPastDue)
         {
-            _logger = log;
-            _applyDataContext = applyDataContext;
+            _logger.LogInformation("GatewayExtract function is running later than scheduled");
         }
 
-        [FunctionName("GatewayExtract")]
-        public async Task Run([TimerTrigger("%GatewayExtractSchedule%")] TimerInfo myTimer,
-            [ServiceBus("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString", EntityType = EntityType.Queue)] IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue)
+        _logger.LogInformation($"GatewayExtract function executed at: {DateTime.Now}");
+
+        var applications = await GetApplicationsToExtract();
+
+        foreach (var application in applications)
         {
-            if (myTimer.IsPastDue)
-            {
-                _logger.LogInformation("GatewayExtract function is running later than scheduled");
-            }
-
-            _logger.LogInformation($"GatewayExtract function executed at: {DateTime.Now}");
-
-            var applications = await GetApplicationsToExtract();
-
-            foreach (var application in applications)
-            {
-                await EnqueueGatewayFilesForExtract(clarificationFileExtractQueue, application);
-                await MarkGatewayFilesExtractedForApplication(application.ApplicationId);
-            }
+            await EnqueueGatewayFilesForExtract(clarificationFileExtractQueue, application);
+            await MarkGatewayFilesExtractedForApplication(application.ApplicationId);
         }
+        return clarificationFileExtractQueue;
+    }
 
-        public async Task<List<Apply>> GetApplicationsToExtract()
+    public async Task<List<Apply>> GetApplicationsToExtract()
+    {
+        _logger.LogDebug($"Getting list of applications to extract");
+
+        var applications = await _applyDataContext.Apply
+                            .AsNoTracking()
+                            .Include(x => x.ExtractedApplication)
+                            .Where(app => app.ExtractedApplication != null && !app.ExtractedApplication.GatewayFilesExtracted)
+                            .Where(app => app.GatewayReviewStatus == "Pass" || app.GatewayReviewStatus == "Fail" || app.GatewayReviewStatus == "Rejected")
+                            .ToListAsync();
+
+        return applications;
+    }
+
+    private static async Task EnqueueGatewayFilesForExtract(List<AdminFileExtractRequest> clarificationFileExtractQueue, Apply application)
+    {
+        if (application.ApplyData?.GatewayReviewDetails?.GatewaySubcontractorDeclarationClarificationUpload == null) return;
+
+        clarificationFileExtractQueue.Add(new AdminFileExtractRequest(application.ApplicationId, application.ApplyData.GatewayReviewDetails));
+    }
+
+    public async Task MarkGatewayFilesExtractedForApplication(Guid applicationId)
+    {
+        _logger.LogDebug($"Marking GatewayFilesExtracted for application {applicationId}");
+
+        try
         {
-            _logger.LogDebug($"Getting list of applications to extract");
+            var application = _applyDataContext.ExtractedApplications.Single(ans => ans.ApplicationId == applicationId);
+            application.GatewayFilesExtracted = true;
 
-            var applications = await _applyDataContext.Apply
-                                .AsNoTracking()
-                                .Include(x => x.ExtractedApplication)
-                                .Where(app => app.ExtractedApplication != null && !app.ExtractedApplication.GatewayFilesExtracted)
-                                .Where(app => app.GatewayReviewStatus == "Pass" || app.GatewayReviewStatus == "Fail" || app.GatewayReviewStatus == "Rejected")
-                                .ToListAsync();
-
-            return applications;
+            await _applyDataContext.SaveChangesAsync();
+            _logger.LogInformation($"Successfully marked GatewayFilesExtracted for application {applicationId}");
         }
-
-        public async Task EnqueueGatewayFilesForExtract(IAsyncCollector<AdminFileExtractRequest> clarificationFileExtractQueue, Apply application)
+        catch (DbUpdateException ex)
         {
-            _logger.LogDebug($"Enqueuing gateway files for extract for application {application.ApplicationId}");
-
-            if (application.ApplyData?.GatewayReviewDetails?.GatewaySubcontractorDeclarationClarificationUpload != null)
-            {
-                await clarificationFileExtractQueue.AddAsync(new AdminFileExtractRequest(application.ApplicationId, application.ApplyData.GatewayReviewDetails));
-            }
-        }
-
-        public async Task MarkGatewayFilesExtractedForApplication(Guid applicationId)
-        {
-            _logger.LogDebug($"Marking GatewayFilesExtracted for application {applicationId}");
-
-            try
-            {
-                var application = _applyDataContext.ExtractedApplications.Single(ans => ans.ApplicationId == applicationId);
-                application.GatewayFilesExtracted = true;
-
-                await _applyDataContext.SaveChangesAsync();
-                _logger.LogInformation($"Successfully marked GatewayFilesExtracted for application {applicationId}");
-            }
-            catch (DbUpdateException ex)
-            {
-                _logger.LogError(ex, $"Unable to mark GatewayFilesExtracted for Application: {applicationId}");
-            }
+            _logger.LogError(ex, $"Unable to mark GatewayFilesExtracted for Application: {applicationId}");
         }
     }
 }

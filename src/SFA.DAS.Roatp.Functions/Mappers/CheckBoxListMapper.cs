@@ -1,42 +1,41 @@
-﻿using SFA.DAS.QnA.Api.Types.Page;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using SFA.DAS.QnA.Api.Types.Page;
+using SFA.DAS.Roatp.Functions.ApplyTypes;
 
-namespace SFA.DAS.Roatp.Functions.Mappers
+namespace SFA.DAS.Roatp.Functions.Mappers;
+
+public static class CheckBoxListMapper
 {
-    public static class CheckBoxListMapper
+    public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, string checkBoxListAnswer)
     {
-        public static List<SubmittedApplicationAnswer> GetAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, string pageId, Question question, string checkBoxListAnswer)
+        var answers = new List<SubmittedApplicationAnswer>();
+
+        if (question?.Input?.Options != null && !string.IsNullOrEmpty(checkBoxListAnswer))
         {
-            var answers = new List<SubmittedApplicationAnswer>();
+            var questionId = question.QuestionId;
+            var questionType = question.Input?.Type;
 
-            if (question?.Input?.Options != null && !string.IsNullOrEmpty(checkBoxListAnswer))
+            foreach (var option in question.Input.Options)
             {
-                var questionId = question.QuestionId;
-                var questionType = question.Input?.Type;
-
-                foreach(var option in question.Input.Options)
+                if (checkBoxListAnswer.Contains(option.Value))
                 {
-                    if(checkBoxListAnswer.Contains(option.Value))
+                    var answer = new SubmittedApplicationAnswer
                     {
-                        var answer = new SubmittedApplicationAnswer
-                        {
-                            ApplicationId = applicationId,
-                            SequenceNumber = sequenceNumber,
-                            SectionNumber = sectionNumber,
-                            PageId = pageId,
-                            QuestionId = questionId,
-                            QuestionType = questionType,
-                            Answer = option.Value
-                        };
+                        ApplicationId = applicationId,
+                        SequenceNumber = sequenceNumber,
+                        SectionNumber = sectionNumber,
+                        PageId = pageId,
+                        QuestionId = questionId,
+                        QuestionType = questionType,
+                        Answer = option.Value
+                    };
 
-                        answers.Add(answer);
-                    }
+                    answers.Add(answer);
                 }
             }
-
-            return answers;
         }
+
+        return answers;
     }
 }

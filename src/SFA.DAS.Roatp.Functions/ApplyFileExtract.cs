@@ -1,49 +1,48 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
 
-namespace SFA.DAS.Roatp.Functions
+namespace SFA.DAS.Roatp.Functions;
+
+public class ApplyFileExtract
 {
-    public class ApplyFileExtract
+    private readonly ILogger<ApplyFileExtract> _logger;
+    private readonly IQnaApiClient _qnaApiClient;
+    private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
+
+    public ApplyFileExtract(ILogger<ApplyFileExtract> log, IQnaApiClient qnaApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
     {
-        private readonly ILogger<ApplyFileExtract> _logger;
-        private readonly IQnaApiClient _qnaApiClient;
-        private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
+        _logger = log;
+        _qnaApiClient = qnaApiClient;
+        _datamartBlobStorageFactory = datamartBlobStorageFactory;
+    }
 
-        public ApplyFileExtract(ILogger<ApplyFileExtract> log, IQnaApiClient qnaApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
+
+    [Function("ApplyFileExtract")]
+    public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
+    {
+        _logger.LogDebug($"Saving QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
+
+        var blobContainerClient = await _datamartBlobStorageFactory.GetQnABlobContainerClient();
+
+        try
         {
-            _logger = log;
-            _qnaApiClient = qnaApiClient;
-            _datamartBlobStorageFactory = datamartBlobStorageFactory;
+            await using var filestream = await _qnaApiClient.DownloadFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SectionNumber, fileToExtract.PageId, fileToExtract.QuestionId);
+            var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.QuestionId}/Apply/{fileToExtract.Filename}";
+
+            var blobClient = blobContainerClient.GetBlobClient(blobName);
+            await blobClient.UploadAsync(filestream, overwrite: true);
+
+            _logger.LogInformation($"Saved QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
         }
-
-
-        [FunctionName("ApplyFileExtract")]
-        public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
+        catch (Exception ex)
         {
-            _logger.LogDebug($"Saving QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
-
-            var blobContainerClient = await _datamartBlobStorageFactory.GetQnABlobContainerClient();
-
-            try
-            {
-                await using var filestream = await _qnaApiClient.DownloadFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SectionNumber, fileToExtract.PageId, fileToExtract.QuestionId);
-                var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.QuestionId}/Apply/{fileToExtract.Filename}";
-
-                var blobClient = blobContainerClient.GetBlobClient(blobName);
-                await blobClient.UploadAsync(filestream, overwrite: true);
-
-                _logger.LogInformation($"Saved QnA file into Datamart for application {fileToExtract.ApplicationId},  question: {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unable to save QnA file into Datamart for application {fileToExtract.ApplicationId} and question {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
-                throw;
-            }
+            _logger.LogError(ex, $"Unable to save QnA file into Datamart for application {fileToExtract.ApplicationId} and question {fileToExtract.QuestionId}, filename: {fileToExtract.Filename}");
+            throw;
         }
     }
 }

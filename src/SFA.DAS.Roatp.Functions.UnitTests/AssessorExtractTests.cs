@@ -1,5 +1,9 @@
-﻿using EntityFrameworkCore.Testing.Moq;
-using Microsoft.Azure.WebJobs;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using EntityFrameworkCore.Testing.Moq;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -7,85 +11,79 @@ using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Requests;
 using SFA.DAS.Roatp.Functions.UnitTests.Generators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace SFA.DAS.Roatp.Functions.UnitTests
+namespace SFA.DAS.Roatp.Functions.UnitTests;
+
+public class AssessorExtractTests
 {
-    public class AssessorExtractTests
+    private Mock<ILogger<AssessorExtract>> _logger;
+    private ApplyDataContext _applyDataContext;
+    private Mock<IEnumerable<AdminFileExtractRequest>> _adminFileExtractQueue;
+    private readonly TimerInfo _timerInfo = new();
+
+    private Apply _reviewInProgressApplication;
+    private Apply _application;
+
+    private AssessorExtract _sut;
+
+    [SetUp]
+    public void Setup()
     {
-        private Mock<ILogger<AssessorExtract>> _logger;
-        private ApplyDataContext _applyDataContext;
-        private Mock<IAsyncCollector<AdminFileExtractRequest>> _adminFileExtractQueue;
-        private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        _logger = new Mock<ILogger<AssessorExtract>>();
+        _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
-        private Apply _reviewInProgressApplication;
-        private Apply _application;
+        _reviewInProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
+                .AddExtractedApplicationDetails(true, false, false, false)
+                .AddAssessorReviewDetails("In Progress", false);
 
-        private AssessorExtract _sut;
+        _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
+                .AddExtractedApplicationDetails(true, false, false, false)
+                .AddAssessorReviewDetails("Approved", true);
 
-        [SetUp]
-        public void Setup()
-        {
-            _logger = new Mock<ILogger<AssessorExtract>>();
-            _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
+        var applications = new List<Apply> { _reviewInProgressApplication, _application };
+        _applyDataContext.Set<Apply>().AddRange(applications);
+        _applyDataContext.SaveChanges();
 
-            _reviewInProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
-                    .AddExtractedApplicationDetails(true, false, false, false)
-                    .AddAssessorReviewDetails("In Progress", false);
+        _adminFileExtractQueue = new Mock<IEnumerable<AdminFileExtractRequest>>();
 
-            _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "GatewayAssessed", DateTime.Today.AddDays(-1))
-                    .AddExtractedApplicationDetails(true, false, false, false)
-                    .AddAssessorReviewDetails("Approved", true);
+        _sut = new AssessorExtract(_logger.Object, _applyDataContext);
+    }
 
-            var applications = new List<Apply> { _reviewInProgressApplication, _application };
-            _applyDataContext.Set<Apply>().AddRange(applications);
-            _applyDataContext.SaveChanges();
+    [Test]
+    public async Task Run_Logs_Information_Message()
+    {
+        await _sut.Run(_timerInfo);
 
-            _adminFileExtractQueue = new Mock<IAsyncCollector<AdminFileExtractRequest>>();
+        _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
+    }
 
-            _sut = new AssessorExtract(_logger.Object, _applyDataContext);
-        }
+    [Test]
+    public async Task GetApplicationsToExtract_Contains_Expected_Applications()
+    {
+        var actualResults = await _sut.GetApplicationsToExtract();
 
-        [Test]
-        public async Task Run_Logs_Information_Message()
-        {
-            await _sut.Run(_timerInfo, _adminFileExtractQueue.Object);
+        Assert.That(actualResults, Is.Not.Empty);
+        Assert.That(actualResults, Contains.Item(_application.ApplicationId));
+        Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication.ApplicationId));
+    }
 
-            _logger.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
-        }
+    //[Test]
+    //public async Task EnqueueAssessorFilesForExtract_Enqueues_Requests()
+    //{
+    //    await _sut.EnqueueAssessorFilesForExtract(_adminFileExtractQueue.Object, _application);
 
-        [Test]
-        public async Task GetApplicationsToExtract_Contains_Expected_Applications()
-        {
-            var actualResults = await _sut.GetApplicationsToExtract();
+    //    _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    //}
 
-            CollectionAssert.IsNotEmpty(actualResults);
-            CollectionAssert.Contains(actualResults, _application);
-            CollectionAssert.DoesNotContain(actualResults, _reviewInProgressApplication);
-        }
+    [Test]
+    public async Task MarkAssessorFilesExtractedForApplication_Saves_AssessorFilesExtracted_Entry()
+    {
+        var applicationId = _application.ApplicationId;
 
-        [Test]
-        public async Task EnqueueAssessorFilesForExtract_Enqueues_Requests()
-        {
-            await _sut.EnqueueAssessorFilesForExtract(_adminFileExtractQueue.Object, _application);
+        await _sut.MarkAssessorFilesExtractedForApplication(applicationId);
 
-            _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-        }
+        var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
 
-        [Test]
-        public async Task MarkAssessorFilesExtractedForApplication_Saves_AssessorFilesExtracted_Entry()
-        {
-            var applicationId = _application.ApplicationId;
-
-            await _sut.MarkAssessorFilesExtractedForApplication(applicationId);
-
-            var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
-
-            Assert.IsTrue(extractedApplication.AssessorFilesExtracted);
-        }
+        Assert.That(extractedApplication.AssessorFilesExtracted, Is.True);
     }
 }

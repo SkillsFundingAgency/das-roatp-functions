@@ -1,4 +1,9 @@
-﻿using Azure.Storage.Blobs;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -7,99 +12,93 @@ using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace SFA.DAS.Roatp.Functions.UnitTests
+namespace SFA.DAS.Roatp.Functions.UnitTests;
+
+public class AdminFileExtractTests
 {
-    public class AdminFileExtractTests
+    private readonly Guid _applicationId = Guid.NewGuid();
+
+    private Mock<ILogger<AdminFileExtract>> _logger;
+    private Mock<IApplyApiClient> _applyApiClient;
+    private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
+
+    private Mock<BlobContainerClient> _blobContainerClient;
+    private Mock<BlobClient> _blobClient;
+
+    private AdminFileExtract _sut;
+
+    [SetUp]
+    public void Setup()
     {
-        private readonly Guid _applicationId = Guid.NewGuid();
+        _logger = new Mock<ILogger<AdminFileExtract>>();
+        _applyApiClient = new Mock<IApplyApiClient>();
 
-        private Mock<ILogger<AdminFileExtract>> _logger;
-        private Mock<IApplyApiClient> _applyApiClient;
-        private Mock<IDatamartBlobStorageFactory> _datamartBlobStorageFactory;
+        _applyApiClient.Setup(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+        _applyApiClient.Setup(x => x.DownloadAssessorClarificationFile(_applicationId, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+        _applyApiClient.Setup(x => x.DownloadFinanceClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
 
-        private Mock<BlobContainerClient> _blobContainerClient;
-        private Mock<BlobClient> _blobClient;
+        SetupDatamartBlobStorageFactory();
 
-        private AdminFileExtract _sut;
+        _sut = new AdminFileExtract(_logger.Object, _applyApiClient.Object, _datamartBlobStorageFactory.Object);
+    }
 
-        [SetUp]
-        public void Setup()
-        {
-            _logger = new Mock<ILogger<AdminFileExtract>>();
-            _applyApiClient = new Mock<IApplyApiClient>();
+    private void SetupDatamartBlobStorageFactory()
+    {
+        _blobContainerClient = new Mock<BlobContainerClient>();
+        _blobContainerClient.Setup(x => x.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<BlobContainerEncryptionScopeOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
-            _applyApiClient.Setup(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
-            _applyApiClient.Setup(x => x.DownloadAssessorClarificationFile(_applicationId, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new MemoryStream());
-            _applyApiClient.Setup(x => x.DownloadFinanceClarificationFile(_applicationId, It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+        _blobClient = new Mock<BlobClient>();
+        _blobContainerClient.Setup(x => x.GetBlobClient(It.IsAny<string>()))
+            .Returns(_blobClient.Object);
 
-            SetupDatamartBlobStorageFactory();
+        _datamartBlobStorageFactory = new Mock<IDatamartBlobStorageFactory>();
+        _datamartBlobStorageFactory.Setup(fac => fac.GetAdminBlobContainerClient()).ReturnsAsync(_blobContainerClient.Object);
+    }
 
-            _sut = new AdminFileExtract(_logger.Object, _applyApiClient.Object, _datamartBlobStorageFactory.Object);
-        }
+    [Test]
+    public async Task Run_Logs_Debug_Message()
+    {
+        var request = new AdminFileExtractRequest(new AssessorClarificationOutcome());
+        await _sut.Run(request);
 
-        private void SetupDatamartBlobStorageFactory()
-        {
-            _blobContainerClient = new Mock<BlobContainerClient>();
-            _blobContainerClient.Setup(x => x.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<BlobContainerEncryptionScopeOptions>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
+        _logger.Verify(x => x.Log(LogLevel.Debug, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
+    }
 
-            _blobClient = new Mock<BlobClient>();
-            _blobContainerClient.Setup(x => x.GetBlobClient(It.IsAny<string>()))
-                .Returns(_blobClient.Object);
+    [Test]
+    public async Task Run_Downloads_and_Saves_Gateway_File_Into_BlobStorage()
+    {
+        var gatewayReviewDetails = new GatewayReviewDetails { GatewaySubcontractorDeclarationClarificationUpload = "file.pdf" };
 
-            _datamartBlobStorageFactory = new Mock<IDatamartBlobStorageFactory>();
-            _datamartBlobStorageFactory.Setup(fac => fac.GetAdminBlobContainerClient()).ReturnsAsync(_blobContainerClient.Object);
-        }
+        var request = new AdminFileExtractRequest(_applicationId, gatewayReviewDetails);
+        await _sut.Run(request);
 
-        [Test]
-        public async Task Run_Logs_Debug_Message()
-        {
-            var request = new AdminFileExtractRequest(new AssessorClarificationOutcome());
-            await _sut.Run(request);
+        _applyApiClient.Verify(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, gatewayReviewDetails.GatewaySubcontractorDeclarationClarificationUpload), Times.Once);
+        _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
+    }
 
-            _logger.Verify(x => x.Log(LogLevel.Debug, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
-        }
+    [Test]
+    public async Task Run_Downloads_and_Saves_Assessor_File_Into_BlobStorage()
+    {
+        var assessorClarificationOutcome = new AssessorClarificationOutcome { ApplicationId = _applicationId, ClarificationFile = "file.pdf" };
 
-        [Test]
-        public async Task Run_Downloads_and_Saves_Gateway_File_Into_BlobStorage()
-        {
-            var gatewayReviewDetails = new GatewayReviewDetails { GatewaySubcontractorDeclarationClarificationUpload = "file.pdf" };
+        var request = new AdminFileExtractRequest(assessorClarificationOutcome);
+        await _sut.Run(request);
 
-            var request = new AdminFileExtractRequest(_applicationId, gatewayReviewDetails);
-            await _sut.Run(request);
+        _applyApiClient.Verify(x => x.DownloadAssessorClarificationFile(assessorClarificationOutcome.ApplicationId, assessorClarificationOutcome.SequenceNumber, assessorClarificationOutcome.SectionNumber, assessorClarificationOutcome.PageId, assessorClarificationOutcome.ClarificationFile), Times.AtLeastOnce);
+        _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
+    }
 
-            _applyApiClient.Verify(x => x.DownloadGatewaySubcontractorDeclarationClarificationFile(_applicationId, gatewayReviewDetails.GatewaySubcontractorDeclarationClarificationUpload), Times.Once);
-            _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
-        }
+    [Test]
+    public async Task Run_Downloads_and_Saves_Finance_File_Into_BlobStorage()
+    {
+        var financeClarificationFile = new FinancialReviewClarificationFile { Filename = "file.pdf" };
 
-        [Test]
-        public async Task Run_Downloads_and_Saves_Assessor_File_Into_BlobStorage()
-        {
-            var assessorClarificationOutcome = new AssessorClarificationOutcome { ApplicationId = _applicationId, ClarificationFile = "file.pdf" };
+        var request = new AdminFileExtractRequest(_applicationId, financeClarificationFile);
+        await _sut.Run(request);
 
-            var request = new AdminFileExtractRequest(assessorClarificationOutcome);
-            await _sut.Run(request);
-
-            _applyApiClient.Verify(x => x.DownloadAssessorClarificationFile(assessorClarificationOutcome.ApplicationId, assessorClarificationOutcome.SequenceNumber, assessorClarificationOutcome.SectionNumber, assessorClarificationOutcome.PageId, assessorClarificationOutcome.ClarificationFile), Times.AtLeastOnce);
-            _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Test]
-        public async Task Run_Downloads_and_Saves_Finance_File_Into_BlobStorage()
-        {
-            var financeClarificationFile = new FinancialReviewClarificationFile { Filename = "file.pdf" };
-
-            var request = new AdminFileExtractRequest(_applicationId, financeClarificationFile);
-            await _sut.Run(request);
-
-            _applyApiClient.Verify(x => x.DownloadFinanceClarificationFile(_applicationId, financeClarificationFile.Filename), Times.Once);
-            _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
-        }
+        _applyApiClient.Verify(x => x.DownloadFinanceClarificationFile(_applicationId, financeClarificationFile.Filename), Times.Once);
+        _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
