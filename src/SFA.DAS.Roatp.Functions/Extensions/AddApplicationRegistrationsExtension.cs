@@ -20,7 +20,8 @@ public static class AddApplicationRegistrationsExtension
 {
     public static void AddApplicationRegistrations(this IServiceCollection services, IConfiguration configuration)
     {
-
+        services.AddOptions();
+        services.Configure<ConnectionStrings>(configuration.GetSection("ConnectionStrings"));
         var qnaConfig = configuration.GetSection(nameof(QnaApiAuthentication)).Get<QnaApiAuthentication>();
         var applyConfig = configuration.GetSection(nameof(ApplyApiAuthentication)).Get<ApplyApiAuthentication>();
         var govUkConfig = configuration.GetSection(nameof(GovUkApiAuthentication)).Get<GovUkApiAuthentication>();

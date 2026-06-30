@@ -24,7 +24,7 @@ public class AppealExtract
 
     [Function("AppealExtract")]
     [ServiceBusOutput("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
-    public async Task<IEnumerable<AppealFileExtractRequest>> Run([TimerTrigger("%AppealExtractSchedule%")] TimerInfo myTimer)
+    public async Task<IEnumerable<AppealFileExtractRequest>> Run([TimerTrigger("%AppealExtractSchedule%", RunOnStartup = false)] TimerInfo myTimer)
     {
         List<AppealFileExtractRequest> appealFileExtractQueue = [];
         if (myTimer.IsPastDue)
@@ -67,7 +67,7 @@ public class AppealExtract
 
         foreach (var file in appealFiles)
         {
-            appealFileExtractQueue.Add(new AppealFileExtractRequest(file));
+            appealFileExtractQueue.Add(new AppealFileExtractRequest() { ApplicationId = file.ApplicationId, FileName = file.FileName });
         }
     }
 

@@ -1,27 +1,17 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Azure.Functions.Worker.Builder;
 using SFA.DAS.Configuration.AzureTableStorage;
 
 namespace SFA.DAS.Roatp.Functions.Extensions;
 
 public static class AddConfigurationExtension
 {
-    public static void AddConfiguration(this IConfigurationBuilder builder)
+    public static void AddConfiguration(this FunctionsApplicationBuilder builder)
     {
-        var configuration = builder.Build();
-
-        StorageOptions opt = new()
+        builder.Configuration.AddAzureTableStorage(options =>
         {
-            ConfigurationKeys = configuration["ConfigNames"].Split(','),
-            StorageConnectionString = configuration["ConfigurationStorageConnectionString"],
-            EnvironmentName = configuration["EnvironmentName"],
-            PreFixConfigurationKeys = false
-        };
-
-        builder.AddAzureTableStorage(options =>
-        {
-            options.ConfigurationKeys = configuration["ConfigNames"].Split(',');
-            options.StorageConnectionString = configuration["ConfigurationStorageConnectionString"];
-            options.EnvironmentName = configuration["EnvironmentName"];
+            options.ConfigurationKeys = builder.Configuration["ConfigNames"].Split(',');
+            options.StorageConnectionString = builder.Configuration["ConfigurationStorageConnectionString"];
+            options.EnvironmentName = builder.Configuration["EnvironmentName"];
             options.PreFixConfigurationKeys = false;
         });
     }
