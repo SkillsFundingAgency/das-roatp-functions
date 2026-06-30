@@ -8,7 +8,6 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
@@ -58,7 +57,7 @@ public class AppealFileExtractTests
     [Test]
     public async Task Run_Logs_Debug_Message()
     {
-        var request = new AppealFileExtractRequest(new AppealFile());
+        var request = new AppealFileExtractRequest();
         await _sut.Run(request);
 
         _logger.Verify(x => x.Log(LogLevel.Debug, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
@@ -67,12 +66,10 @@ public class AppealFileExtractTests
     [Test]
     public async Task Run_Downloads_and_Saves_Appeal_File_Into_BlobStorage()
     {
-        var appealfile = new AppealFile { ApplicationId = _applicationId, FileName = "file.pdf" };
-
-        var request = new AppealFileExtractRequest(appealfile);
+        var request = new AppealFileExtractRequest() { ApplicationId = _applicationId, FileName = "file.pdf" };
         await _sut.Run(request);
 
-        _applyApiClient.Verify(x => x.DownloadAppealFile(_applicationId, appealfile.FileName), Times.Once);
+        _applyApiClient.Verify(x => x.DownloadAppealFile(_applicationId, request.FileName), Times.Once);
         _blobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>(), true, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

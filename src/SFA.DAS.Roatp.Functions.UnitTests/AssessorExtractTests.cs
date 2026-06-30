@@ -63,17 +63,9 @@ public class AssessorExtractTests
         var actualResults = await _sut.GetApplicationsToExtract();
 
         Assert.That(actualResults, Is.Not.Empty);
-        Assert.That(actualResults, Contains.Item(_application.ApplicationId));
-        Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication.ApplicationId));
+        Assert.That(actualResults, Contains.Item(_application));
+        Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication));
     }
-
-    //[Test]
-    //public async Task EnqueueAssessorFilesForExtract_Enqueues_Requests()
-    //{
-    //    await _sut.EnqueueAssessorFilesForExtract(_adminFileExtractQueue.Object, _application);
-
-    //    _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    //}
 
     [Test]
     public async Task MarkAssessorFilesExtractedForApplication_Saves_AssessorFilesExtracted_Entry()
