@@ -67,14 +67,6 @@ public class AppealExtractTests
         Assert.That(actualResults, Does.Not.Contain(_applicationWithAppealNotYetSubmitted.Appeal));
     }
 
-    //[Test]
-    //public async Task EnqueueAppealFilesForExtract_Enqueues_Requests()
-    //{
-    //    await _sut.EnqueueAppealFilesForExtract(_appealFileExtractQueue.Object, _application.Appeal);
-
-    //    _appealFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AppealFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    //}
-
     [Test]
     public async Task MarkAppealFilesExtractedForApplication_Saves_AppealFilesExtracted_Entry()
     {

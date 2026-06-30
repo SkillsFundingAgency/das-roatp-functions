@@ -67,14 +67,6 @@ public class GatewayExtractTests
         Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication));
     }
 
-    //[Test]
-    //public async Task EnqueueGatewayFilesForExtract_Enqueues_Requests()
-    //{
-    //    await _sut.EnqueueGatewayFilesForExtract(_adminFileExtractQueue.Object, _application);
-
-    //    _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    //}
-
     [Test]
     public async Task MarkGatewayFilesExtractedForApplication_Saves_GatewayFilesExtracted_Entry()
     {

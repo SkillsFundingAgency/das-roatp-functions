@@ -67,14 +67,6 @@ public class FinanceExtractTests
         Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication));
     }
 
-    //[Test]
-    //public async Task EnqueueFinanceFilesForExtract_Enqueues_Requests()
-    //{
-    //    await _sut.EnqueueFinanceFilesForExtract(_adminFileExtractQueue.Object, _application);
-
-    //    _adminFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<AdminFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    //}
-
     [Test]
     public async Task MarkFinanceFilesExtractedForApplication_Saves_FinanceFilesExtracted_Entry()
     {

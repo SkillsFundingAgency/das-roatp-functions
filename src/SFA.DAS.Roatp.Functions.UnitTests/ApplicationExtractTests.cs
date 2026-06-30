@@ -152,17 +152,6 @@ public class ApplicationExtractTests
         Assert.That(extractedApplication, Is.Not.Null);
     }
 
-    //[Test]
-    //public async Task EnqueueApplyFilesForExtract_Enqueues_Requests()
-    //{
-    //    var applicationId = _application.ApplicationId;
-    //    var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
-
-    //    await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
-
-    //    _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    //}
-
     [Test]
     public async Task LoadOrganisationManagementForApplication_Loads_OrganisationManagement()
     {
