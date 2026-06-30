@@ -1,8 +1,10 @@
-﻿using Microsoft.Azure.Functions.Worker.Builder;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Azure.Functions.Worker.Builder;
 using SFA.DAS.Configuration.AzureTableStorage;
 
 namespace SFA.DAS.Roatp.Functions.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class AddConfigurationExtension
 {
     public static void AddConfiguration(this FunctionsApplicationBuilder builder)

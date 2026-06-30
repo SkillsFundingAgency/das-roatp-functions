@@ -1,30 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <OutputType>Exe</OutputType>
+    <UserSecretsId>2c12bb7e-0d86-41d7-9dd6-6efed41f1ecb</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.22.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.7" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.51.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.13.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.15.3" />
-    <PackageReference Include="Refit" Version="11.1.0" />
-    <PackageReference Include="Refit.HttpClientFactory" Version="11.1.0" />
+    <PackageReference Include="Refit" Version="12.1.0" />
+    <PackageReference Include="Refit.HttpClientFactory" Version="12.1.0" />
     <PackageReference Include="SFA.DAS.Configuration.AzureTableStorage" Version="17.1.165" />
     <PackageReference Include="SFA.DAS.QnA.Api.Types" Version="0.2.251" />
     <PackageReference Include="SFA.DAS.Api.Common" Version="17.1.165" />

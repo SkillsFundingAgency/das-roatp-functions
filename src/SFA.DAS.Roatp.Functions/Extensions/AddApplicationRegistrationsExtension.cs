@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus.Administration;
 using Microsoft.Data.SqlClient;
@@ -16,6 +17,7 @@ using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 namespace SFA.DAS.Roatp.Functions.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class AddApplicationRegistrationsExtension
 {
     public static void AddApplicationRegistrations(this IServiceCollection services, IConfiguration configuration)
