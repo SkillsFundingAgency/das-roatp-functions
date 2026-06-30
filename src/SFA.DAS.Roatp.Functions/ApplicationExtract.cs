@@ -223,7 +223,6 @@ public class ApplicationExtract
 
         try
         {
-
             var sections = await _qnaApiClient.GetAllSectionsForApplication(applicationId);
 
             if (sections != null)
@@ -260,7 +259,7 @@ public class ApplicationExtract
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Unable to extract answers for application {applicationId}");
+            _logger.LogError(ex, "Unable to extract answers for application {ApplicationId}", applicationId);
             throw;
         }
         return answers;
@@ -270,7 +269,7 @@ public class ApplicationExtract
     {
         try
         {
-            _logger.LogInformation($"Extract Partnership answers for application {applicationId}");
+            _logger.LogInformation("Extract Partnership answers for application {ApplicationId}", applicationId);
 
             var answersbyQuestionTag = await ExtractAnswersByQuestionTag(applicationId, questionTag, questionId);
             if (answersbyQuestionTag == null) return;
@@ -288,7 +287,7 @@ public class ApplicationExtract
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Unable to extracted {questionTag} answers for Application: {applicationId}");
+            _logger.LogError(ex, "Unable to extracted {QuestionTag} answers for Application: {ApplicationId}", questionTag, applicationId);
             throw;
         }
     }
@@ -307,20 +306,20 @@ public class ApplicationExtract
 
     private async Task SaveSectorDetailsForApplication(Guid applicationId, IReadOnlyCollection<SubmittedApplicationAnswer> answers)
     {
-        _logger.LogInformation($"Saving OrganisationSector details for application {applicationId}");
+        _logger.LogInformation("Saving OrganisationSector details for application {ApplicationId}", applicationId);
 
         var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
         var sectorsToAdd = _sectorProcessingService.BuildSectorDetails(answers, organisationId);
 
         if (sectorsToAdd == null || !sectorsToAdd.Any())
         {
-            _logger.LogInformation($"No sectors present to extract for application {applicationId}");
+            _logger.LogInformation("No sectors present to extract for application {ApplicationId}", applicationId);
             return;
         }
         _applyDataContext.OrganisationSectors.AddRange(sectorsToAdd);
         await _applyDataContext.SaveChangesAsync();
 
-        _logger.LogInformation($"OrganisationSector successfully extracted for application {applicationId}");
+        _logger.LogInformation("OrganisationSector successfully extracted for application {ApplicationId}", applicationId);
     }
 
     private static List<SubmittedApplicationAnswer> ExtractPageAnswers(Guid applicationId, int sequenceNumber, int sectionNumber, Page page)
@@ -399,7 +398,7 @@ public class ApplicationExtract
 
     public async Task SaveExtractedAnswersForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
     {
-        _logger.LogInformation($"Saving extracted answers for application {applicationId}");
+        _logger.LogInformation("Saving extracted answers for application {ApplicationId}", applicationId);
         var existingAnswers = _applyDataContext.SubmittedApplicationAnswers.Where(ans => ans.ApplicationId == applicationId);
         _applyDataContext.SubmittedApplicationAnswers.RemoveRange(existingAnswers);
 
@@ -416,7 +415,7 @@ public class ApplicationExtract
         _applyDataContext.ExtractedApplications.Add(application);
         await _applyDataContext.SaveChangesAsync();
 
-        _logger.LogInformation($"Extracted answers successfully saved for application {applicationId}");
+        _logger.LogInformation("Extracted answers successfully saved for application {ApplicationId}", applicationId);
     }
 
 
@@ -491,12 +490,12 @@ public class ApplicationExtract
 
     public async Task LoadOrganisationManagementForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
     {
-        _logger.LogInformation($"OrganisationManagement extract for application {applicationId}");
+        _logger.LogInformation("OrganisationManagement extract for application {ApplicationId}", applicationId);
 
         var organisationManagementAnswers = LoadOrganisationManagementAnswers(applicationId, answers);
         _applyDataContext.OrganisationManagement.AddRange(organisationManagementAnswers);
         await _applyDataContext.SaveChangesAsync();
 
-        _logger.LogInformation($"OrganisationManagement successfully extract for application {applicationId}");
+        _logger.LogInformation("OrganisationManagement successfully extract for application {ApplicationId}", applicationId);
     }
 }

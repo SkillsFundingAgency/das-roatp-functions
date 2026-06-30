@@ -24,7 +24,7 @@ public class AssessorExtract
 
     [Function("AssessorExtract")]
     [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
-    public async Task<List<AdminFileExtractRequest>> Run([TimerTrigger("%AssessorExtractSchedule%")] TimerInfo myTimer)
+    public async Task<List<AdminFileExtractRequest>> Run([TimerTrigger("%AssessorExtractSchedule%", RunOnStartup = false)] TimerInfo myTimer)
     {
         List<AdminFileExtractRequest> clarificationFileExtractQueue = [];
         if (myTimer.IsPastDue)

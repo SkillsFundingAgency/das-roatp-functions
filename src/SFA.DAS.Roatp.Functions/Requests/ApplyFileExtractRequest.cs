@@ -5,12 +5,12 @@ namespace SFA.DAS.Roatp.Functions.Requests;
 
 public class ApplyFileExtractRequest
 {
-    public Guid ApplicationId { get; }
-    public int SequenceNumber { get; }
-    public int SectionNumber { get; }
-    public string PageId { get; }
-    public string QuestionId { get; }
-    public string Filename { get; }
+    public Guid ApplicationId { get; set; }
+    public int SequenceNumber { get; set; }
+    public int SectionNumber { get; set; }
+    public string PageId { get; set; }
+    public string QuestionId { get; set; }
+    public string Filename { get; set; }
 
     public ApplyFileExtractRequest() { }
 

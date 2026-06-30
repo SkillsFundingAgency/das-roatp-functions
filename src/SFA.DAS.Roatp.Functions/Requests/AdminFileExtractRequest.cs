@@ -12,12 +12,12 @@ public enum AdminFileType
 
 public class AdminFileExtractRequest
 {
-    public Guid ApplicationId { get; }
-    public int SequenceNumber { get; }
-    public int SectionNumber { get; }
-    public string PageId { get; }
-    public string Filename { get; }
-    public AdminFileType AdminFileType { get; }
+    public Guid ApplicationId { get; set; }
+    public int SequenceNumber { get; set; }
+    public int SectionNumber { get; set; }
+    public string PageId { get; set; }
+    public string Filename { get; set; }
+    public AdminFileType AdminFileType { get; set; }
 
     public AdminFileExtractRequest() { }
 
