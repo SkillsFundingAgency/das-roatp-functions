@@ -63,9 +63,6 @@ public class ApplicationExtract
             _logger.LogInformation("ApplicationExtract function is running later than scheduled");
         }
 
-        _logger.LogInformation($"ApplicationExtract function executed at: {DateTime.Now}");
-
-
         var applications = await GetApplicationsToExtract(DateTime.Now);
 
         foreach (var applicationId in applications)
@@ -99,7 +96,7 @@ public class ApplicationExtract
 
     public async Task LoadOrganisationPersonnelForApplication(Guid applicationId, List<SubmittedApplicationAnswer> answers)
     {
-        _logger.LogInformation($"Load Organisation Personnel for application {applicationId}");
+        _logger.LogInformation("Load Organisation Personnel for application {ApplicationId}", applicationId);
 
         var organisationPersonnel = new List<OrganisationPersonnel>();
         var application = _applyDataContext.Apply.Where(app => app.ApplicationId == applicationId).FirstOrDefault();
@@ -125,7 +122,7 @@ public class ApplicationExtract
         _applyDataContext.OrganisationPersonnel.AddRange(organisationPersonnel);
         await _applyDataContext.SaveChangesAsync();
 
-        _logger.LogInformation($"Organisation Personnel successfully load for application {applicationId}");
+        _logger.LogInformation("Organisation Personnel successfully load for application {ApplicationId}", applicationId);
     }
 
     private static List<OrganisationPersonnel> ExtractTabularAnswerOrganisationPersonnel(List<SubmittedApplicationAnswer> answers, Guid organisationId, string questionId, PersonnelType personnelType)
@@ -218,7 +215,7 @@ public class ApplicationExtract
 
     public async Task<List<SubmittedApplicationAnswer>> ExtractAnswersForApplication(Guid applicationId)
     {
-        _logger.LogInformation($"Extracting answers for application {applicationId}");
+        _logger.LogInformation("Extracting answers for application {ApplicationId}", applicationId);
         var answers = new List<SubmittedApplicationAnswer>();
 
         try
@@ -311,7 +308,7 @@ public class ApplicationExtract
         var organisationId = _applyDataContext.Apply.FirstOrDefault(x => x.ApplicationId == applicationId).OrganisationId;
         var sectorsToAdd = _sectorProcessingService.BuildSectorDetails(answers, organisationId);
 
-        if (sectorsToAdd == null || !sectorsToAdd.Any())
+        if (sectorsToAdd == null || sectorsToAdd.Count == 0)
         {
             _logger.LogInformation("No sectors present to extract for application {ApplicationId}", applicationId);
             return;
@@ -405,7 +402,7 @@ public class ApplicationExtract
         var existingApplications = _applyDataContext.ExtractedApplications.Where(app => app.ApplicationId == applicationId);
         _applyDataContext.ExtractedApplications.RemoveRange(existingApplications);
 
-        if (answers != null && answers.Any())
+        if (answers != null && answers.Count != 0)
         {
             answers.ForEach(a => a.ApplicationId = applicationId);
             _applyDataContext.SubmittedApplicationAnswers.AddRange(answers);
@@ -462,7 +459,7 @@ public class ApplicationExtract
                         organisationManagement.TimeInRoleMonths += int.Parse(personDetails.Answer);
                         break;
                     case "Part of another organisation":
-                        organisationManagement.IsPartOfAnyOtherOrganisation = personDetails.Answer.Equals("Yes") ? true : false;
+                        organisationManagement.IsPartOfAnyOtherOrganisation = personDetails.Answer.Equals("Yes");
                         break;
                     case "Organisation details":
                         organisationManagement.OtherOrganisationNames = personDetails.Answer;

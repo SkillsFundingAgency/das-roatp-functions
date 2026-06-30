@@ -32,8 +32,6 @@ public class AppealExtract
             _logger.LogInformation("AppealExtract function is running later than scheduled");
         }
 
-        _logger.LogInformation("AppealExtract function executed at: {Timestamp}", DateTime.Now);
-
         var appeals = await GetAppealsToExtract();
 
         foreach (var appeal in appeals)
@@ -57,7 +55,7 @@ public class AppealExtract
                             .Where(app => app.Appeal.AppealSubmittedDate != null)
                             .ToListAsync();
 
-        return applications.Select(ap => ap.Appeal).ToList();
+        return [.. applications.Select(ap => ap.Appeal)];
     }
 
     private static async Task EnqueueAppealFilesForExtract(List<AppealFileExtractRequest> appealFileExtractQueue, Appeal appeal)
@@ -73,7 +71,7 @@ public class AppealExtract
 
     public async Task MarkAppealFilesExtractedForApplication(Guid applicationId)
     {
-        _logger.LogDebug($"Marking AppealFilesExtracted for application {applicationId}");
+        _logger.LogDebug("Marking AppealFilesExtracted for application {ApplicationId}", applicationId);
 
         try
         {
@@ -81,11 +79,11 @@ public class AppealExtract
             application.AppealFilesExtracted = true;
 
             await _applyDataContext.SaveChangesAsync();
-            _logger.LogInformation($"Successfully marked AppealFilesExtracted for application {applicationId}");
+            _logger.LogInformation("Successfully marked AppealFilesExtracted for application {ApplicationId}", applicationId);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, $"Unable to mark AppealFilesExtracted for Application: {applicationId}");
+            _logger.LogError(ex, "Unable to mark AppealFilesExtracted for Application: {ApplicationId}", applicationId);
         }
     }
 }

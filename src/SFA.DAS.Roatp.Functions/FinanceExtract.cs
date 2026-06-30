@@ -32,8 +32,6 @@ public class FinanceExtract
             _logger.LogInformation("FinanceExtract function is running later than scheduled");
         }
 
-        _logger.LogInformation($"FinanceExtract function executed at: {DateTime.Now}");
-
         var applications = await GetApplicationsToExtract();
 
         foreach (var application in applications)
@@ -46,7 +44,7 @@ public class FinanceExtract
 
     public async Task<List<Apply>> GetApplicationsToExtract()
     {
-        _logger.LogDebug($"Getting list of applications to extract");
+        _logger.LogDebug("Getting list of applications to extract");
 
         var applications = await _applyDataContext.Apply
                             .AsNoTracking()
@@ -73,7 +71,7 @@ public class FinanceExtract
 
     public async Task MarkFinanceFilesExtractedForApplication(Guid applicationId)
     {
-        _logger.LogDebug($"Marking FinanceFilesExtracted for application {applicationId}");
+        _logger.LogDebug("Marking FinanceFilesExtracted for application {ApplicationId}", applicationId);
 
         try
         {
@@ -81,11 +79,11 @@ public class FinanceExtract
             application.FinanceFilesExtracted = true;
 
             await _applyDataContext.SaveChangesAsync();
-            _logger.LogInformation($"Successfully marked FinanceFilesExtracted for application {applicationId}");
+            _logger.LogInformation("Successfully marked FinanceFilesExtracted for application {ApplicationId}", applicationId);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, $"Unable to mark FinanceFilesExtracted for Application: {applicationId}");
+            _logger.LogError(ex, "Unable to mark FinanceFilesExtracted for Application: {ApplicationId}", applicationId);
         }
     }
 }

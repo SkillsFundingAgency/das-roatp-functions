@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus.Administration;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,7 @@ public interface IServiceBusQueueInitializer
     Task InitializeAsync();
 }
 
+[ExcludeFromCodeCoverage]
 public class ServiceBusQueueInitializer : IServiceBusQueueInitializer
 {
     private readonly IConfiguration _configuration;

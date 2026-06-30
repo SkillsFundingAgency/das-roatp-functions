@@ -24,7 +24,7 @@ public class AdminFileExtract
     [Function("AdminFileExtract")]
     public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
     {
-        _logger.LogDebug($"Saving {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}");
+        _logger.LogDebug("Saving {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename);
 
         try
         {
@@ -45,7 +45,7 @@ public class AdminFileExtract
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Unable to save {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId} and page {fileToExtract.PageId}, filename: {fileToExtract.Filename}");
+            _logger.LogError(ex, "Unable to save {AdminFileType} clarification file into Datamart for application {ApplicationId} and page {PageId}, filename: {Filename}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename);
             throw;
         }
     }
@@ -60,7 +60,7 @@ public class AdminFileExtract
         var blobClient = blobContainerClient.GetBlobClient(blobName);
         await blobClient.UploadAsync(filestream, overwrite: true);
 
-        _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
     }
 
     private async Task ExtractAssessorFile(AdminFileExtractRequest fileToExtract)
@@ -73,7 +73,7 @@ public class AdminFileExtract
         var blobClient = blobContainerClient.GetBlobClient(blobName);
         await blobClient.UploadAsync(filestream, overwrite: true);
 
-        _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
     }
 
     private async Task ExtractFinanceFile(AdminFileExtractRequest fileToExtract)
@@ -86,6 +86,6 @@ public class AdminFileExtract
         var blobClient = blobContainerClient.GetBlobClient(blobName);
         await blobClient.UploadAsync(filestream, overwrite: true);
 
-        _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
     }
 }

@@ -32,8 +32,6 @@ public class AssessorExtract
             _logger.LogInformation("AssessorExtract function is running later than scheduled");
         }
 
-        _logger.LogInformation($"AssessorExtract function executed at: {DateTime.Now}");
-
         var applications = await GetApplicationsToExtract();
 
         foreach (var application in applications)
@@ -46,7 +44,7 @@ public class AssessorExtract
 
     public async Task<List<Apply>> GetApplicationsToExtract()
     {
-        _logger.LogDebug($"Getting list of applications to extract");
+        _logger.LogDebug("Getting list of applications to extract");
 
         var applications = await _applyDataContext.Apply
                             .AsNoTracking()
@@ -72,7 +70,7 @@ public class AssessorExtract
 
     public async Task MarkAssessorFilesExtractedForApplication(Guid applicationId)
     {
-        _logger.LogDebug($"Marking AssessorFilesExtracted for application {applicationId}");
+        _logger.LogDebug("Marking AssessorFilesExtracted for application {ApplicationId}", applicationId);
 
         try
         {
@@ -80,11 +78,11 @@ public class AssessorExtract
             application.AssessorFilesExtracted = true;
 
             await _applyDataContext.SaveChangesAsync();
-            _logger.LogInformation($"Successfully marked AssessorFilesExtracted for application {applicationId}");
+            _logger.LogInformation("Successfully marked AssessorFilesExtracted for application {ApplicationId}", applicationId);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, $"Unable to mark AssessorFilesExtracted for Application: {applicationId}");
+            _logger.LogError(ex, "Unable to mark AssessorFilesExtracted for Application: {ApplicationId}", applicationId);
         }
     }
 }

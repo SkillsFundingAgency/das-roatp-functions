@@ -32,8 +32,6 @@ public class GatewayExtract
             _logger.LogInformation("GatewayExtract function is running later than scheduled");
         }
 
-        _logger.LogInformation($"GatewayExtract function executed at: {DateTime.Now}");
-
         var applications = await GetApplicationsToExtract();
 
         foreach (var application in applications)
@@ -46,7 +44,7 @@ public class GatewayExtract
 
     public async Task<List<Apply>> GetApplicationsToExtract()
     {
-        _logger.LogDebug($"Getting list of applications to extract");
+        _logger.LogDebug("Getting list of applications to extract");
 
         var applications = await _applyDataContext.Apply
                             .AsNoTracking()
@@ -67,7 +65,7 @@ public class GatewayExtract
 
     public async Task MarkGatewayFilesExtractedForApplication(Guid applicationId)
     {
-        _logger.LogDebug($"Marking GatewayFilesExtracted for application {applicationId}");
+        _logger.LogDebug("Marking GatewayFilesExtracted for application {ApplicationId}", applicationId);
 
         try
         {
@@ -75,11 +73,11 @@ public class GatewayExtract
             application.GatewayFilesExtracted = true;
 
             await _applyDataContext.SaveChangesAsync();
-            _logger.LogInformation($"Successfully marked GatewayFilesExtracted for application {applicationId}");
+            _logger.LogInformation("Successfully marked GatewayFilesExtracted for application {ApplicationId}", applicationId);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, $"Unable to mark GatewayFilesExtracted for Application: {applicationId}");
+            _logger.LogError(ex, "Unable to mark GatewayFilesExtracted for Application: {ApplicationId}", applicationId);
         }
     }
 }
