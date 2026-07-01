@@ -62,9 +62,12 @@ public class AssessorExtractTests
     {
         var actualResults = await _sut.GetApplicationsToExtract();
 
-        Assert.That(actualResults, Is.Not.Empty);
-        Assert.That(actualResults, Contains.Item(_application));
-        Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualResults, Is.Not.Empty);
+            Assert.That(actualResults, Contains.Item(_application));
+            Assert.That(actualResults, Does.Not.Contain(_reviewInProgressApplication));
+        });
     }
 
     [Test]

@@ -84,8 +84,11 @@ public class BankHolidayFulfillmentTests
 
         var resultantBankHolidays = await _applyDataContext.BankHoliday.AsNoTracking().ToListAsync();
 
-        Assert.That(resultantBankHolidays, Is.Not.EquivalentTo(initialBankHolidays));
-        Assert.That(resultantBankHolidays.Count, Is.GreaterThan(initialBankHolidays.Count));
+        Assert.Multiple(() =>
+        {
+            Assert.That(resultantBankHolidays, Is.Not.EquivalentTo(initialBankHolidays));
+            Assert.That(resultantBankHolidays.Count, Is.GreaterThan(initialBankHolidays.Count));
+        });
     }
 
     [Test]
@@ -95,7 +98,10 @@ public class BankHolidayFulfillmentTests
 
         var actualBankHolidays = await _sut.GetCurrentBankHolidays();
 
-        Assert.That(actualBankHolidays, Is.Not.Empty);
-        Assert.That(actualBankHolidays, Is.EquivalentTo(expectedBankHolidays));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualBankHolidays, Is.Not.Empty);
+            Assert.That(actualBankHolidays, Is.EquivalentTo(expectedBankHolidays));
+        });
     }
 }

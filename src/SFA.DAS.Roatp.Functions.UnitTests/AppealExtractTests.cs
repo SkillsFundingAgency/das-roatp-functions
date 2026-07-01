@@ -62,9 +62,12 @@ public class AppealExtractTests
     {
         var actualResults = await _sut.GetAppealsToExtract();
 
-        Assert.That(actualResults, Is.Not.Empty);
-        Assert.That(actualResults, Contains.Item(_application.Appeal));
-        Assert.That(actualResults, Does.Not.Contain(_applicationWithAppealNotYetSubmitted.Appeal));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualResults, Is.Not.Empty);
+            Assert.That(actualResults, Contains.Item(_application.Appeal));
+            Assert.That(actualResults, Does.Not.Contain(_applicationWithAppealNotYetSubmitted.Appeal));
+        });
     }
 
     [Test]

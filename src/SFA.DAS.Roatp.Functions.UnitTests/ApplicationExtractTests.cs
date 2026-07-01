@@ -63,9 +63,12 @@ public class ApplicationExtractTests
 
         var actualResults = await _sut.GetApplicationsToExtract(executionDateTime);
 
-        Assert.That(actualResults, Is.Not.Empty);
-        Assert.That(actualResults, Contains.Item(expectedApplicationId));
-        Assert.That(actualResults, Does.Not.Contain(_inProgressApplication.ApplicationId));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualResults, Is.Not.Empty);
+            Assert.That(actualResults, Contains.Item(expectedApplicationId));
+            Assert.That(actualResults, Does.Not.Contain(_inProgressApplication.ApplicationId));
+        });
     }
 
     [Test]
@@ -90,13 +93,16 @@ public class ApplicationExtractTests
 
         _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-        Assert.That(actualQuestion, Is.Not.Null);
-        Assert.That(expectedQuestion.ApplicationId, Is.EqualTo(actualQuestion.ApplicationId));
-        Assert.That(expectedQuestion.SequenceNumber, Is.EqualTo(actualQuestion.SequenceNumber));
-        Assert.That(expectedQuestion.SectionNumber, Is.EqualTo(actualQuestion.SectionNumber));
-        Assert.That(expectedQuestion.PageId, Is.EqualTo(actualQuestion.PageId));
-        Assert.That(expectedQuestion.QuestionId, Is.EqualTo(actualQuestion.QuestionId));
-        Assert.That(expectedQuestion.QuestionType, Is.EqualTo(actualQuestion.QuestionType));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualQuestion, Is.Not.Null);
+            Assert.That(expectedQuestion.ApplicationId, Is.EqualTo(actualQuestion.ApplicationId));
+            Assert.That(expectedQuestion.SequenceNumber, Is.EqualTo(actualQuestion.SequenceNumber));
+            Assert.That(expectedQuestion.SectionNumber, Is.EqualTo(actualQuestion.SectionNumber));
+            Assert.That(expectedQuestion.PageId, Is.EqualTo(actualQuestion.PageId));
+            Assert.That(expectedQuestion.QuestionId, Is.EqualTo(actualQuestion.QuestionId));
+            Assert.That(expectedQuestion.QuestionType, Is.EqualTo(actualQuestion.QuestionType));
+        });
     }
 
     [Test]
@@ -118,11 +124,14 @@ public class ApplicationExtractTests
 
         _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-        Assert.That(actualAnswer, Is.Not.Null);
-        Assert.That(expectedAnswer.Answer, Is.EqualTo(actualAnswer.Answer));
-        Assert.That(expectedAnswer.ColumnHeading, Is.EqualTo(actualAnswer.ColumnHeading));
-        Assert.That(expectedAnswer.RowNumber, Is.EqualTo(actualAnswer.RowNumber));
-        Assert.That(expectedAnswer.ColumnNumber, Is.EqualTo(actualAnswer.ColumnNumber));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualAnswer, Is.Not.Null);
+            Assert.That(expectedAnswer.Answer, Is.EqualTo(actualAnswer.Answer));
+            Assert.That(expectedAnswer.ColumnHeading, Is.EqualTo(actualAnswer.ColumnHeading));
+            Assert.That(expectedAnswer.RowNumber, Is.EqualTo(actualAnswer.RowNumber));
+            Assert.That(expectedAnswer.ColumnNumber, Is.EqualTo(actualAnswer.ColumnNumber));
+        });
     }
 
     [Test]
@@ -164,11 +173,14 @@ public class ApplicationExtractTests
 
         var organisationManagementAnswers = _applyDataContext.OrganisationManagement.AsQueryable().Where(app => app.OrganisationId == organisationId).ToList();
 
-        Assert.That(organisationManagementAnswers, Is.Not.Empty);
-        Assert.That(organisationManagementAnswers.Count, Is.EqualTo(3));
-        Assert.That(organisationManagementAnswers[0].TimeInRoleMonths, Is.EqualTo(26));
-        Assert.That(organisationManagementAnswers[1].TimeInRoleMonths, Is.EqualTo(13));
-        Assert.That(organisationManagementAnswers[2].TimeInRoleMonths, Is.EqualTo(39));
+        Assert.Multiple(() =>
+        {
+            Assert.That(organisationManagementAnswers, Is.Not.Empty);
+            Assert.That(organisationManagementAnswers.Count, Is.EqualTo(3));
+            Assert.That(organisationManagementAnswers[0].TimeInRoleMonths, Is.EqualTo(26));
+            Assert.That(organisationManagementAnswers[1].TimeInRoleMonths, Is.EqualTo(13));
+            Assert.That(organisationManagementAnswers[2].TimeInRoleMonths, Is.EqualTo(39));
+        });
     }
 
     [Test]
@@ -182,10 +194,13 @@ public class ApplicationExtractTests
 
         var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
 
-        Assert.That(loadedOrganisationPersonnel, Is.Not.Null);
-        Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CompanyDirector).Count(), Is.GreaterThan(0));
-        Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count(), Is.GreaterThan(0));
-        Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count(), Is.GreaterThan(0));
-        Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count(), Is.GreaterThan(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(loadedOrganisationPersonnel, Is.Not.Null);
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CompanyDirector).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count(), Is.GreaterThan(0));
+        });
     }
 }

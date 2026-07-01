@@ -67,13 +67,16 @@ public class SubmittedAnswerMapperTests
     {
         var result = SubmittedAnswerMapper.GetAnswer(_applicationId, _sequenceNumber, _sectionNumber, _pageId, _question, _submittedAnswer);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(_applicationId, Is.EqualTo(result.ApplicationId));
-        Assert.That(_sequenceNumber, Is.EqualTo(result.SequenceNumber));
-        Assert.That(_sectionNumber, Is.EqualTo(result.SectionNumber));
-        Assert.That(_pageId, Is.EqualTo(result.PageId));
-        Assert.That(_question.QuestionId, Is.EqualTo(result.QuestionId));
-        Assert.That(_question.Input.Type, Is.EqualTo(result.QuestionType));
-        Assert.That(_submittedAnswer, Is.EqualTo(result.Answer));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.Not.Null);
+            Assert.That(_applicationId, Is.EqualTo(result.ApplicationId));
+            Assert.That(_sequenceNumber, Is.EqualTo(result.SequenceNumber));
+            Assert.That(_sectionNumber, Is.EqualTo(result.SectionNumber));
+            Assert.That(_pageId, Is.EqualTo(result.PageId));
+            Assert.That(_question.QuestionId, Is.EqualTo(result.QuestionId));
+            Assert.That(_question.Input.Type, Is.EqualTo(result.QuestionType));
+            Assert.That(_submittedAnswer, Is.EqualTo(result.Answer));
+        });
     }
 }
