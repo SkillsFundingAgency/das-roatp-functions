@@ -23,7 +23,7 @@ public class FinanceExtract
     }
 
     [Function("FinanceExtract")]
-    [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
+    [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "ServiceBusConnectionString")]
     public async Task<List<AdminFileExtractRequest>> Run([TimerTrigger("%FinanceExtractSchedule%")] TimerInfo myTimer)
     {
         List<AdminFileExtractRequest> clarificationFileExtractQueue = [];

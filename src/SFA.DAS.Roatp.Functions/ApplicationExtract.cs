@@ -54,7 +54,7 @@ public class ApplicationExtract
     }
 
     [Function("ApplicationExtract")]
-    [ServiceBusOutput("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
+    [ServiceBusOutput("%ApplyFileExtractQueue%", Connection = "ServiceBusConnectionString")]
     public async Task<List<ApplyFileExtractRequest>> Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
     {
         List<ApplyFileExtractRequest> applyFileExtractQueue = [];

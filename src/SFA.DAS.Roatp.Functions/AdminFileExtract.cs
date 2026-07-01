@@ -22,7 +22,7 @@ public class AdminFileExtract
     }
 
     [Function("AdminFileExtract")]
-    public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
+    public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "ServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
     {
         _logger.LogDebug("Saving {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename);
 

@@ -23,7 +23,7 @@ public class ApplyFileExtract
 
 
     [Function("ApplyFileExtract")]
-    public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "DASServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
+    public async Task Run([ServiceBusTrigger("%ApplyFileExtractQueue%", Connection = "ServiceBusConnectionString")] ApplyFileExtractRequest fileToExtract)
     {
         _logger.LogDebug("Saving QnA file into Datamart for application {ApplicationId},  question: {QuestionId}, filename: {Filename}", fileToExtract.ApplicationId, fileToExtract.QuestionId, fileToExtract.Filename);
 

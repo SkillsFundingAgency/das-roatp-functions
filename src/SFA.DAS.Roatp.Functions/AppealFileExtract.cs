@@ -22,7 +22,7 @@ public class AppealFileExtract
     }
 
     [Function("AppealFileExtract")]
-    public async Task Run([ServiceBusTrigger("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AppealFileExtractRequest fileToExtract)
+    public async Task Run([ServiceBusTrigger("%AppealFileExtractQueue%", Connection = "ServiceBusConnectionString")] AppealFileExtractRequest fileToExtract)
     {
         _logger.LogDebug($"Saving appeal file into Datamart for application {fileToExtract.ApplicationId} and filename: {fileToExtract.FileName}");
 

@@ -23,7 +23,7 @@ public class GatewayExtract
     }
 
     [Function("GatewayExtract")]
-    [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
+    [ServiceBusOutput("%AdminFileExtractQueue%", Connection = "ServiceBusConnectionString")]
     public async Task<List<AdminFileExtractRequest>> Run([TimerTrigger("%GatewayExtractSchedule%")] TimerInfo myTimer)
     {
         List<AdminFileExtractRequest> clarificationFileExtractQueue = [];

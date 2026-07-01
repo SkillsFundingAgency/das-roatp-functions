@@ -23,7 +23,7 @@ public class AppealExtract
     }
 
     [Function("AppealExtract")]
-    [ServiceBusOutput("%AppealFileExtractQueue%", Connection = "DASServiceBusConnectionString")]
+    [ServiceBusOutput("%AppealFileExtractQueue%", Connection = "ServiceBusConnectionString")]
     public async Task<IEnumerable<AppealFileExtractRequest>> Run([TimerTrigger("%AppealExtractSchedule%", RunOnStartup = false)] TimerInfo myTimer)
     {
         List<AppealFileExtractRequest> appealFileExtractQueue = [];

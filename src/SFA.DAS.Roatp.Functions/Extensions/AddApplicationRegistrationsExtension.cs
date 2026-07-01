@@ -76,7 +76,7 @@ public static class AddApplicationRegistrationsExtension
 
         services.AddSingleton(sp =>
         {
-            var serviceBusConnectionString = configuration["DASServiceBusConnectionString"];
+            var serviceBusConnectionString = configuration["ServiceBusConnectionString"];
             return new ServiceBusAdministrationClient(serviceBusConnectionString);
         });
 
