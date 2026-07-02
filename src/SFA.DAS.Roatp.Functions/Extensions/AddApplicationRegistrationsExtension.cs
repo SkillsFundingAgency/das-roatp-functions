@@ -12,7 +12,6 @@ using SFA.DAS.Roatp.Functions.Configuration;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
-using SFA.DAS.Roatp.Functions.Infrastructure.Tokens;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
 
 namespace SFA.DAS.Roatp.Functions.Extensions;
@@ -62,13 +61,7 @@ public static class AddApplicationRegistrationsExtension
             var applySqlConnectionString = connectionStrings.ApplySqlConnectionString;
             var connection = new SqlConnection(applySqlConnectionString);
 
-            if (!string.Equals(configuration["EnvironmentName"], "LOCAL", StringComparison.OrdinalIgnoreCase))
-            {
-                var token = SqlTokenGenerator.GenerateTokenAsync().GetAwaiter().GetResult();
-                connection.AccessToken = token;
-            }
-
-            options.UseSqlServer(connection);
+            options.UseSqlServer(connection, o => o.EnableRetryOnFailure(5, TimeSpan.FromSeconds(20), null));
         });
 
         services.AddScoped<IDatamartBlobStorageFactory, DatamartBlobStorageFactory>();
