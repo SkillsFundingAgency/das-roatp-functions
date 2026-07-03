@@ -52,6 +52,7 @@ jobs:
             TableName: Configuration
             ConfigurationSecrets: 
               DatamartBlobStorageConnectionString: $(DatamartBlobStorageConnectionString)
+              RoatpOuterApiAuthenticationSubscriptionKey: $(RoatpOuterApiAuthenticationSubscriptionKey)
         - template: azure-pipelines-templates/deploy/step/app-role-assignments.yml@das-platform-building-blocks
           parameters:
             ServiceConnection: ${{ parameters.AppRoleAssignmentsServiceConnection }}
