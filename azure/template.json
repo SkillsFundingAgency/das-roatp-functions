@@ -116,7 +116,10 @@
     "financeExtractSchedule": "0 0 2 * * *",
     "appealExtractSchedule": "0 0 2 * * *",
     "bankHolidayFulfillmentSchedule": "0 0 1 * * *",
-    "updateProviderDetailsFunctionSchedule": "0 0 2 * * 1-5"
+    "updateProviderDetailsFunctionSchedule": "0 0 2 * * 1-5",
+    "applyFileExtractQueue": "SFA.DAS.Roatp.Functions.ApplyFileExtract",
+    "adminFileExtractQueue": "SFA.DAS.Roatp.Functions.AdminFileExtract",
+    "appealFileExtractQueue": "SFA.DAS.Roatp.Functions.AppealFileExtract"
   },
   "resources": [
     {
@@ -365,6 +368,18 @@
                 {
                   "name": "UpdateProviderDetailsFunctionSchedule",
                   "value": "[variables('updateProviderDetailsFunctionSchedule')]"
+                },
+                {
+                  "name": "ApplyFileExtractQueue",
+                  "value": "[variables('applyFileExtractQueue')]"
+                },
+                {
+                  "name": "AdminFileExtractQueue",
+                  "value": "[variables('adminFileExtractQueue')]"
+                },
+                {
+                  "name": "AppealFileExtractQueue",
+                  "value": "[variables('appealFileExtractQueue')]"
                 }
               ]
             }
