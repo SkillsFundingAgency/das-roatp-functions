@@ -1,5 +1,9 @@
-﻿using EntityFrameworkCore.Testing.Moq;
-using Microsoft.Azure.WebJobs;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using EntityFrameworkCore.Testing.Moq;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -8,197 +12,195 @@ using SFA.DAS.Roatp.Functions.ApplyTypes;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.Databases;
 using SFA.DAS.Roatp.Functions.Requests;
-using SFA.DAS.Roatp.Functions.UnitTests.Generators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using SFA.DAS.Roatp.Functions.Services.Sectors;
+using SFA.DAS.Roatp.Functions.UnitTests.Generators;
 
-namespace SFA.DAS.Roatp.Functions.UnitTests
+namespace SFA.DAS.Roatp.Functions.UnitTests;
+
+public class ApplicationExtractTests
 {
-    public class ApplicationExtractTests
+    private Mock<ILogger<ApplicationExtract>> _logger;
+    private Mock<IQnaApiClient> _qnaApiClient;
+    private Mock<ISectorProcessingService> _sectorProcessingService;
+    private ApplyDataContext _applyDataContext;
+    private Mock<IEnumerable<ApplyFileExtractRequest>> _applyFileExtractQueue;
+    private readonly TimerInfo _timerInfo = new();
+
+    private Apply _inProgressApplication;
+    private Apply _application;
+    private List<Section> _sections;
+
+    private ApplicationExtract _sut;
+
+    [SetUp]
+    public void Setup()
     {
-        private Mock<ILogger<ApplicationExtract>> _logger;
-        private Mock<IQnaApiClient> _qnaApiClient;
-        private Mock<ISectorProcessingService> _sectorProcessingService;
-        private ApplyDataContext _applyDataContext;
-        private Mock<IAsyncCollector<ApplyFileExtractRequest>> _applyFileExtractQueue;
-        private readonly TimerInfo _timerInfo = new TimerInfo(null, null, false);
+        _logger = new Mock<ILogger<ApplicationExtract>>();
+        _qnaApiClient = new Mock<IQnaApiClient>();
+        _sectorProcessingService = new Mock<ISectorProcessingService>();
+        _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
 
-        private Apply _inProgressApplication;
-        private Apply _application;
-        private List<Section> _sections;
+        _inProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "In Progress", null);
+        _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "Submitted", DateTime.Today.AddDays(-1));
 
-        private ApplicationExtract _sut;
+        var applications = new List<Apply> { _inProgressApplication, _application };
+        _applyDataContext.Set<Apply>().AddRange(applications);
+        _applyDataContext.SaveChanges();
 
-        [SetUp]
-        public void Setup()
+        _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
+        _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(_application.ApplicationId)).ReturnsAsync(_sections);
+
+        _applyFileExtractQueue = new Mock<IEnumerable<ApplyFileExtractRequest>>();
+
+        _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _sectorProcessingService.Object);
+    }
+
+    [Test]
+    public async Task GetApplicationsToExtract_Contains_Expected_Applications()
+    {
+        var expectedApplicationId = _application.ApplicationId;
+        var executionDateTime = _application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value.Date.AddDays(1);
+
+        var actualResults = await _sut.GetApplicationsToExtract(executionDateTime);
+
+        Assert.Multiple(() =>
         {
-            _logger = new Mock<ILogger<ApplicationExtract>>();
-            _qnaApiClient = new Mock<IQnaApiClient>();
-            _sectorProcessingService = new Mock<ISectorProcessingService>();
-            _applyDataContext = Create.MockedDbContextFor<ApplyDataContext>();
+            Assert.That(actualResults, Is.Not.Empty);
+            Assert.That(actualResults, Contains.Item(expectedApplicationId));
+            Assert.That(actualResults, Does.Not.Contain(_inProgressApplication.ApplicationId));
+        });
+    }
 
-            _inProgressApplication = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "In Progress", null);
-            _application = ApplyGenerator.GenerateApplication(Guid.NewGuid(), "Submitted", DateTime.Today.AddDays(-1));
+    [Test]
+    public async Task ExtractAnswersForApplication_Contains_Expected_Questions()
+    {
+        var firstSection = _sections[0];
+        var firstPage = firstSection.QnAData.Pages[0];
+        var firstPageQuestion = firstPage.Questions[0];
 
-            var applications = new List<Apply> { _inProgressApplication, _application };
-            _applyDataContext.Set<Apply>().AddRange(applications);
-            _applyDataContext.SaveChanges();
-
-            _sections = QnaGenerator.GenerateSectionsForApplication(_application.ApplicationId);
-            _qnaApiClient.Setup(x => x.GetAllSectionsForApplication(_application.ApplicationId)).ReturnsAsync(_sections);
-
-            _applyFileExtractQueue = new Mock<IAsyncCollector<ApplyFileExtractRequest>>();
-
-            _sut = new ApplicationExtract(_logger.Object, _applyDataContext, _qnaApiClient.Object, _sectorProcessingService.Object);
-        }
-
-        [Test]
-        public async Task GetApplicationsToExtract_Contains_Expected_Applications()
+        var expectedQuestion = new SubmittedApplicationAnswer
         {
-            var expectedApplicationId = _application.ApplicationId;
-            var executionDateTime = _application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value.Date.AddDays(1);
+            ApplicationId = _application.ApplicationId,
+            SequenceNumber = firstSection.SequenceNo,
+            SectionNumber = firstSection.SectionNo,
+            PageId = firstPage.PageId,
+            QuestionId = firstPageQuestion.QuestionId,
+            QuestionType = firstPageQuestion.Input.Type
+        };
 
-            var actualResults = await _sut.GetApplicationsToExtract(executionDateTime);
+        var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
+        var actualQuestion = extractedQuestions.FirstOrDefault(x => x.PageId == expectedQuestion.PageId && x.QuestionId == expectedQuestion.QuestionId);
 
-            CollectionAssert.IsNotEmpty(actualResults);
-            CollectionAssert.Contains(actualResults, expectedApplicationId);
-            CollectionAssert.DoesNotContain(actualResults, _inProgressApplication.ApplicationId);
-        }
+        _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-        [Test]
-        public async Task ExtractAnswersForApplication_Contains_Expected_Questions()
+        Assert.Multiple(() =>
         {
-            var firstSection = _sections[0];
-            var firstPage = firstSection.QnAData.Pages[0];
-            var firstPageQuestion = firstPage.Questions[0];
+            Assert.That(actualQuestion, Is.Not.Null);
+            Assert.That(expectedQuestion.ApplicationId, Is.EqualTo(actualQuestion.ApplicationId));
+            Assert.That(expectedQuestion.SequenceNumber, Is.EqualTo(actualQuestion.SequenceNumber));
+            Assert.That(expectedQuestion.SectionNumber, Is.EqualTo(actualQuestion.SectionNumber));
+            Assert.That(expectedQuestion.PageId, Is.EqualTo(actualQuestion.PageId));
+            Assert.That(expectedQuestion.QuestionId, Is.EqualTo(actualQuestion.QuestionId));
+            Assert.That(expectedQuestion.QuestionType, Is.EqualTo(actualQuestion.QuestionType));
+        });
+    }
 
-            var expectedQuestion = new SubmittedApplicationAnswer
-            {
-                ApplicationId = _application.ApplicationId,
-                SequenceNumber = firstSection.SequenceNo,
-                SectionNumber = firstSection.SectionNo,
-                PageId = firstPage.PageId,
-                QuestionId = firstPageQuestion.QuestionId,
-                QuestionType = firstPageQuestion.Input.Type
-            };
+    [Test]
+    public async Task ExtractAnswersForApplication_Contains_Expected_QuestionAnswers()
+    {
+        var firstSection = _sections[0];
+        var firstPage = firstSection.QnAData.Pages[0];
+        var firstPageQuestion = firstPage.Questions[0];
+        var firstPageAnswer = firstPage.PageOfAnswers[0].Answers[0];
 
-            var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
-            var actualQuestion = extractedQuestions.FirstOrDefault(x => x.PageId == expectedQuestion.PageId && x.QuestionId == expectedQuestion.QuestionId);
-
-            _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
-
-            Assert.IsNotNull(actualQuestion);
-            Assert.AreEqual(expectedQuestion.ApplicationId, actualQuestion.ApplicationId);
-            Assert.AreEqual(expectedQuestion.SequenceNumber, actualQuestion.SequenceNumber);
-            Assert.AreEqual(expectedQuestion.SectionNumber, actualQuestion.SectionNumber);
-            Assert.AreEqual(expectedQuestion.PageId, actualQuestion.PageId);
-            Assert.AreEqual(expectedQuestion.QuestionId, actualQuestion.QuestionId);
-            Assert.AreEqual(expectedQuestion.QuestionType, actualQuestion.QuestionType);
-        }
-
-        [Test]
-        public async Task ExtractAnswersForApplication_Contains_Expected_QuestionAnswers()
+        var expectedAnswer = new SubmittedApplicationAnswer
         {
-            var firstSection = _sections[0];
-            var firstPage = firstSection.QnAData.Pages[0];
-            var firstPageQuestion = firstPage.Questions[0];
-            var firstPageAnswer = firstPage.PageOfAnswers[0].Answers[0];
+            Answer = firstPageAnswer.Value,
+            ColumnHeading = null
+        };
 
-            var expectedAnswer = new SubmittedApplicationAnswer
-            {
-                Answer = firstPageAnswer.Value,
-                ColumnHeading = null
-            };
+        var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
+        var actualAnswer = extractedQuestions.FirstOrDefault(x => x.PageId == firstPage.PageId && x.QuestionId == firstPageQuestion.QuestionId);
 
-            var extractedQuestions = await _sut.ExtractAnswersForApplication(_application.ApplicationId);
-            var actualAnswer = extractedQuestions.FirstOrDefault(x => x.PageId == firstPage.PageId && x.QuestionId == firstPageQuestion.QuestionId);
+        _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
 
-            _qnaApiClient.Verify(x => x.GetAllSectionsForApplication(_application.ApplicationId), Times.Once);
-
-            Assert.IsNotNull(actualAnswer);
-            Assert.AreEqual(expectedAnswer.Answer, actualAnswer.Answer);
-            Assert.AreEqual(expectedAnswer.ColumnHeading, actualAnswer.ColumnHeading);
-            Assert.AreEqual(expectedAnswer.RowNumber, actualAnswer.RowNumber);
-            Assert.AreEqual(expectedAnswer.ColumnNumber, actualAnswer.ColumnNumber);
-        }
-
-        [Test]
-        public async Task SaveExtractedAnswersForApplication_Saves_Answers()
+        Assert.Multiple(() =>
         {
-            var applicationId = _application.ApplicationId;
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+            Assert.That(actualAnswer, Is.Not.Null);
+            Assert.That(expectedAnswer.Answer, Is.EqualTo(actualAnswer.Answer));
+            Assert.That(expectedAnswer.ColumnHeading, Is.EqualTo(actualAnswer.ColumnHeading));
+            Assert.That(expectedAnswer.RowNumber, Is.EqualTo(actualAnswer.RowNumber));
+            Assert.That(expectedAnswer.ColumnNumber, Is.EqualTo(actualAnswer.ColumnNumber));
+        });
+    }
 
-            await _sut.SaveExtractedAnswersForApplication(applicationId, applicationAnswers);
+    [Test]
+    public async Task SaveExtractedAnswersForApplication_Saves_Answers()
+    {
+        var applicationId = _application.ApplicationId;
+        var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
 
-            var submittedAnswers = _applyDataContext.SubmittedApplicationAnswers.AsQueryable().Where(app => app.ApplicationId == applicationId).ToList();
+        await _sut.SaveExtractedAnswersForApplication(applicationId, applicationAnswers);
 
-            CollectionAssert.IsNotEmpty(submittedAnswers);
-            Assert.AreEqual(applicationAnswers.Count, submittedAnswers.Count);
-        }
+        var submittedAnswers = _applyDataContext.SubmittedApplicationAnswers.AsQueryable().Where(app => app.ApplicationId == applicationId).ToList();
 
-        [Test]
-        public async Task SaveExtractedAnswersForApplication_Saves_ApplicationExtracted_Entry()
+        Assert.That(submittedAnswers, Is.Not.Empty);
+        Assert.That(applicationAnswers.Count, Is.EqualTo(submittedAnswers.Count));
+    }
+
+    [Test]
+    public async Task SaveExtractedAnswersForApplication_Saves_ApplicationExtracted_Entry()
+    {
+        var applicationId = _application.ApplicationId;
+        var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+        await _sut.SaveExtractedAnswersForApplication(applicationId, applicationAnswers);
+
+        var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
+
+        Assert.That(extractedApplication, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task LoadOrganisationManagementForApplication_Loads_OrganisationManagement()
+    {
+        var applicationId = _application.ApplicationId;
+        var organisationId = _application.OrganisationId;
+
+        var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+
+        await _sut.LoadOrganisationManagementForApplication(applicationId, applicationAnswers);
+
+        var organisationManagementAnswers = _applyDataContext.OrganisationManagement.AsQueryable().Where(app => app.OrganisationId == organisationId).ToList();
+
+        Assert.Multiple(() =>
         {
-            var applicationId = _application.ApplicationId;
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
+            Assert.That(organisationManagementAnswers, Is.Not.Empty);
+            Assert.That(organisationManagementAnswers.Count, Is.EqualTo(3));
+            Assert.That(organisationManagementAnswers[0].TimeInRoleMonths, Is.EqualTo(26));
+            Assert.That(organisationManagementAnswers[1].TimeInRoleMonths, Is.EqualTo(13));
+            Assert.That(organisationManagementAnswers[2].TimeInRoleMonths, Is.EqualTo(39));
+        });
+    }
 
-            await _sut.SaveExtractedAnswersForApplication(applicationId, applicationAnswers);
+    [Test]
+    public async Task LoadOrganisationPersonnelForApplication_Loads_OrganisationPersonnel()
+    {
+        var applicationId = _application.ApplicationId;
+        var organisationId = _application.OrganisationId;
+        var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
 
-            var extractedApplication = _applyDataContext.ExtractedApplications.AsQueryable().SingleOrDefault(app => app.ApplicationId == applicationId);
+        await _sut.LoadOrganisationPersonnelForApplication(applicationId, applicationAnswers);
 
-            Assert.IsNotNull(extractedApplication);
-        }
+        var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
 
-        [Test]
-        public async Task EnqueueApplyFilesForExtract_Enqueues_Requests()
+        Assert.Multiple(() =>
         {
-            var applicationId = _application.ApplicationId;
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
-
-            await _sut.EnqueueApplyFilesForExtract(_applyFileExtractQueue.Object, applicationAnswers);
-
-            _applyFileExtractQueue.Verify(x => x.AddAsync(It.IsAny<ApplyFileExtractRequest>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-        }
-
-        [Test]
-        public async Task LoadOrganisationManagementForApplication_Loads_OrganisationManagement()
-        {
-            var applicationId = _application.ApplicationId;
-            var organisationId = _application.OrganisationId;
-
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
-
-            await _sut.LoadOrganisationManagementForApplication(applicationId, applicationAnswers);
-
-            var organisationManagementAnswers = _applyDataContext.OrganisationManagement.AsQueryable().Where(app => app.OrganisationId == organisationId).ToList();
-
-            CollectionAssert.IsNotEmpty(organisationManagementAnswers);
-            Assert.IsTrue(organisationManagementAnswers.Count == 3);
-            Assert.IsTrue(organisationManagementAnswers[0].TimeInRoleMonths == 26);
-            Assert.IsTrue(organisationManagementAnswers[1].TimeInRoleMonths == 13);
-            Assert.IsTrue(organisationManagementAnswers[2].TimeInRoleMonths == 39);
-        }
-
-        [Test]
-        public async Task LoadOrganisationPersonnelForApplication_Loads_OrganisationPersonnel()
-        {
-            var applicationId = _application.ApplicationId;
-            var organisationId = _application.OrganisationId;
-            var applicationAnswers = await _sut.ExtractAnswersForApplication(applicationId);
-
-            await _sut.LoadOrganisationPersonnelForApplication(applicationId, applicationAnswers);
-
-            var loadedOrganisationPersonnel = _applyDataContext.OrganisationPersonnel.AsQueryable().Where(app => app.OrganisationId == organisationId);
-            
-            Assert.IsNotNull(loadedOrganisationPersonnel);
-            Assert.True(loadedOrganisationPersonnel.Where(a=>a.PersonnelType == PersonnelType.CompanyDirector).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count() > 0);
-            Assert.True(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count() > 0);
-        }
+            Assert.That(loadedOrganisationPersonnel, Is.Not.Null);
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CompanyDirector).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonWithSignificantControl).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.CharityTrustee).Count(), Is.GreaterThan(0));
+            Assert.That(loadedOrganisationPersonnel.Where(a => a.PersonnelType == PersonnelType.PersonInControl).Count(), Is.GreaterThan(0));
+        });
     }
 }

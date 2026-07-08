@@ -1,7 +1,6 @@
-﻿namespace SFA.DAS.Roatp.Functions.ApplyTypes
+﻿namespace SFA.DAS.Roatp.Functions.ApplyTypes;
+
+public class GatewayReviewDetails
 {
-    public class GatewayReviewDetails
-    {
-        public string GatewaySubcontractorDeclarationClarificationUpload { get; set; }
-    }
+    public string GatewaySubcontractorDeclarationClarificationUpload { get; set; }
 }

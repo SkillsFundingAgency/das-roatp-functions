@@ -1,9 +1,8 @@
-﻿namespace SFA.DAS.Roatp.Functions.Configuration
+﻿namespace SFA.DAS.Roatp.Functions.Configuration;
+
+public class RoatpOuterApiAuthentication : IOuterApiClientConfiguration
 {
-    public class RoatpOuterApiAuthentication
-    {
-        public string BaseUrl { get; set; }
-        public string SubscriptionKey { get; set; }
-        public string ApiVersion { get; set; }
-    }
+    public string BaseUrl { get; set; }
+    public string SubscriptionKey { get; set; }
+    public string ApiVersion { get; set; }
 }

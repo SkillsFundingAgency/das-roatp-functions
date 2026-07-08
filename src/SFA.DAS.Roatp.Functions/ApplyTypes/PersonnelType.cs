@@ -1,10 +1,9 @@
-﻿namespace SFA.DAS.Roatp.Functions.ApplyTypes
+﻿namespace SFA.DAS.Roatp.Functions.ApplyTypes;
+
+public enum PersonnelType
 {
-    public enum PersonnelType
-    {
-        CompanyDirector = 1,
-        PersonWithSignificantControl = 2,
-        CharityTrustee = 3,
-        PersonInControl = 4
-    }
+    CompanyDirector = 1,
+    PersonWithSignificantControl = 2,
+    CharityTrustee = 3,
+    PersonInControl = 4
 }

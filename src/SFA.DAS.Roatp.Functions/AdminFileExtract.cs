@@ -1,92 +1,91 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.Roatp.Functions.Infrastructure.ApiClients;
 using SFA.DAS.Roatp.Functions.Infrastructure.BlobStorage;
 using SFA.DAS.Roatp.Functions.Requests;
 
-namespace SFA.DAS.Roatp.Functions
+namespace SFA.DAS.Roatp.Functions;
+
+public class AdminFileExtract
 {
-    public class AdminFileExtract
+    private readonly ILogger<AdminFileExtract> _logger;
+    private readonly IApplyApiClient _applyApiClient;
+    private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
+
+    public AdminFileExtract(ILogger<AdminFileExtract> log, IApplyApiClient applyApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
     {
-        private readonly ILogger<AdminFileExtract> _logger;
-        private readonly IApplyApiClient _applyApiClient;
-        private readonly IDatamartBlobStorageFactory _datamartBlobStorageFactory;
+        _logger = log;
+        _applyApiClient = applyApiClient;
+        _datamartBlobStorageFactory = datamartBlobStorageFactory;
+    }
 
-        public AdminFileExtract(ILogger<AdminFileExtract> log, IApplyApiClient applyApiClient, IDatamartBlobStorageFactory datamartBlobStorageFactory)
+    [Function("AdminFileExtract")]
+    public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "ServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
+    {
+        _logger.LogDebug("Saving {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename);
+
+        try
         {
-            _logger = log;
-            _applyApiClient = applyApiClient;
-            _datamartBlobStorageFactory = datamartBlobStorageFactory;
-        }
-
-        [FunctionName("AdminFileExtract")]
-        public async Task Run([ServiceBusTrigger("%AdminFileExtractQueue%", Connection = "DASServiceBusConnectionString")] AdminFileExtractRequest fileToExtract)
-        {
-            _logger.LogDebug($"Saving {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}");
-
-            try
+            switch (fileToExtract.AdminFileType)
             {
-                switch(fileToExtract.AdminFileType)
-                {
-                    case AdminFileType.Gateway:
-                        await ExtractGatewayFile(fileToExtract);
-                        break;
-                    case AdminFileType.Assessor:
-                        await ExtractAssessorFile(fileToExtract);
-                        break;
-                    case AdminFileType.Finance:
-                        await ExtractFinanceFile(fileToExtract);
-                        break;
-                    default:
-                        throw new NotImplementedException($"{fileToExtract.AdminFileType} is not yet supported");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unable to save {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId} and page {fileToExtract.PageId}, filename: {fileToExtract.Filename}");
-                throw;
+                case AdminFileType.Gateway:
+                    await ExtractGatewayFile(fileToExtract);
+                    break;
+                case AdminFileType.Assessor:
+                    await ExtractAssessorFile(fileToExtract);
+                    break;
+                case AdminFileType.Finance:
+                    await ExtractFinanceFile(fileToExtract);
+                    break;
+                default:
+                    throw new NotImplementedException($"{fileToExtract.AdminFileType} is not yet supported");
             }
         }
-
-        private async Task ExtractGatewayFile(AdminFileExtractRequest fileToExtract)
+        catch (Exception ex)
         {
-            var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
-
-            await using var filestream = await _applyApiClient.DownloadGatewaySubcontractorDeclarationClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
-            var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
-
-            var blobClient = blobContainerClient.GetBlobClient(blobName);
-            await blobClient.UploadAsync(filestream, overwrite: true);
-
-            _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
+            _logger.LogError(ex, "Unable to save {AdminFileType} clarification file into Datamart for application {ApplicationId} and page {PageId}, filename: {Filename}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename);
+            throw;
         }
+    }
 
-        private async Task ExtractAssessorFile(AdminFileExtractRequest fileToExtract)
-        {
-            var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
+    private async Task ExtractGatewayFile(AdminFileExtractRequest fileToExtract)
+    {
+        var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
 
-            await using var filestream = await _applyApiClient.DownloadAssessorClarificationFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SectionNumber, fileToExtract.PageId, fileToExtract.Filename);
-            var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
+        await using var filestream = await _applyApiClient.DownloadGatewaySubcontractorDeclarationClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
+        var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
 
-            var blobClient = blobContainerClient.GetBlobClient(blobName);
-            await blobClient.UploadAsync(filestream, overwrite: true);
+        var blobClient = blobContainerClient.GetBlobClient(blobName);
+        await blobClient.UploadAsync(filestream, overwrite: true);
 
-            _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
-        }
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
+    }
 
-        private async Task ExtractFinanceFile(AdminFileExtractRequest fileToExtract)
-        {
-            var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
+    private async Task ExtractAssessorFile(AdminFileExtractRequest fileToExtract)
+    {
+        var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
 
-            await using var filestream = await _applyApiClient.DownloadFinanceClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
-            var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
+        await using var filestream = await _applyApiClient.DownloadAssessorClarificationFile(fileToExtract.ApplicationId, fileToExtract.SequenceNumber, fileToExtract.SectionNumber, fileToExtract.PageId, fileToExtract.Filename);
+        var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
 
-            var blobClient = blobContainerClient.GetBlobClient(blobName);
-            await blobClient.UploadAsync(filestream, overwrite: true);
+        var blobClient = blobContainerClient.GetBlobClient(blobName);
+        await blobClient.UploadAsync(filestream, overwrite: true);
 
-            _logger.LogInformation($"Saved {fileToExtract.AdminFileType} clarification file into Datamart for application {fileToExtract.ApplicationId},  page: {fileToExtract.PageId}, filename: {fileToExtract.Filename}. Data-mart path: {blobName}");
-        }
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
+    }
+
+    private async Task ExtractFinanceFile(AdminFileExtractRequest fileToExtract)
+    {
+        var blobContainerClient = await _datamartBlobStorageFactory.GetAdminBlobContainerClient();
+
+        await using var filestream = await _applyApiClient.DownloadFinanceClarificationFile(fileToExtract.ApplicationId, fileToExtract.Filename);
+        var blobName = $"{fileToExtract.ApplicationId}/{fileToExtract.PageId}/{fileToExtract.AdminFileType}/{fileToExtract.Filename}";
+
+        var blobClient = blobContainerClient.GetBlobClient(blobName);
+        await blobClient.UploadAsync(filestream, overwrite: true);
+
+        _logger.LogInformation("Saved {AdminFileType} clarification file into Datamart for application {ApplicationId},  page: {PageId}, filename: {Filename}. Data-mart path: {BlobName}", fileToExtract.AdminFileType, fileToExtract.ApplicationId, fileToExtract.PageId, fileToExtract.Filename, blobName);
     }
 }

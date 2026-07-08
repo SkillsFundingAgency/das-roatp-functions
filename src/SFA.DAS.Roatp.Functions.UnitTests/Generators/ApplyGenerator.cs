@@ -1,133 +1,132 @@
-﻿using SFA.DAS.Roatp.Functions.ApplyTypes;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using SFA.DAS.Roatp.Functions.ApplyTypes;
 
-namespace SFA.DAS.Roatp.Functions.UnitTests.Generators
+namespace SFA.DAS.Roatp.Functions.UnitTests.Generators;
+
+public static class ApplyGenerator
 {
-    public static class ApplyGenerator
+    public static Apply GenerateApplication(Guid applicationId, string applicationStatus, DateTime? applicationSubmittedDate)
     {
-        public static Apply GenerateApplication(Guid applicationId, string applicationStatus, DateTime? applicationSubmittedDate)
+        return new Apply
         {
-            return new Apply
+            ApplicationId = applicationId,
+            OrganisationId = Guid.NewGuid(),
+            ApplicationStatus = applicationStatus,
+            ApplyData = new ApplyData
             {
-                ApplicationId = applicationId,
-                OrganisationId = Guid.NewGuid(),
-                ApplicationStatus = applicationStatus,
-                ApplyData = new ApplyData
+                ApplyDetails = new ApplyDetails
                 {
-                    ApplyDetails = new ApplyDetails
-                    {
-                        ApplicationSubmittedOn = applicationSubmittedDate
-                    }
+                    ApplicationSubmittedOn = applicationSubmittedDate
+                }
+            }
+        };
+    }
+
+    public static Apply AddExtractedApplicationDetails(this Apply application, bool hasGatewayFilesExtracted, bool hasAssessorFilesExtracted, bool hasFinanceFilesExtracted, bool hasAppealFilesExtracted)
+    {
+        application.ExtractedApplication = new ExtractedApplication
+        {
+            ApplicationId = application.ApplicationId,
+            ExtractedDate = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value.AddDays(1),
+            GatewayFilesExtracted = hasGatewayFilesExtracted,
+            AssessorFilesExtracted = hasAssessorFilesExtracted,
+            FinanceFilesExtracted = hasFinanceFilesExtracted,
+            AppealFilesExtracted = hasAppealFilesExtracted,
+            Apply = application
+        };
+
+        return application;
+    }
+
+    public static Apply AddGatewayReviewDetails(this Apply application, string gatewayReviewStatus, bool hasSubcontractorDeclarationClarificationFile)
+    {
+        application.GatewayReviewStatus = gatewayReviewStatus;
+
+        if (hasSubcontractorDeclarationClarificationFile)
+        {
+            GatewayReviewDetails gatewayReviewDetails = new GatewayReviewDetails
+            {
+                GatewaySubcontractorDeclarationClarificationUpload = "file.pdf"
+            };
+
+            application.ApplyData.GatewayReviewDetails = gatewayReviewDetails;
+        }
+
+        return application;
+    }
+
+    public static Apply AddAssessorReviewDetails(this Apply application, string assessorReviewStatus, bool hasClarificationFiles)
+    {
+        application.AssessorReviewStatus = assessorReviewStatus;
+
+        if (hasClarificationFiles)
+        {
+            List<AssessorClarificationOutcome> outcomes = new List<AssessorClarificationOutcome>
+            {
+                new AssessorClarificationOutcome
+                {
+                    ApplicationId = application.ApplicationId,
+                    PageId = "pageId",
+                    SectionNumber = 3,
+                    SequenceNumber = 3,
+                    ClarificationFile = "file.pdf",
+                    Apply = application
                 }
             };
+
+            application.AssessorClarificationOutcomes = outcomes;
         }
 
-        public static Apply AddExtractedApplicationDetails(this Apply application, bool hasGatewayFilesExtracted, bool hasAssessorFilesExtracted, bool hasFinanceFilesExtracted, bool hasAppealFilesExtracted)
+        return application;
+    }
+
+    public static Apply AddFinancialReviewDetails(this Apply application, string financialReviewStatus, bool hasClarificationFiles)
+    {
+        application.FinancialReview = new FinancialReviewDetails
         {
-            application.ExtractedApplication = new ExtractedApplication
+            ApplicationId = application.ApplicationId,
+            Status = financialReviewStatus,
+            Apply = application
+        };
+
+        if (hasClarificationFiles)
+        {
+            var clarificationFiles = new List<FinancialReviewClarificationFile>
             {
-                ApplicationId = application.ApplicationId,
-                ExtractedDate = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value.AddDays(1),
-                GatewayFilesExtracted = hasGatewayFilesExtracted,
-                AssessorFilesExtracted = hasAssessorFilesExtracted,
-                FinanceFilesExtracted = hasFinanceFilesExtracted,
-                AppealFilesExtracted = hasAppealFilesExtracted,
-                Apply = application
+                new FinancialReviewClarificationFile
+                {
+                    ApplicationId = application.ApplicationId,
+                    Filename = "file.pdf",
+                    FinancialReview = application.FinancialReview
+                }
             };
 
-            return application;
+            application.FinancialReview.ClarificationRequestedOn = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value;
+            application.FinancialReview.ClarificationFiles = clarificationFiles;
         }
 
-        public static Apply AddGatewayReviewDetails(this Apply application, string gatewayReviewStatus, bool hasSubcontractorDeclarationClarificationFile)
-        {
-            application.GatewayReviewStatus = gatewayReviewStatus;
+        return application;
+    }
 
-            if (hasSubcontractorDeclarationClarificationFile)
+    public static Apply AddAppealDetails(this Apply application, DateTime? appealSubmittedDate, bool hasAppealFiles)
+    {
+        application.Appeal = new Appeal { ApplicationId = application.ApplicationId, AppealSubmittedDate = appealSubmittedDate };
+
+        if (hasAppealFiles)
+        {
+            List<AppealFile> appealFiles = new List<AppealFile>
             {
-                GatewayReviewDetails gatewayReviewDetails = new GatewayReviewDetails
+                new AppealFile
                 {
-                    GatewaySubcontractorDeclarationClarificationUpload = "file.pdf"
-                };
-
-                application.ApplyData.GatewayReviewDetails = gatewayReviewDetails;
-            }
-
-            return application;
-        }
-
-        public static Apply AddAssessorReviewDetails(this Apply application, string assessorReviewStatus, bool hasClarificationFiles)
-        {
-            application.AssessorReviewStatus = assessorReviewStatus;
-
-            if (hasClarificationFiles)
-            {
-                List<AssessorClarificationOutcome> outcomes = new List<AssessorClarificationOutcome>
-                {
-                    new AssessorClarificationOutcome
-                    {
-                        ApplicationId = application.ApplicationId,
-                        PageId = "pageId",
-                        SectionNumber = 3,
-                        SequenceNumber = 3,
-                        ClarificationFile = "file.pdf",
-                        Apply = application
-                    }
-                };
-
-                application.AssessorClarificationOutcomes = outcomes;
-            }
-
-            return application;
-        }
-
-        public static Apply AddFinancialReviewDetails(this Apply application, string financialReviewStatus, bool hasClarificationFiles)
-        {
-            application.FinancialReview = new FinancialReviewDetails
-            {
-                ApplicationId = application.ApplicationId,
-                Status = financialReviewStatus,
-                Apply = application
+                    ApplicationId = application.ApplicationId,
+                    FileName = "file.pdf"
+                }
             };
 
-            if (hasClarificationFiles)
-            {
-                var clarificationFiles = new List<FinancialReviewClarificationFile>
-                {
-                    new FinancialReviewClarificationFile
-                    {
-                        ApplicationId = application.ApplicationId,
-                        Filename = "file.pdf",
-                        FinancialReview = application.FinancialReview
-                    }
-                };
-
-                application.FinancialReview.ClarificationRequestedOn = application.ApplyData.ApplyDetails.ApplicationSubmittedOn.Value;
-                application.FinancialReview.ClarificationFiles = clarificationFiles;
-            }
-
-            return application;
+            application.Appeal.AppealFiles = appealFiles;
         }
 
-        public static Apply AddAppealDetails(this Apply application, DateTime? appealSubmittedDate, bool hasAppealFiles)
-        {
-            application.Appeal = new Appeal { ApplicationId = application.ApplicationId, AppealSubmittedDate = appealSubmittedDate };
-
-            if (hasAppealFiles)
-            {
-                List<AppealFile> appealFiles = new List<AppealFile>
-                {
-                    new AppealFile
-                    {
-                        ApplicationId = application.ApplicationId,
-                        FileName = "file.pdf"
-                    }
-                };
-
-                application.Appeal.AppealFiles = appealFiles;
-            }
-
-            return application;
-        }
+        return application;
     }
 }
