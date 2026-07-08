@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -55,7 +54,7 @@ public class ApplicationExtract
 
     [Function("ApplicationExtract")]
     [ServiceBusOutput("%ApplyFileExtractQueue%", Connection = "ServiceBusConnectionString")]
-    public async Task<List<ApplyFileExtractRequest>> Run([TimerTrigger("%ApplicationExtractSchedule%")] TimerInfo myTimer)
+    public async Task<List<ApplyFileExtractRequest>> Run([TimerTrigger("%ApplicationExtractSchedule%", RunOnStartup = true)] TimerInfo myTimer)
     {
         List<ApplyFileExtractRequest> applyFileExtractQueue = [];
         if (myTimer.IsPastDue)
@@ -67,29 +66,32 @@ public class ApplicationExtract
 
         foreach (var applicationId in applications)
         {
-            try
-            {
-                var answers = await ExtractAnswersForApplication(applicationId);
+            var answers = await ExtractAnswersForApplication(applicationId);
 
-                using (var transaction = _applyDataContext.Database.BeginTransaction())
+            var strategy = _applyDataContext.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                using (var transaction = await _applyDataContext.Database.BeginTransactionAsync())
                 {
-                    await SaveExtractedAnswersForApplication(applicationId, answers);
-                    await SaveSectorDetailsForApplication(applicationId, answers);
-                    await LoadOrganisationManagementForApplication(applicationId, answers);
-                    await LoadOrganisationPersonnelForApplication(applicationId, answers);
-                    await transaction.CommitAsync();
+                    try
+                    {
+                        await SaveExtractedAnswersForApplication(applicationId, answers);
+                        await SaveSectorDetailsForApplication(applicationId, answers);
+                        await LoadOrganisationManagementForApplication(applicationId, answers);
+                        await LoadOrganisationPersonnelForApplication(applicationId, answers);
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ErrorMessage, applicationId);
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
-                await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
-            }
-            catch (SqlException ex)
-            {
-                _logger.LogError(ex, ErrorMessage, applicationId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ErrorMessage, applicationId);
-                throw;
-            }
+            });
+
+            await EnqueueApplyFilesForExtract(applyFileExtractQueue, answers);
         }
         return applyFileExtractQueue;
     }
